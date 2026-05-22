@@ -1,0 +1,15 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+.env
+.env.*
+config.json
+.generated/
+test_images/
+__pycache__/
+*.py[cod]

@@ -1,0 +1,8 @@
+{
+  "api_key": {
+    "secret": "ark-..."
+  },
+  "model": "ep-your-endpoint-id",
+  "image_model": "doubao-seedream-5-0-260128",
+  "base_url": "https://ark.cn-beijing.volces.com/api/v3"
+}

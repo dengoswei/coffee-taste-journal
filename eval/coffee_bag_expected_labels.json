@@ -1,0 +1,99 @@
+{
+  "cases": [
+    {
+      "id": "IMG_1726",
+      "source_image": "test_images/IMG_1726.PNG",
+      "expected": {
+        "coffee": {
+          "roaster": "Apartment",
+          "name": null,
+          "origin": "Peru",
+          "farm": "Juan Herrera",
+          "variety": "Gesha",
+          "process": "Washed",
+          "flavor_notes": ["Mandarin", "red berries", "jasmine"]
+        },
+        "bag": {
+          "roast_date": "2025-03-02",
+          "total_grams": 200
+        }
+      }
+    },
+    {
+      "id": "IMG_1753",
+      "source_image": "test_images/IMG_1753.HEIC",
+      "expected": {
+        "coffee": {
+          "roaster": "mirra",
+          "name": null,
+          "origin": "Costa Rica",
+          "farm": "Johel & Mathias Monge; Hacienda San Isidro Labrador",
+          "variety": "Bourbon",
+          "process": "Honey",
+          "flavor_notes": ["White Cherry", "Honeysuckle", "Orange"]
+        },
+        "bag": {
+          "roast_date": "2026-02-11",
+          "total_grams": 250
+        }
+      }
+    },
+    {
+      "id": "IMG_1936",
+      "source_image": "test_images/IMG_1936.HEIC",
+      "expected": {
+        "coffee": {
+          "roaster": "Passenger",
+          "name": "Neyver Salas",
+          "origin": "Peru",
+          "farm": "Neyver Salas",
+          "variety": "Gesha",
+          "process": "Washed",
+          "flavor_notes": ["Florals", "Meyer Lemon", "Fig"]
+        },
+        "bag": {
+          "roast_date": null,
+          "total_grams": 250
+        }
+      }
+    },
+    {
+      "id": "IMG_1937",
+      "source_image": "test_images/IMG_1937.HEIC",
+      "expected": {
+        "coffee": {
+          "roaster": "Savage Coffees",
+          "name": "Radiance",
+          "origin": "Panama",
+          "farm": "Finca Deborah; Jamison Savage",
+          "variety": "Geisha",
+          "process": "Carbonic maceration",
+          "flavor_notes": ["Nectarine", "Pomegranate", "Black Tea"]
+        },
+        "bag": {
+          "roast_date": null,
+          "total_grams": null
+        }
+      }
+    },
+    {
+      "id": "IMG_1938",
+      "source_image": "test_images/IMG_1938.HEIC",
+      "expected": {
+        "coffee": {
+          "roaster": "Rogue Wave",
+          "name": null,
+          "origin": "Colombia",
+          "farm": "Herrera Family; Las Margaritas",
+          "variety": "Geisha",
+          "process": "Washed",
+          "flavor_notes": ["Blackberry", "Jasmine", "Vanilla", "Iced Tea", "Mandarin", "Brown Sugar"]
+        },
+        "bag": {
+          "roast_date": "2026-03-23",
+          "total_grams": 100
+        }
+      }
+    }
+  ]
+}
