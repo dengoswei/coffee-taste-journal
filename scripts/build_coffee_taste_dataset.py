@@ -45,6 +45,13 @@ APP_ENTITY_OVERRIDES = {
     "65FFBCC8-B843-4851-AB2E-B7DE3848D97D": "app_ethiopia_toh1",
 }
 
+# Brew-log or coffee UUID -> dedupe_key, for app observations that duplicate a
+# curated Flomo observation. Without an entry here, cross-source duplicates can
+# never collapse because only curated Flomo entries carry dedupe_key.
+APP_DEDUPE_OVERRIDES: dict[str, str] = {}
+
+# Two label families share this scale: the app Verdict enum
+# (Loved/Liked/Ok/Disliked) and curated Flomo labels (Great/Good/OK/So So/General).
 RATING_SCORES = {
     "Disliked": 0,
     "General": 1,
@@ -219,7 +226,12 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
         claimed_quality_signals = quality_matches(descriptors)
         details = log.get("details") or {}
         rating_label = log["verdict"]
-        observations.append({
+        rating_score = RATING_SCORES.get(rating_label)
+        rating_limitations = (
+            [] if rating_score is not None
+            else [f"Unmapped verdict label: {rating_label}."]
+        )
+        observation = {
             "id": f"app_brew_{log['id'].lower()}",
             "entity_id": app_entity_id(coffee),
             "source": "app_brew_log",
@@ -228,8 +240,8 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
             "coffee": coffee_payload(coffee),
             "rating": {
                 "label": rating_label,
-                "score": RATING_SCORES[rating_label],
-                "explicit": True,
+                "score": rating_score,
+                "explicit": rating_score is not None,
             },
             "sensory": {
                 "descriptors": descriptors,
@@ -251,13 +263,17 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
                 "rating_weight": 1.0 if substantive else 0.72,
                 "descriptor_weight": 0.9 if substantive else 0.45,
                 "substantive_first_person_note": substantive,
-                "limitations": [] if substantive else [
+                "limitations": rating_limitations + ([] if substantive else [
                     "Rating is explicit, but the tasting note is a placeholder.",
                     "Flavor descriptors come from coffee metadata, not confirmed perception.",
-                ],
+                ]),
             },
             "provenance_refs": [f"app:{log['id']}"],
-        })
+        }
+        dedupe_key = APP_DEDUPE_OVERRIDES.get(log["id"]) or APP_DEDUPE_OVERRIDES.get(coffee["id"])
+        if dedupe_key:
+            observation["dedupe_key"] = dedupe_key
+        observations.append(observation)
 
     for coffee in store.get("coffees", []):
         if logs_by_coffee.get(coffee["id"]):
@@ -449,6 +465,7 @@ def main() -> int:
     app_observations = parse_app(store, args.store)
     flomo_observations = [enrich_flomo(item) for item in flomo_document["observations"]]
     observations = deduplicate([*app_observations, *flomo_observations])
+    collapsed_duplicates = len(app_observations) + len(flomo_observations) - len(observations)
     observations.sort(key=lambda item: (item.get("date") or "", item["id"]))
 
     dataset = {
@@ -473,7 +490,7 @@ def main() -> int:
             "app_store": str(args.store),
             "flomo_curated": str(args.flomo),
         },
-        "stats": dataset_stats(observations),
+        "stats": {**dataset_stats(observations), "collapsed_duplicates": collapsed_duplicates},
         "observations": observations,
         "entities": build_entity_summaries(observations),
     }

@@ -250,6 +250,50 @@ The `60` frontier threshold, different-roaster constraint, numeric fit scores,
 and expected-liking scores are uncalibrated product heuristics. They remain
 hypotheses until prospective safe/frontier outcomes are collected.
 
+### 2026-07-19 Pipeline Changes (pending Sol Max R1/R2)
+
+The following changes are implemented and unit-tested but their new evaluation
+numbers are **pending Sol Max review**; the historical numbers above were
+produced by the earlier tautological contract scorer and are superseded as
+comparison baselines once a re-run lands.
+
+- **Non-tautological contract scoring.** `ground_recommendation` used to force
+  `safe_fit = max_other_fit + 0.1` and `frontier_novelty = safe_novelty + 5`,
+  and `score_recommendation` then verified those same forced numbers. The scorer
+  now takes an `ordering_source` (the raw model output) so `safe_highest_fit`
+  and `frontier_more_novel` grade the model's own ordering discipline; grounded
+  output additionally records `grounding_adjustments`. Expect the contract score
+  to drop from `0.970` on re-run — that drop is the correction, not a
+  regression.
+- **Single-source thresholds.** `FRONTIER_MIN_FIT = 60` now gates both the
+  live-shortlist novelty pool (previously 55) and grounded frontier
+  eligibility. `NARRATIVE_LENGTH_RANGE = (90, 180)` aligns the profile scorer
+  with the prompt spec (previously 45-260), and every fallback-template branch
+  combination satisfies it.
+- **Dedupe observability.** `dataset.stats.collapsed_duplicates` reports
+  observation-level dedupe on every build; `APP_DEDUPE_OVERRIDES` enables
+  app-to-Flomo cross-source collapsing, which previously could never happen.
+  Unmapped app verdict labels now degrade to unrated observations instead of
+  crashing the build.
+- **CJK matching.** `normalized_key` now applies NFKC (shared with the dataset
+  builder), and identity matching accepts two-hanzi tokens with a CJK stop-word
+  list, so Chinese coffee names can hit direct history matches.
+- **Honest reporting.** The summary table now renders weighted AND unweighted
+  pairwise accuracy plus a raw unweighted column, and eval cases may set
+  `"regression_watch": true` to surface themselves in a dedicated "Tracked
+  Challenge Cases" section (the medium Yemen-vs-Tabi and low Radiance cases are
+  so flagged in the private set).
+- **v2 narrative pipeline.** `prompts/coffee_profile_v2.md` keeps the
+  model-authored summary verbatim when `validate_model_narrative` passes
+  (length, absolute claims, extrinsic terms, unhedged undersampled dimensions,
+  invented flavor families, confidence clamp); otherwise it falls back to the
+  template and records `narrative_violations`. `summary_source` and
+  `narrative_model_kept_rate` make adoption measurable.
+
+**v2 adoption rule:** `PRODUCT_VERSION` switches from `v1` to `v2` only when a
+re-run shows v2 pairwise accuracy (weighted and unweighted) at or above v1 with
+no tracked-challenge-case regression, and Sol Max review R2 approves.
+
 The availability-only purchase refresh is stored at
 `.generated/coffee_taste_eval/20260717-current-final`. It intentionally runs
 zero holdout pairs, so its displayed pairwise value is not an accuracy result.

@@ -16,12 +16,25 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from build_coffee_taste_dataset import category_matches, quality_matches
+from build_coffee_taste_dataset import category_matches, normalized_text, quality_matches
 
 
 DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 DEFAULT_MODEL = "doubao-seed-1-6-flash-250828"
-VERSIONS = ("v0", "v1")
+VERSIONS = ("v0", "v1", "v2")
+# Versions whose output goes through deterministic grounding. v2 additionally
+# keeps the model-authored narrative when it passes validate_model_narrative.
+GROUNDED_VERSIONS = ("v1", "v2")
+# Version whose grounded output feeds the private product report. v2 may take
+# over only after it meets the adoption rule in
+# docs/coffee-taste-profile-and-recommendation.md (pairwise >= v1 weighted AND
+# unweighted, no tracked-challenge regression).
+PRODUCT_VERSION = "v1"
+# Single source of truth for the frontier fit gate (prompt v1/v2 rule text,
+# live-shortlist novelty pool, and grounded frontier eligibility).
+FRONTIER_MIN_FIT = 60.0
+# Narrative length band in characters; must match the prompt spec (90-180).
+NARRATIVE_LENGTH_RANGE = (90, 180)
 
 
 def read_json(path: Path) -> Any:
@@ -510,7 +523,9 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
         for item in observations
     )
     likely_labels = [item["label"] for item in likely_families]
-    narrative_parts = ["你像是在寻找一杯有清楚主线、而不是只靠标签取胜的咖啡。"]
+    # Part lengths are tuned so every branch combination lands inside
+    # NARRATIVE_LENGTH_RANGE; test_fallback_narrative_satisfies_length_spec pins this.
+    narrative_parts = ["你像是在寻找一杯有清楚主线、而不是只靠标签取胜的咖啡，愿意为真实的杯中体验买单。"]
     if clarity_ids and acid_sweet_ids:
         narrative_parts.append("风味最好能自己亮起来，酸与甜也要彼此托住。")
     elif clarity_ids:
@@ -521,7 +536,7 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
         narrative_parts.append("实验性处理并不构成障碍，但不希望突兀发酵感抢戏。")
     if temperature_ids:
         narrative_parts.append("降温后风味继续展开，曾给你留下很深的正面印象。")
-    narrative_parts.append("多数具体风味词仍来自豆袋或混合来源，口感、余韵和强度偏好还需要更多实饮记录。")
+    narrative_parts.append("多数具体风味词仍来自豆袋或混合来源，口感、余韵和强度偏好还需要更多实饮记录来确认，这份画像会随每一支新豆继续生长。")
     headline = (
         "喜欢风味轮廓清楚、酸甜彼此托住的杯子"
         if clarity_ids and acid_sweet_ids
@@ -572,12 +587,90 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
     }
 
 
+# Undersampled dimensions (see required_unknowns) that a kept narrative may
+# mention only alongside an explicit hedge marker.
+UNDERSAMPLED_DIMENSION_TERMS = ("烘焙", "醇厚", "口感", "余韵", "苦味")
+HEDGE_MARKERS = ("未知", "不确定", "仍需", "还需要", "证据不足", "欠采样", "还不清楚", "有待")
+
+
+def validate_model_narrative(
+    summary: dict[str, Any],
+    contract: dict[str, Any],
+    assertions: dict[str, Any],
+) -> list[str]:
+    """Deterministic guardrails deciding whether a model-authored summary is kept.
+
+    Returns violation labels; empty means the summary may be kept verbatim.
+    """
+    violations: list[str] = []
+    narrative = str(summary.get("narrative") or "")
+    headline = str(summary.get("headline") or "")
+    if not (NARRATIVE_LENGTH_RANGE[0] <= len(narrative) <= NARRATIVE_LENGTH_RANGE[1]):
+        violations.append("narrative_length_out_of_range")
+    if not headline or len(headline) > 30:
+        violations.append("headline_missing_or_too_long")
+    text = normalized_key(f"{headline} {narrative}")
+    for phrase in assertions.get("forbidden_absolute_phrases", []):
+        if normalized_key(phrase) in text:
+            violations.append("forbidden_absolute_phrase")
+            break
+    for term in assertions.get("known_preference_forbidden_terms", []):
+        if normalized_key(term) in text:
+            violations.append("extrinsic_term_in_narrative")
+            break
+    if any(term in text for term in UNDERSAMPLED_DIMENSION_TERMS):
+        if not any(marker in text for marker in HEDGE_MARKERS):
+            violations.append("unhedged_undersampled_dimension")
+    # Families the deterministic contract itself asserts (fallback narrative and
+    # known-preference statements) are safe to echo; anything beyond that set is
+    # an invented flavor claim.
+    contract_text = [
+        str((contract.get("fallback_summary") or {}).get("narrative") or ""),
+        *[
+            str(item.get("statement") or "")
+            for item in contract.get("known_preferences_allowed", [])
+        ],
+    ]
+    allowed_families = {
+        item["category"] for item in contract.get("likely_sensory_families", [])
+    } | set(category_matches(contract_text))
+    mentioned_families = set(category_matches([narrative, headline]))
+    if not mentioned_families.issubset(allowed_families):
+        violations.append("invented_flavor_family")
+    return violations
+
+
 def ground_profile(
     profile: dict[str, Any],
     contract: dict[str, Any],
+    keep_model_summary: bool = False,
+    assertions: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     grounded = dict(profile)
     grounded["summary"] = contract["fallback_summary"]
+    grounded["summary_source"] = "fallback"
+    grounded["narrative_violations"] = []
+    if keep_model_summary:
+        model_summary = profile.get("summary") or {}
+        violations = validate_model_narrative(
+            model_summary,
+            contract,
+            assertions or {},
+        )
+        grounded["narrative_violations"] = violations
+        if not violations:
+            kept = dict(model_summary)
+            fallback_confidence = float(
+                contract["fallback_summary"].get("confidence", 0.6)
+            )
+            model_confidence = kept.get("confidence")
+            kept["confidence"] = (
+                min(float(model_confidence), fallback_confidence)
+                if isinstance(model_confidence, (int, float))
+                else fallback_confidence
+            )
+            grounded["summary"] = kept
+            grounded["summary_source"] = "model"
     grounded["preference_axes"] = contract["axis_facts"]
     sensory = dict(grounded.get("sensory_profile") or {})
     likely = contract["likely_sensory_families"]
@@ -596,7 +689,7 @@ def ground_profile(
 
 
 def normalized_key(value: Any) -> str:
-    return " ".join(str(value or "").casefold().split())
+    return normalized_text(str(value or ""))
 
 
 def prior_stat_map(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -607,14 +700,18 @@ def identity_tokens(value: str) -> set[str]:
     stop_words = {
         "coffee", "coffees", "finca", "farm", "estate", "station", "washing",
         "gesha", "geisha", "natural", "washed", "anaerobic",
+        "\u5496\u5561", "\u5e84\u56ed", "\u5904\u7406", "\u6c34\u6d17", "\u65e5\u6652", "\u538c\u6c27", "\u7470\u590f", "\u871c\u5904\u7406",
     }
-    return {
-        token for token in re.findall(
-            r"[a-z0-9\u3400-\u9fff]+",
-            normalized_key(value),
-        )
-        if len(token) >= 4 and token not in stop_words
+    normalized = normalized_key(value)
+    ascii_tokens = {
+        token for token in re.findall(r"[a-z0-9]+", normalized)
+        if len(token) >= 4
     }
+    cjk_tokens = {
+        token for token in re.findall(r"[\u3400-\u9fff]+", normalized)
+        if len(token) >= 2
+    }
+    return {token for token in ascii_tokens | cjk_tokens if token not in stop_words}
 
 
 def significant_identity_tokens(candidate: dict[str, Any]) -> set[str]:
@@ -799,7 +896,7 @@ def shortlist_live_candidates(
     novelty_ranked = sorted(
         (
             item for item in enriched
-            if item["deterministic_prior"]["fit_score"] >= 55
+            if item["deterministic_prior"]["fit_score"] >= FRONTIER_MIN_FIT
         ),
         key=lambda item: (
             -item["deterministic_prior"]["novelty_score"],
@@ -987,7 +1084,7 @@ def score_profile(
     axes = profile.get("preference_axes")
     axes_ok = isinstance(axes, list) and len(axes) >= 3
     narrative = ((profile.get("summary") or {}).get("narrative") or "")
-    narrative_ok = 45 <= len(narrative) <= 260
+    narrative_ok = NARRATIVE_LENGTH_RANGE[0] <= len(narrative) <= NARRATIVE_LENGTH_RANGE[1]
     score = statistics.mean([
         float(schema_ok),
         evidence_accuracy,
@@ -1015,29 +1112,19 @@ def score_profile(
     }
 
 
-def score_recommendation(
+def ordering_discipline(
     recommendation: dict[str, Any],
     candidate_ids: set[str],
-    candidate_roasters: dict[str, str],
-    valid_observation_ids: set[str],
-    expected_safe_id: str | None,
-    constraints: dict[str, Any],
-) -> dict[str, Any]:
-    required_keys = {"safe_match", "frontier_pick", "ranking", "caveats"}
-    schema_ok = required_keys.issubset(recommendation)
-    safe = recommendation.get("safe_match") or {}
-    frontier = recommendation.get("frontier_pick") or {}
-    safe_id = safe.get("candidate_id")
-    frontier_id = frontier.get("candidate_id")
-    ids_valid = safe_id in candidate_ids and frontier_id in candidate_ids
-    distinct = safe_id != frontier_id
+) -> tuple[bool, bool]:
+    """safe_highest_fit / frontier_more_novel computed from a recommendation's own ranking.
+
+    Pass the RAW model output here when scoring grounded output: the grounder
+    forces safe fit to the maximum and frontier novelty above safe, so checking
+    the grounded numbers would be tautological.
+    """
+    safe_id = (recommendation.get("safe_match") or {}).get("candidate_id")
+    frontier_id = (recommendation.get("frontier_pick") or {}).get("candidate_id")
     ranking = recommendation.get("ranking")
-    ranking_ids = [
-        item.get("candidate_id")
-        for item in ranking
-        if isinstance(item, dict)
-    ] if isinstance(ranking, list) else []
-    ranking_complete = len(ranking_ids) == len(candidate_ids) and set(ranking_ids) == candidate_ids
     ranking_by_id = {
         item.get("candidate_id"): item
         for item in ranking
@@ -1060,6 +1147,37 @@ def score_recommendation(
         isinstance(frontier_novelty, (int, float))
         and isinstance(safe_novelty, (int, float))
         and frontier_novelty > safe_novelty
+    )
+    return safe_highest_fit, frontier_more_novel
+
+
+def score_recommendation(
+    recommendation: dict[str, Any],
+    candidate_ids: set[str],
+    candidate_roasters: dict[str, str],
+    valid_observation_ids: set[str],
+    expected_safe_id: str | None,
+    constraints: dict[str, Any],
+    ordering_source: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    required_keys = {"safe_match", "frontier_pick", "ranking", "caveats"}
+    schema_ok = required_keys.issubset(recommendation)
+    safe = recommendation.get("safe_match") or {}
+    frontier = recommendation.get("frontier_pick") or {}
+    safe_id = safe.get("candidate_id")
+    frontier_id = frontier.get("candidate_id")
+    ids_valid = safe_id in candidate_ids and frontier_id in candidate_ids
+    distinct = safe_id != frontier_id
+    ranking = recommendation.get("ranking")
+    ranking_ids = [
+        item.get("candidate_id")
+        for item in ranking
+        if isinstance(item, dict)
+    ] if isinstance(ranking, list) else []
+    ranking_complete = len(ranking_ids) == len(candidate_ids) and set(ranking_ids) == candidate_ids
+    safe_highest_fit, frontier_more_novel = ordering_discipline(
+        ordering_source if ordering_source is not None else recommendation,
+        candidate_ids,
     )
     evidence_ids = collect_evidence_ids({"safe": safe, "frontier": frontier})
     evidence_valid = sum(item in valid_observation_ids for item in evidence_ids)
@@ -1246,7 +1364,7 @@ def ground_recommendation(
         ]
         fit_eligible = [
             candidate_id for candidate_id in eligible
-            if ranking_by_id[candidate_id]["fit_score"] >= 60
+            if ranking_by_id[candidate_id]["fit_score"] >= FRONTIER_MIN_FIT
         ]
         return fit_eligible or eligible
 
@@ -1266,6 +1384,10 @@ def ground_recommendation(
             ),
         )
 
+    grounding_adjustments = {
+        "safe_fit_raised": False,
+        "frontier_novelty_raised": False,
+    }
     safe_fit = ranking_by_id[safe_id]["fit_score"]
     maximum_other_fit = max(
         (
@@ -1277,6 +1399,7 @@ def ground_recommendation(
     )
     if safe_fit < maximum_other_fit:
         ranking_by_id[safe_id]["fit_score"] = min(100.0, maximum_other_fit + 0.1)
+        grounding_adjustments["safe_fit_raised"] = True
 
     safe_novelty = ranking_by_id[safe_id]["novelty_score"]
     frontier_novelty = ranking_by_id[frontier_id]["novelty_score"]
@@ -1285,6 +1408,7 @@ def ground_recommendation(
             ranking_by_id[safe_id]["novelty_score"] = 94.9
             safe_novelty = 94.9
         ranking_by_id[frontier_id]["novelty_score"] = min(100.0, safe_novelty + 5.0)
+        grounding_adjustments["frontier_novelty_raised"] = True
 
     profile_evidence_ids = [
         evidence_id
@@ -1393,6 +1517,7 @@ def ground_recommendation(
         grounded["caveats"].append(
             "混合排序器否决了原始安全款：其最相似低评分近邻比最相似正向近邻更接近。"
         )
+    grounded["grounding_adjustments"] = grounding_adjustments
     return grounded
 
 
@@ -1461,8 +1586,8 @@ def render_evaluation_summary(
         f"- Holdout cases executed per version: {max_cases}",
         "- Live candidate set is report-only and excluded from tuning labels.",
         "",
-        "| Version | Pipeline | Raw prompt | Profile | Pairwise | Recommendation contract | Evidence refs |",
-        "|---|---:|---:|---:|---:|---:|---:|",
+        "| Version | Pipeline | Raw prompt | Profile | Pairwise (weighted) | Pairwise (unweighted) | Raw pairwise (unweighted) | Recommendation contract | Evidence refs |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for version in versions:
         summary = summaries[version]
@@ -1470,9 +1595,33 @@ def render_evaluation_summary(
             f"| {version} | {summary['overall_score']:.3f} | "
             f"{summary['raw_overall_score']:.3f} | "
             f"{summary['profile_score']:.3f} | {summary['pairwise_accuracy']:.3f} | "
+            f"{summary['pairwise_accuracy_unweighted']:.3f} | "
+            f"{summary['raw_pairwise_accuracy_unweighted']:.3f} | "
             f"{summary['recommendation_contract_score']:.3f} | "
             f"{summary['evidence_reference_accuracy']:.3f} |"
         )
+    watch_rows = [
+        (version, row)
+        for version in versions
+        for row in summaries[version].get("regression_watch", [])
+    ]
+    if watch_rows:
+        lines.extend([
+            "",
+            "## Tracked Challenge Cases",
+            "",
+            "Cases flagged `regression_watch` in the eval set. They stay inside the",
+            "mean metrics above; this section keeps them from hiding in the weighted average.",
+            "",
+            "| Version | Case | Learnability | Pipeline safe pick | Raw safe pick |",
+            "|---|---|---|---|---|",
+        ])
+        for version, row in watch_rows:
+            lines.append(
+                f"| {version} | {row['case_id']} | {row['level']} | "
+                f"{'correct' if row['pipeline_expected_safe_ok'] else 'WRONG'} | "
+                f"{'correct' if row['raw_expected_safe_ok'] else 'WRONG'} |"
+            )
     for version in versions:
         levels = summaries[version].get("pairwise_by_learnability", {})
         if not levels:
@@ -1492,6 +1641,26 @@ def render_evaluation_summary(
                 f"| {level} | {row['cases']} | {row['accuracy']:.3f} | "
                 f"{row['raw_accuracy']:.3f} |"
             )
+    kept_rates = [
+        (version, summaries[version].get("narrative_model_kept_rate"))
+        for version in versions
+        if summaries[version].get("narrative_model_kept_rate") is not None
+    ]
+    if kept_rates:
+        lines.extend([
+            "",
+            "## Narrative Source",
+            "",
+            "Share of grounded profiles whose model-authored summary passed the",
+            "deterministic narrative guardrails and was kept verbatim.",
+            "",
+            "| Version | Model narrative kept rate |",
+            "|---|---:|",
+            *[
+                f"| {version} | {rate:.3f} |"
+                for version, rate in kept_rates
+            ],
+        ])
     lines.extend([
         "",
         "## Interpretation",
@@ -1681,8 +1850,14 @@ def main() -> int:
         )
         raw_full_profile = full_profile_result.get("parsed")
         full_profile = (
-            ground_profile(raw_full_profile, full_profile_contract)
-            if version == "v1" and raw_full_profile else raw_full_profile
+            ground_profile(
+                raw_full_profile,
+                full_profile_contract,
+                keep_model_summary=(version == "v2"),
+                assertions=cases["profile_assertions"],
+            )
+            if version in GROUNDED_VERSIONS and raw_full_profile
+            else raw_full_profile
         )
         raw_full_profile_score: dict[str, Any] = {"score": 0.0}
         if raw_full_profile:
@@ -1728,8 +1903,14 @@ def main() -> int:
             )
             raw_profile = profile_result.get("parsed")
             profile = (
-                ground_profile(raw_profile, training_profile_contract)
-                if version == "v1" and raw_profile else raw_profile
+                ground_profile(
+                    raw_profile,
+                    training_profile_contract,
+                    keep_model_summary=(version == "v2"),
+                    assertions=cases["profile_assertions"],
+                )
+                if version in GROUNDED_VERSIONS and raw_profile
+                else raw_profile
             )
             raw_profile_score: dict[str, Any] = {"score": 0.0}
             if raw_profile:
@@ -1790,7 +1971,8 @@ def main() -> int:
                         constraints,
                         profile,
                     )
-                    if version == "v1" and raw_recommendation else raw_recommendation
+                    if version in GROUNDED_VERSIONS and raw_recommendation
+                    else raw_recommendation
                 )
                 if recommendation:
                     write_json(
@@ -1828,6 +2010,7 @@ def main() -> int:
                     valid_training_ids,
                     case["expected_safe_entity_id"],
                     constraints,
+                    ordering_source=raw_recommendation,
                 )
                 if recommendation else {"score": 0.0, "expected_safe_ok": False}
             )
@@ -1838,6 +2021,7 @@ def main() -> int:
                 "profile_score": profile_score,
                 "raw_recommendation_score": raw_recommendation_score,
                 "recommendation_score": recommendation_score,
+                "profile_summary_source": (profile or {}).get("summary_source"),
             })
 
         current_constraints = {
@@ -1890,7 +2074,7 @@ def main() -> int:
                     full_profile,
                     lock_to_prior=True,
                 )
-                if version == "v1" and raw_current_recommendation
+                if version in GROUNDED_VERSIONS and raw_current_recommendation
                 else raw_current_recommendation
             )
             if current_recommendation:
@@ -1918,6 +2102,7 @@ def main() -> int:
                     valid_all_ids,
                     None,
                     current_constraints,
+                    ordering_source=raw_current_recommendation,
                 )
         write_json(version_dir / "current_recommendation_score.json", current_score)
 
@@ -2001,6 +2186,38 @@ def main() -> int:
                     for item in level_items
                 ]), 4),
             }
+        narrative_sources = [
+            source for source in [
+                (full_profile or {}).get("summary_source"),
+                *[item.get("profile_summary_source") for item in pairwise_results],
+            ]
+            if source is not None
+        ]
+        narrative_model_kept_rate = (
+            round(
+                sum(source == "model" for source in narrative_sources)
+                / len(narrative_sources),
+                4,
+            )
+            if narrative_sources else None
+        )
+        regression_watch_results = [
+            {
+                "case_id": item["case"].get("id"),
+                "level": (item["case"].get("learnability") or {}).get(
+                    "level",
+                    "unspecified",
+                ),
+                "pipeline_expected_safe_ok": bool(
+                    item["recommendation_score"].get("expected_safe_ok", False)
+                ),
+                "raw_expected_safe_ok": bool(
+                    item["raw_recommendation_score"].get("expected_safe_ok", False)
+                ),
+            }
+            for item in pairwise_results
+            if item["case"].get("regression_watch")
+        ]
         evidence_scores = [
             full_profile_score.get("evidence_reference_accuracy", 0.0),
             *[
@@ -2064,6 +2281,8 @@ def main() -> int:
                 4,
             ),
             "pairwise_by_learnability": pairwise_by_learnability,
+            "regression_watch": regression_watch_results,
+            "narrative_model_kept_rate": narrative_model_kept_rate,
             "recommendation_contract_score": round(rec_contract, 4),
             "evidence_reference_accuracy": round(evidence_avg, 4),
             "overall_score": round(overall, 4),
@@ -2095,25 +2314,25 @@ def main() -> int:
         selected_versions,
     )
     if (
-        "v1" in version_outputs
-        and version_outputs["v1"]["profile"]
-        and version_outputs["v1"]["current_recommendation"]
+        PRODUCT_VERSION in version_outputs
+        and version_outputs[PRODUCT_VERSION]["profile"]
+        and version_outputs[PRODUCT_VERSION]["current_recommendation"]
     ):
         render_current_report(
             Path("private/coffee_taste/current_profile_and_recommendations.md"),
             dataset,
-            version_outputs["v1"]["profile"],
-            version_outputs["v1"]["current_recommendation"],
+            version_outputs[PRODUCT_VERSION]["profile"],
+            version_outputs[PRODUCT_VERSION]["current_recommendation"],
             live_candidates,
             model,
         )
         write_json(
             Path("private/coffee_taste/current_profile.json"),
-            version_outputs["v1"]["profile"],
+            version_outputs[PRODUCT_VERSION]["profile"],
         )
         write_json(
             Path("private/coffee_taste/current_recommendations.json"),
-            version_outputs["v1"]["current_recommendation"],
+            version_outputs[PRODUCT_VERSION]["current_recommendation"],
         )
 
     write_json(output_dir / "run_summary.json", {
