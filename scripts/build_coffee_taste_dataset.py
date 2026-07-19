@@ -117,7 +117,8 @@ CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
     ),
     "spice_herbal": (
         "spice", "spices", "herbal", "eucalyptus", "anise", "lemon balm",
-        "baking spices", "香料", "草本", "桉树", "八角",
+        "baking spices", "cardamom", "mint", "peppermint", "spearmint",
+        "香料", "草本", "桉树", "八角", "豆蔻", "薄荷",
     ),
     "fermented_alcoholic": (
         "ferment", "fermented", "anaerobic", "anoxic", "carbonic", "cognac",
