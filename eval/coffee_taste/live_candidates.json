@@ -1,0 +1,365 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-07-19",
+  "purpose": "User-provided live shortlist (chat message 2026-07-19). Descriptors keep the seller's original Chinese wording plus direct English glosses for lexicon matching; glosses add no new claims.",
+  "curation_notes": [
+    "Roaster attribution corrected by the user 2026-07-19: block 1 = Mirra (Banko Taratu, Alina Solano SL9, Acacia Pacamara, Acacia Gesha); block 2 = Hatch (Cerro Azul mixed washed Gesha, Esmeralda Red Noria 5, Fellow Gesha); block 3 = Tanat (Margaritas natural Gesha, Sudan Rume, Acacia Hills Gesha, Jhon Saenz SL9). History spelling 'Tanant' unified to 'Tanat' (same roaster, one-letter variance in the curated flomo entry).",
+    "Availability is assumed in_stock as of 2026-07-19 because the user supplied these as current purchase options; no prices provided, only pack sizes.",
+    "Historical-overlap notes referencing app_* entities are informational only; the app export is absent on this machine (flomo-only dataset).",
+    "2026-07-19 update: user reported liking Sudan Rume from FriedHats and Tanat (good~great); both moved to rated history. Added Hatch Santamaria Panama Geisha and FriedHats Colombia Sudan Rume as candidates. The FriedHats Colombia Sudan Rume is a repurchase-type candidate (known-good), not a discovery."
+  ],
+  "candidates": [
+    {
+      "id": "live_mirra_banko_taratu",
+      "roaster": "Mirra",
+      "name": "Banko Taratu",
+      "origin": "Ethiopia",
+      "region": "Gedeb",
+      "farm": "Banko Taratu",
+      "variety": "74110 / 74112",
+      "process": "Washed",
+      "altitude_m": "2300",
+      "descriptors": [
+        "桃子软糖",
+        "茉莉",
+        "蓝莓果酱",
+        "peach gummy",
+        "jasmine",
+        "blueberry jam"
+      ],
+      "seller_notes": "埃塞俄比亚南部格德布镇，当地海拔最高种植园",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "历史中 Ethiopia 水洗豆多为 Good（Nensenbo Mewa、Hadeso），Mesina 为 So So。"
+    },
+    {
+      "id": "live_mirra_alina_solano_sl9",
+      "roaster": "Mirra",
+      "name": "Alina Solano SL9",
+      "origin": "Peru",
+      "region": "Cusco",
+      "farm": "Alina Solano",
+      "variety": "SL9",
+      "process": "Washed",
+      "altitude_m": "2400",
+      "descriptors": [
+        "椰奶",
+        "阿陶尔芒果",
+        "粉色牡丹花",
+        "coconut milk",
+        "ataulfo mango",
+        "pink peony"
+      ],
+      "seller_notes": "Mirra 首款秘鲁 SL9，秘鲁能豆大年出品；SL9 常被称作印加瑰夏（非瑰夏品种）",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "历史中 Peru 水洗豆两支均为 Good（BIG SUR Peru Gesha、有容乃大 Amazonas Agret Gesha）；另有 app 记录 Peru Kukipata SL9（本机未含 app 数据）。"
+    },
+    {
+      "id": "live_mirra_acacia_pacamara",
+      "roaster": "Mirra",
+      "name": "Acacia 帕卡马拉 AA",
+      "origin": "Tanzania",
+      "region": "Arusha",
+      "farm": "Acacia Hills",
+      "variety": "Pacamara AA",
+      "process": "Washed",
+      "altitude_m": "1800",
+      "descriptors": [
+        "覆盆子果酱",
+        "柠檬蜜饯",
+        "荔枝",
+        "raspberry jam",
+        "candied lemon",
+        "lychee"
+      ],
+      "seller_notes": "Mirra 连续 3 年采购爆款；2022 坦桑尼亚 PCA 大赛多名次",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "历史无 Tanzania 记录；覆盆子/柠檬与多支 Good 记录的莓果、柑橘家族重合。"
+    },
+    {
+      "id": "live_mirra_acacia_gesha",
+      "roaster": "Mirra",
+      "name": "Acacia 瑰夏",
+      "origin": "Tanzania",
+      "region": "Arusha",
+      "farm": "Acacia Hills",
+      "variety": "Gesha",
+      "process": "Washed",
+      "altitude_m": "1800",
+      "descriptors": [
+        "蜜瓜",
+        "玫瑰",
+        "南非博士茶",
+        "melon",
+        "rose",
+        "rooibos tea"
+      ],
+      "seller_notes": "Mirra 最长采购咖啡豆；同庄园 PCA 大赛高分表现",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "历史无 Tanzania 记录；蜜瓜/玫瑰与 Mesina（So So）的瓜果花香组合有部分相似。"
+    },
+    {
+      "id": "live_b_cerro_azul_mixed_washed_gesha",
+      "roaster": "Hatch",
+      "name": "希望庄园 Cerro Azul 混合水洗瑰夏",
+      "origin": "Colombia",
+      "region": "考卡山谷",
+      "farm": "Cerro Azul",
+      "variety": "Gesha",
+      "process": "混合水洗 (mixed washed)",
+      "altitude_m": "1752-1941",
+      "descriptors": [
+        "茉莉",
+        "油桃",
+        "杏脯",
+        "雷司令",
+        "jasmine",
+        "nectarine",
+        "dried apricot",
+        "riesling"
+      ],
+      "seller_notes": "哥伦比亚首个规模化种植瑰夏庄园，国际赛事常用豆，招牌款",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "历史 Colombia 豆 11 条且整体高分；茉莉/油桃与 El Platanillo Gesha（Good）风味相近。"
+    },
+    {
+      "id": "live_b_esmeralda_red_noria5",
+      "roaster": "Hatch",
+      "name": "翡翠庄园 红标瑰夏 Noria 5 FB",
+      "origin": "Panama",
+      "region": "Boquete Jaramillo",
+      "farm": "Hacienda La Esmeralda / Noria",
+      "variety": "Gesha",
+      "process": "水洗（低温发酵72h，晾晒10天）",
+      "altitude_m": "1700",
+      "descriptors": [
+        "花香",
+        "甘蔗",
+        "金银花",
+        "桃子",
+        "葡萄",
+        "floral",
+        "cane sugar",
+        "honeysuckle",
+        "peach",
+        "grape"
+      ],
+      "seller_notes": "26 新产季；2026-01-15 Noria 地块采摘",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "历史 Panama 水洗 Gesha 有唯一 Great（Lost Origin, Boquete）；El Salto、FriedHats Panama Gesha 均 Good。"
+    },
+    {
+      "id": "live_b_fellow_gesha",
+      "roaster": "Hatch",
+      "name": "圣洁庄园 Fellow 瑰夏",
+      "origin": "Colombia",
+      "region": "Pichindé",
+      "farm": "圣洁庄园",
+      "variety": "Gesha",
+      "process": "Washed",
+      "altitude_m": "1750-2000",
+      "descriptors": [
+        "花香",
+        "黄桃",
+        "蜂蜜",
+        "红茶",
+        "floral",
+        "yellow peach",
+        "honey",
+        "black tea"
+      ],
+      "seller_notes": "哥伦比亚知名庄园小农项目，溢价鲜果精细处理，赛事常客",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "花香/桃/蜂蜜/茶感与历史多支 Good 记录（Nensenbo Mewa、El Salto Natural 的 earl grey）重合。"
+    },
+    {
+      "id": "live_b_margaritas_natural_gesha",
+      "roaster": "Tanat",
+      "name": "希望庄园 Margaritas 日晒瑰夏",
+      "origin": "Colombia",
+      "region": "考卡山谷",
+      "farm": "Las Margaritas",
+      "variety": "Gesha",
+      "process": "Natural",
+      "altitude_m": "1570-1800",
+      "descriptors": [
+        "热带水果",
+        "朗姆酒",
+        "薰衣草",
+        "小豆蔻",
+        "tropical fruit",
+        "rum",
+        "lavender",
+        "cardamom"
+      ],
+      "seller_notes": "欧洲擅长烘焙哥伦比亚瑰夏的烘焙商，酒体醇厚酒香",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "热带水果+酒香与 Lost Origin（Great）、KAWA Nestor Lasso（Great）方向一致，但朗姆/辛香强度更高。"
+    },
+    {
+      "id": "live_b_acacia_hills_gesha",
+      "roaster": "Tanat",
+      "name": "Acacia Hills 瑰夏",
+      "origin": "Tanzania",
+      "region": "Arusha",
+      "farm": "Acacia Hills",
+      "variety": "Gesha",
+      "process": "Washed",
+      "altitude_m": "1900",
+      "descriptors": [
+        "柠檬蜜饯",
+        "干果",
+        "香草",
+        "红茶",
+        "candied lemon",
+        "dried fruit",
+        "vanilla",
+        "black tea"
+      ],
+      "seller_notes": "2022 坦桑尼亚 PCA 大赛多项名次",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "柠檬/干果/香草与 Hadeso（Good）、Heza 系列（Good, vanilla）、Yemen Bait Waseel（Great, 果干）家族重合；与 Mirra 的 Acacia 瑰夏为同庄园不同批次。"
+    },
+    {
+      "id": "live_b_jhon_saenz_sl9",
+      "roaster": "Tanat",
+      "name": "Jhon Saenz 水洗SL9",
+      "origin": "Peru",
+      "region": "Incahuasi",
+      "farm": "Jhon Saenz",
+      "variety": "SL9",
+      "process": "水洗（干式发酵36h）",
+      "altitude_m": "2290",
+      "descriptors": [
+        "红茶",
+        "橙皮",
+        "蜂蜜",
+        "茉莉",
+        "black tea",
+        "orange peel",
+        "honey",
+        "jasmine"
+      ],
+      "seller_notes": "花香细腻柔和，酸甜平衡干净",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "橙皮/蜂蜜/茉莉与 Finca El Manantial（Good）、Nensenbo Mewa（Good）高度重合；历史 Peru 水洗均 Good。"
+    },
+    {
+      "id": "live_hatch_santamaria_panama_gesha",
+      "roaster": "Hatch",
+      "name": "Santamaria 巴拿马瑰夏",
+      "origin": "Panama",
+      "region": "Chiriqui 奇里基省",
+      "farm": "Santamaria",
+      "variety": "Geisha",
+      "process": "Natural",
+      "altitude_m": "1550-1950",
+      "descriptors": [
+        "橙花",
+        "菠萝",
+        "芒果",
+        "深色蜂蜜",
+        "orange blossom",
+        "pineapple",
+        "mango",
+        "dark honey"
+      ],
+      "seller_notes": "华丽浓郁、热带花果甜感",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "历史 Panama 有唯一 Great（Lost Origin, Boquete Gesha）；橙花/菠萝/芒果落在花香+热带家族。"
+    },
+    {
+      "id": "live_friedhats_colombia_sudan_rume",
+      "roaster": "FriedHats",
+      "name": "Las Margaritas Sudan Rume",
+      "origin": "Colombia",
+      "region": "考卡山谷省",
+      "farm": "Las Margaritas",
+      "variety": "Sudan Rume",
+      "process": "Washed",
+      "altitude_m": "1570-1760",
+      "descriptors": [
+        "薄荷",
+        "橙子",
+        "豆蔻面包卷",
+        "mint",
+        "orange",
+        "cardamom"
+      ],
+      "seller_notes": "清爽通透、草本柑橘调",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-19",
+      "source_url": "",
+      "historical_overlap": "用户已喝过并喜欢 FriedHats/Tanat Sudan Rume（good~great，见历史）；此为当前在售批次，属已知偏好的复购型候选。"
+    }
+  ]
+}
