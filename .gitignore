@@ -10,6 +10,8 @@ xcuserdata/
 .env.*
 config.json
 .generated/
+private/
+backups/
 test_images/
 __pycache__/
 *.py[cod]

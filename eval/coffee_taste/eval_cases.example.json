@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "profile_assertions": {
+    "required_concepts": [
+      ["fruit", "水果"],
+      ["clean", "clarity", "干净", "清晰"],
+      ["acid", "sweet", "酸甜"],
+      ["ferment", "发酵"]
+    ],
+    "minimum_unknowns": 2,
+    "known_preference_forbidden_terms": [
+      "Washed",
+      "水洗",
+      "Gesha",
+      "瑰夏"
+    ],
+    "forbidden_absolute_phrases": [
+      "只喜欢水洗",
+      "不喜欢所有厌氧"
+    ]
+  },
+  "pairwise_cases": [
+    {
+      "id": "synthetic_high_vs_lower",
+      "candidate_entity_ids": [
+        "synthetic_high",
+        "synthetic_lower"
+      ],
+      "expected_safe_entity_id": "synthetic_high",
+      "learnability": {
+        "level": "high",
+        "weight": 1.0,
+        "rationale": "Training data contains related positive and lower-rated sensory combinations."
+      },
+      "why": "Synthetic example only. Keep real personal labels in ignored private data."
+    }
+  ]
+}

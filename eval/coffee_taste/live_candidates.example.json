@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-01-01T00:00:00+00:00",
+  "purpose": "Synthetic example only. Keep real shortlists and historical overlap notes under ignored private data.",
+  "candidates": [
+    {
+      "id": "synthetic_safe",
+      "roaster": "Example Roaster A",
+      "name": "Synthetic Safe Lot",
+      "origin": "Origin A",
+      "variety": "Unknown",
+      "process": "Washed",
+      "descriptors": ["peach", "black tea", "clean"],
+      "price": {"amount": 20.0, "currency": "USD", "size_grams": 250},
+      "availability": "in_stock",
+      "source_url": "https://example.com/synthetic-safe",
+      "historical_overlap": "Synthetic bridge note only."
+    },
+    {
+      "id": "synthetic_frontier",
+      "roaster": "Example Roaster B",
+      "name": "Synthetic Frontier Lot",
+      "origin": "Origin B",
+      "variety": "Unknown",
+      "process": "Natural",
+      "descriptors": ["blueberry", "cocoa", "juicy"],
+      "price": {"amount": 24.0, "currency": "USD", "size_grams": 250},
+      "availability": "in_stock",
+      "source_url": "https://example.com/synthetic-frontier",
+      "historical_overlap": "Synthetic controlled novelty note only."
+    },
+    {
+      "id": "synthetic_sold_out",
+      "roaster": "Example Roaster C",
+      "name": "Synthetic Sold Out Lot",
+      "origin": "Origin C",
+      "variety": "Unknown",
+      "process": "Washed",
+      "descriptors": ["citrus", "honey"],
+      "price": {"amount": 18.0, "currency": "USD", "size_grams": 250},
+      "availability": "sold_out",
+      "source_url": "https://example.com/synthetic-sold-out",
+      "historical_overlap": "Synthetic unavailable candidate for shortlist tests."
+    }
+  ]
+}
