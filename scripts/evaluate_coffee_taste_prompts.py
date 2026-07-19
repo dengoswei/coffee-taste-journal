@@ -319,6 +319,10 @@ def build_evidence_packet(observations: list[dict[str, Any]]) -> dict[str, Any]:
             observations,
             lambda item: [item["coffee"].get("variety")] if item["coffee"].get("variety") else [],
         ),
+        "roaster_stats": weighted_feature_stats(
+            observations,
+            lambda item: [item["coffee"].get("roaster")] if item["coffee"].get("roaster") else [],
+        ),
         "high_evidence_examples": [compact_observation(item) for item in ranked[:10]],
         "lower_rated_contrasts": [compact_observation(item) for item in lower[:8]],
         "substantive_notes": [compact_observation(item) for item in substantive],
@@ -896,7 +900,16 @@ def candidate_prior(
         if row["top_tier_count"] >= TOP_TIER_MIN_OBSERVATIONS
     }
     top_tier_bonus = min(5.0, 2.5 * len(top_tier_families.intersection(categories)))
-    fit = min(100.0, fit + quality_bonus + history_bonus + top_tier_bonus)
+    # Roasters are treated equally unless rated history exists for them, in
+    # which case a small capped adjustment applies (user decision 2026-07-19:
+    # no hard roaster constraints, evidence-weighted only). Uncalibrated.
+    roaster_stats = prior_stat_map(evidence_packet.get("roaster_stats", []))
+    roaster_row = roaster_stats.get(normalized_key(candidate.get("roaster")))
+    roaster_bonus = 0.0
+    if roaster_row and roaster_row["weighted_rating"] is not None:
+        roaster_scaled = ((roaster_row["weighted_rating"] - 1) / 3) * 100
+        roaster_bonus = max(-3.0, min(3.0, (roaster_scaled - 50.0) * 0.09))
+    fit = min(100.0, fit + quality_bonus + history_bonus + top_tier_bonus + roaster_bonus)
 
     category_familiarity_scores = [
         min(1.0, category_stats[normalized_key(category)]["observations"] / 6) * 100
@@ -926,6 +939,7 @@ def candidate_prior(
         "quality_claim_bonus": round(quality_bonus, 1),
         "direct_history_bonus": round(history_bonus, 1),
         "top_tier_affinity_bonus": round(top_tier_bonus, 1),
+        "roaster_affinity_bonus": round(roaster_bonus, 1),
         "note": (
             "Prefilter prior only. Seller quality claims have a small capped bonus; "
             "direct historical identity overlap has a larger but non-causal bonus."
@@ -2095,8 +2109,10 @@ def main() -> int:
                 "profile_summary_source": (profile or {}).get("summary_source"),
             })
 
+        # User decision 2026-07-19: no hard cross-roaster constraint. Roaster
+        # history instead enters candidate_prior as a capped affinity bonus.
         current_constraints = {
-            "different_roasters": True,
+            "different_roasters": False,
             "purchase_scope": "Official global shops of roasters present in history",
             "roles": ["safe_match", "frontier_pick"],
         }

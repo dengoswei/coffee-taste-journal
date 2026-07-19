@@ -13,6 +13,8 @@ matching, report weighted plus unweighted pairwise accuracy with tracked
 regression-watch cases, and add the top-tier rating-concentration signal
 (`top_tier_family_stats`, `top_tier_signals`, capped `top_tier_affinity_bonus`)
 requested by the user because their history is notes-sparse and rating-rich.
+Also covers the removal of the hard cross-roaster constraint in favor of the
+capped `roaster_affinity_bonus` (user decision 2026-07-19).
 
 ```bash
 python3 scripts/consult_sol_max.py \

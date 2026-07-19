@@ -675,6 +675,24 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         self.assertEqual(double["top_tier_affinity_bonus"], 5.0)
         self.assertEqual(none["top_tier_affinity_bonus"], 0.0)
 
+    def test_candidate_prior_roaster_bonus_only_with_history(self) -> None:
+        observations = self._tiered_observations()
+        for item in observations:
+            item["coffee"]["roaster"] = "Loved Roaster" if item["rating"]["score"] == 4 else "Meh Roaster"
+        packet = evaluator.build_evidence_packet(observations)
+
+        def prior(roaster: str) -> dict:
+            return evaluator.candidate_prior(
+                {"id": "cand", "roaster": roaster, "descriptors": ["peach"], "origin": "", "process": ""},
+                packet,
+                observations,
+            )["deterministic_prior"]
+
+        self.assertEqual(prior("Unknown Roaster")["roaster_affinity_bonus"], 0.0)
+        self.assertGreater(prior("Loved Roaster")["roaster_affinity_bonus"], 0.0)
+        self.assertLessEqual(prior("Loved Roaster")["roaster_affinity_bonus"], 3.0)
+        self.assertLess(prior("Meh Roaster")["roaster_affinity_bonus"], 3.0)
+
     def test_negative_analog_margin_cannot_remain_safe(self) -> None:
         candidates = [
             {

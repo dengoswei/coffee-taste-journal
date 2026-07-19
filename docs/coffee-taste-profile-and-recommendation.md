@@ -291,6 +291,12 @@ comparison baselines once a re-run lands.
   mixed-source claims), the narrative validator accepts those families, and
   `candidate_prior` adds a capped `top_tier_affinity_bonus` (2.5 per shared
   family, max 5.0, uncalibrated like the other bonuses).
+- **No hard cross-roaster constraint (user decision 2026-07-19).** The
+  different-roaster requirement between safe and frontier was an uncalibrated
+  diversification heuristic; it is now off by default. Roaster history enters
+  `candidate_prior` instead as a capped `roaster_affinity_bonus` (±3, only when
+  rated history exists for that roaster; roasters without history are treated
+  equally).
 - **v2 narrative pipeline.** `prompts/coffee_profile_v2.md` keeps the
   model-authored summary verbatim when `validate_model_narrative` passes
   (length, absolute claims, extrinsic terms, unhedged undersampled dimensions,
