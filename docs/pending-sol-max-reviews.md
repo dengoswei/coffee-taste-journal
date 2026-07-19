@@ -9,8 +9,10 @@ review phases on a machine with `codex` CLI access.
 
 Scope: make recommendation contract scoring non-tautological, unify the
 frontier fit and narrative length thresholds, apply NFKC and two-hanzi identity
-matching, and report weighted plus unweighted pairwise accuracy with tracked
-regression-watch cases.
+matching, report weighted plus unweighted pairwise accuracy with tracked
+regression-watch cases, and add the top-tier rating-concentration signal
+(`top_tier_family_stats`, `top_tier_signals`, capped `top_tier_affinity_bonus`)
+requested by the user because their history is notes-sparse and rating-rich.
 
 ```bash
 python3 scripts/consult_sol_max.py \

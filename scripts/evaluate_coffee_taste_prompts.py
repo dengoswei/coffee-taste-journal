@@ -226,6 +226,41 @@ def weighted_feature_stats(
     return sorted(rows, key=lambda row: (-row["contrast"], -row["observations"], row["feature"]))
 
 
+# Score threshold for the top rating tier (Great / Loved). The user rarely
+# writes tasting notes, so tier concentration is the strongest affective signal
+# available; it stays "likely" evidence because descriptors are still mostly
+# seller or mixed-source claims.
+TOP_TIER_SCORE = 4
+# A family must appear in at least this many top-tier coffees to count as a
+# concentration signal.
+TOP_TIER_MIN_OBSERVATIONS = 2
+
+
+def top_tier_family_stats(observations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    top_tier = [
+        item for item in observations
+        if (item["rating"].get("score") or 0) >= TOP_TIER_SCORE
+        and item["sensory"].get("descriptor_categories")
+    ]
+    rows: list[dict[str, Any]] = []
+    counts: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in top_tier:
+        for category in item["sensory"].get("descriptor_categories", []):
+            counts[category].append(item)
+    for category, items in sorted(
+        counts.items(),
+        key=lambda pair: (-len(pair[1]), pair[0]),
+    ):
+        rows.append({
+            "category": category,
+            "label": CATEGORY_LABELS.get(category, category),
+            "top_tier_count": len(items),
+            "top_tier_total": len(top_tier),
+            "evidence_ids": [item["id"] for item in items],
+        })
+    return rows
+
+
 def build_evidence_packet(observations: list[dict[str, Any]]) -> dict[str, Any]:
     rated = [item for item in observations if item["rating"].get("score") is not None]
     substantive = [
@@ -267,6 +302,7 @@ def build_evidence_packet(observations: list[dict[str, Any]]) -> dict[str, Any]:
             observations,
             lambda item: item["sensory"].get("descriptor_categories", []),
         ),
+        "top_tier_family_stats": top_tier_family_stats(observations),
         "quality_signal_stats": weighted_feature_stats(
             observations,
             lambda item: item["sensory"].get("quality_signals", []),
@@ -436,6 +472,24 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
         for row in likely_rows
     ]
 
+    top_tier_signals = [
+        {
+            "category": row["category"],
+            "label": row["label"],
+            "statement": (
+                f"在 {row['top_tier_total']} 支 Great/Loved 顶级评分中，有 "
+                f"{row['top_tier_count']} 支带{row['label']}类描述——这是最强的评分集中信号，"
+                "但描述多来自卖方或混合来源，不是第一人称确认。"
+            ),
+            "top_tier_count": row["top_tier_count"],
+            "top_tier_total": row["top_tier_total"],
+            "evidence_ids": row["evidence_ids"],
+            "evidence_type": "top_tier_rating_concentration",
+        }
+        for row in packet["top_tier_family_stats"]
+        if row["top_tier_count"] >= TOP_TIER_MIN_OBSERVATIONS
+    ]
+
     axis_facts: list[dict[str, Any]] = []
     if clarity_ids:
         axis_facts.append({
@@ -560,9 +614,13 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
             *correlation_statements(packet["process_stats"], "处理法", limit=3),
             *correlation_statements(packet["variety_stats"], "品种", limit=2),
         ],
+        "top_tier_signals": top_tier_signals,
         "likely_preferences_allowed": [
-            f"评分记录与{label}风味家族呈正相关，但多数描述不是第一人称确认。"
-            for label in likely_labels
+            *[signal["statement"] for signal in top_tier_signals],
+            *[
+                f"评分记录与{label}风味家族呈正相关，但多数描述不是第一人称确认。"
+                for label in likely_labels
+            ],
         ],
         "data_quality": {
             "rated_observations": rated,
@@ -631,9 +689,11 @@ def validate_model_narrative(
             for item in contract.get("known_preferences_allowed", [])
         ],
     ]
-    allowed_families = {
-        item["category"] for item in contract.get("likely_sensory_families", [])
-    } | set(category_matches(contract_text))
+    allowed_families = (
+        {item["category"] for item in contract.get("likely_sensory_families", [])}
+        | {signal["category"] for signal in contract.get("top_tier_signals", [])}
+        | set(category_matches(contract_text))
+    )
     mentioned_families = set(category_matches([narrative, headline]))
     if not mentioned_families.issubset(allowed_families):
         violations.append("invented_flavor_family")
@@ -826,7 +886,17 @@ def candidate_prior(
         and history_match["weighted_rating"] >= 3
     ):
         history_bonus = min(18.0, 10.0 + 4.0 * (history_match["rated_observations"] - 1))
-    fit = min(100.0, fit + quality_bonus + history_bonus)
+    # Uncalibrated heuristic like the other bonuses: candidates sharing flavor
+    # families concentrated in the user's Great/Loved tier get a small capped
+    # lift, because tier concentration is the strongest affective signal in a
+    # notes-sparse history.
+    top_tier_families = {
+        row["category"]
+        for row in evidence_packet.get("top_tier_family_stats", [])
+        if row["top_tier_count"] >= TOP_TIER_MIN_OBSERVATIONS
+    }
+    top_tier_bonus = min(5.0, 2.5 * len(top_tier_families.intersection(categories)))
+    fit = min(100.0, fit + quality_bonus + history_bonus + top_tier_bonus)
 
     category_familiarity_scores = [
         min(1.0, category_stats[normalized_key(category)]["observations"] / 6) * 100
@@ -855,6 +925,7 @@ def candidate_prior(
         "novelty_score": round(max(0.0, min(100.0, novelty)), 1),
         "quality_claim_bonus": round(quality_bonus, 1),
         "direct_history_bonus": round(history_bonus, 1),
+        "top_tier_affinity_bonus": round(top_tier_bonus, 1),
         "note": (
             "Prefilter prior only. Seller quality claims have a small capped bonus; "
             "direct historical identity overlap has a larger but non-causal bonus."
@@ -1698,8 +1769,8 @@ def render_current_report(
         price = candidate.get("price") or {}
         price_text = (
             f"{price.get('currency')} {price.get('amount')}"
-            + (f" / {price.get('size_grams')}g" if price.get("size_grams") else "")
-        )
+            if price.get("amount") is not None else "未标价"
+        ) + (f" / {price.get('size_grams')}g" if price.get("size_grams") else "")
         return [
             f"## {title}",
             "",

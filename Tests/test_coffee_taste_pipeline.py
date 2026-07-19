@@ -608,6 +608,73 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         self.assertIn("headline_missing_or_too_long", grounded["narrative_violations"])
         self.assertEqual(grounded["summary"], contract["fallback_summary"])
 
+    def _tiered_observations(self) -> list[dict]:
+        return [
+            observation("great_a", name="Great A", score=4, categories=["fruit.dried", "fruit.tropical"]),
+            observation("great_b", name="Great B", score=4, categories=["fruit.dried", "fruit.berry"]),
+            observation("great_c", name="Great C", score=4, categories=["fruit.berry"]),
+            observation("good_a", name="Good A", score=3, categories=["fruit.citrus"]),
+            observation("ok_a", name="Ok A", score=2, categories=["fruit.pome"]),
+        ]
+
+    def test_top_tier_signal_requires_multiple_great_observations(self) -> None:
+        contract = build_profile_contract(self._tiered_observations())
+        signal_categories = {
+            signal["category"] for signal in contract["top_tier_signals"]
+        }
+        self.assertEqual(signal_categories, {"fruit.dried", "fruit.berry"})
+        dried = next(
+            signal for signal in contract["top_tier_signals"]
+            if signal["category"] == "fruit.dried"
+        )
+        self.assertEqual(dried["top_tier_count"], 2)
+        self.assertEqual(dried["top_tier_total"], 3)
+        self.assertEqual(dried["evidence_ids"], ["great_a", "great_b"])
+        self.assertIn(dried["statement"], contract["likely_preferences_allowed"])
+        # fruit.tropical appears in only one Great observation: no signal.
+        self.assertNotIn("fruit.tropical", signal_categories)
+
+    def test_narrative_may_mention_top_tier_family(self) -> None:
+        contract = build_profile_contract(self._tiered_observations())
+        summary = {
+            "headline": "被果干浓缩感抓住的杯子",
+            "narrative": (
+                "最打动你的杯子有一条共同的线：果干与莓果式的浓缩风味，"
+                "像蓝莓与晒干的浆果被时间收拢成的一小口精华，评分最高的几支都指向它。"
+                "这主要来自评分集中度而非文字确认，口感与余韵的具体偏好证据不足，"
+                "还需要更多实饮记录。"
+            ),
+            "confidence": 0.5,
+        }
+        violations = validate_model_narrative(
+            summary,
+            contract,
+            self.NARRATIVE_ASSERTIONS,
+        )
+        self.assertEqual(violations, [])
+
+    def test_candidate_prior_top_tier_bonus_capped(self) -> None:
+        observations = self._tiered_observations()
+        packet = evaluator.build_evidence_packet(observations)
+        single = evaluator.candidate_prior(
+            {"id": "single", "descriptors": ["raisin"], "origin": "", "process": ""},
+            packet,
+            observations,
+        )["deterministic_prior"]
+        double = evaluator.candidate_prior(
+            {"id": "double", "descriptors": ["raisin", "blueberry"], "origin": "", "process": ""},
+            packet,
+            observations,
+        )["deterministic_prior"]
+        none = evaluator.candidate_prior(
+            {"id": "none", "descriptors": ["green apple"], "origin": "", "process": ""},
+            packet,
+            observations,
+        )["deterministic_prior"]
+        self.assertEqual(single["top_tier_affinity_bonus"], 2.5)
+        self.assertEqual(double["top_tier_affinity_bonus"], 5.0)
+        self.assertEqual(none["top_tier_affinity_bonus"], 0.0)
+
     def test_negative_analog_margin_cannot_remain_safe(self) -> None:
         candidates = [
             {

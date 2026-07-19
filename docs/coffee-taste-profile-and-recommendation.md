@@ -283,6 +283,14 @@ comparison baselines once a re-run lands.
   `"regression_watch": true` to surface themselves in a dedicated "Tracked
   Challenge Cases" section (the medium Yemen-vs-Tabi and low Radiance cases are
   so flagged in the private set).
+- **Top-tier rating concentration (user-requested).** The user rarely writes
+  tasting notes, so Great/Loved tier concentration is now a first-class signal:
+  `top_tier_family_stats` reports families appearing in >=2 top-tier coffees,
+  `build_profile_contract` emits `top_tier_signals` statements into
+  likely_preferences (still not "known" — descriptors remain mostly seller or
+  mixed-source claims), the narrative validator accepts those families, and
+  `candidate_prior` adds a capped `top_tier_affinity_bonus` (2.5 per shared
+  family, max 5.0, uncalibrated like the other bonuses).
 - **v2 narrative pipeline.** `prompts/coffee_profile_v2.md` keeps the
   model-authored summary verbatim when `validate_model_narrative` passes
   (length, absolute claims, extrinsic terms, unhedged undersampled dimensions,
