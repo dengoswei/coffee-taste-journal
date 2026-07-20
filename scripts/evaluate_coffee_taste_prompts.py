@@ -446,25 +446,30 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
         minimum_score=0,
     )
 
-    known_preferences: list[dict[str, Any]] = []
-    if clarity_ids:
-        known_preferences.append({
-            "statement": "偏好风味表达明显、容易辨识的杯子",
-            "evidence_ids": clarity_ids,
-            "confidence": 0.72 if len(clarity_ids) >= 2 else 0.55,
-        })
-    if acid_sweet_ids:
-        known_preferences.append({
-            "statement": "偏好酸与甜彼此协调，而不是只追求酸度强弱",
-            "evidence_ids": acid_sweet_ids,
-            "confidence": 0.52,
-        })
-    if clean_ids:
-        known_preferences.append({
-            "statement": "偏好干净、没有突兀发酵感抢戏的表达",
-            "evidence_ids": clean_ids,
-            "confidence": 0.58,
-        })
+    # First-person notes no longer produce preference statements (user decision
+    # 2026-07-20). They were being promoted to the highest-confidence tier of
+    # the profile on n=1 or n=2 evidence, above 49 ratings — the wrong way
+    # round. One of them was a single cup of RADIANCE that scored Ok the very
+    # next day on the same recipe, which is the clearest possible sign that an
+    # in-the-moment note is not a stable preference.
+    #
+    # The notes are still recorded, as observations about how a cup behaved,
+    # never as statements about what the user prefers. Rating distribution is
+    # the preference evidence.
+    note_observations: list[dict[str, Any]] = []
+    for label, ids in (
+        ("提到风味清晰度", clarity_ids),
+        ("提到酸甜关系", acid_sweet_ids),
+        ("提到干净度/发酵感", clean_ids),
+        ("提到降温后的变化", temperature_ids),
+        ("提到同配方冲煮结果不一致", variability_ids),
+    ):
+        if ids:
+            note_observations.append({
+                "topic": label,
+                "evidence_ids": ids,
+                "note_count": len(ids),
+            })
 
     # Expressed as a share of the rating range rather than a raw score, so the
     # gate survives a change to the scale itself. 60 corresponds to the old
@@ -605,25 +610,42 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
     likely_labels = [item["label"] for item in likely_families]
     # Part lengths are tuned so every branch combination lands inside
     # NARRATIVE_LENGTH_RANGE; test_fallback_narrative_satisfies_length_spec pins this.
-    narrative_parts = ["你像是在寻找一杯有清楚主线、而不是只靠标签取胜的咖啡，愿意为真实的杯中体验买单。"]
-    if clarity_ids and acid_sweet_ids:
-        narrative_parts.append("风味最好能自己亮起来，酸与甜也要彼此托住。")
-    elif clarity_ids:
-        narrative_parts.append("目前最直接的信号，是你会为明显、容易辨识的风味表达加分。")
-    elif acid_sweet_ids:
-        narrative_parts.append("目前最直接的信号，是你会为酸与甜彼此协调的杯子加分。")
-    if clean_ids:
-        narrative_parts.append("实验性处理并不构成障碍，但不希望突兀发酵感抢戏。")
-    if temperature_ids:
-        narrative_parts.append("降温后风味继续展开，曾给你留下很深的正面印象。")
-    narrative_parts.append("多数具体风味词仍来自豆袋或混合来源，口感、余韵和强度偏好还需要更多实饮记录来确认，这份画像会随每一支新豆继续生长。")
+    # The narrative describes the rating distribution, not the notes. Every
+    # branch below is driven by counts over all rated observations, so the
+    # story cannot outrun the evidence the way a note-driven one did.
+    top_labels = [
+        CATEGORY_LABELS.get(signal["category"], signal["category"])
+        for signal in top_tier_signals[:3]
+    ]
+    narrative_parts = [
+        f"这份画像建立在 {rated} 条明确评分之上，看的是你实际喝完给出的分布，而不是零散的文字描述。"
+    ]
+    if top_labels:
+        narrative_parts.append(
+            f"评分最高的那一档里反复出现的是{'、'.join(top_labels)}。"
+        )
+    elif likely_labels:
+        narrative_parts.append(
+            f"评分与{'、'.join(likely_labels[:3])}呈正相关，但最高档尚未形成集中。"
+        )
+    if note_observations:
+        narrative_parts.append(
+            f"你写过 {substantive} 条实饮描述，只作为线索保留，样本太少不足以下判断。"
+        )
+    narrative_parts.append(
+        "多数具体风味词仍来自豆袋或混合来源，口感、余韵和强度偏好还需要更多实饮记录来确认，这份画像会随每一支新豆继续生长。"
+    )
     headline = (
-        "喜欢风味轮廓清楚、酸甜彼此托住的杯子"
-        if clarity_ids and acid_sweet_ids
-        else "偏好正在收敛，但直接实饮证据仍然稀疏"
+        f"评分集中在{top_labels[0]}这一路的杯子"
+        if top_labels
+        else "偏好正在收敛，但评分层次仍不够分明"
     )
     return {
-        "known_preferences_allowed": known_preferences,
+        # Deliberately always empty: kept as a key so downstream consumers
+        # and the prompts do not need a schema change, but the profile no
+        # longer asserts preferences from first-person notes.
+        "known_preferences_allowed": [],
+        "note_observations": note_observations,
         "axis_facts": axis_facts,
         "likely_sensory_families": likely_families,
         "required_structure": required_structure,
@@ -673,8 +695,29 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
 
 # Undersampled dimensions (see required_unknowns) that a kept narrative may
 # mention only alongside an explicit hedge marker.
-UNDERSAMPLED_DIMENSION_TERMS = ("烘焙", "醇厚", "口感", "余韵", "苦味")
+# Synonyms matter here: an invented "收尾是干净的" headline once slipped
+# through because only 余韵 was listed.
+UNDERSAMPLED_DIMENSION_TERMS = (
+    "烘焙", "醇厚", "口感", "余韵", "收尾", "尾韵", "回甘", "苦味", "body",
+)
 HEDGE_MARKERS = ("未知", "不确定", "仍需", "还需要", "证据不足", "欠采样", "还不清楚", "有待")
+
+
+SENTENCE_BOUNDARY = re.compile(r"[。！？；\n.!?;]+")
+
+
+def split_sentences(text: str) -> list[str]:
+    return [part for part in SENTENCE_BOUNDARY.split(str(text or "")) if part.strip()]
+
+
+def mentions_undersampled_dimension(text: str) -> bool:
+    normalized = normalized_key(text)
+    return any(term in normalized for term in UNDERSAMPLED_DIMENSION_TERMS)
+
+
+def is_hedged(text: str) -> bool:
+    normalized = normalized_key(text)
+    return any(marker in normalized for marker in HEDGE_MARKERS)
 
 
 def validate_model_narrative(
@@ -702,9 +745,19 @@ def validate_model_narrative(
         if normalized_key(term) in text:
             violations.append("extrinsic_term_in_narrative")
             break
-    if any(term in text for term in UNDERSAMPLED_DIMENSION_TERMS):
-        if not any(marker in text for marker in HEDGE_MARKERS):
-            violations.append("unhedged_undersampled_dimension")
+    # A hedge only excuses the claim it sits next to. Concatenating headline and
+    # narrative and looking for a hedge anywhere let "收尾是干净的" through as a
+    # headline because the body happened to say "余韵仍证据不足" three sentences
+    # later — the reader sees an unqualified assertion either way.
+    if mentions_undersampled_dimension(headline):
+        # A headline is too short to carry a real qualification, and it is the
+        # most prominent claim on the page, so it may not touch these at all.
+        violations.append("unhedged_undersampled_dimension")
+    elif any(
+        mentions_undersampled_dimension(sentence) and not is_hedged(sentence)
+        for sentence in split_sentences(narrative)
+    ):
+        violations.append("unhedged_undersampled_dimension")
     # Families the deterministic contract itself asserts (fallback narrative and
     # known-preference statements) are safe to echo; anything beyond that set is
     # an invented flavor claim.

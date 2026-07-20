@@ -143,7 +143,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         )
         self.assertIn("acid_sweet_balance_positive", quality_matches(descriptors))
 
-    def test_profile_contract_limits_known_preferences_to_direct_notes(self) -> None:
+    def test_first_person_notes_never_become_preference_statements(self) -> None:
         observations = [
             observation(
                 "clear_acid",
@@ -176,12 +176,22 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             ),
         ]
         contract = build_profile_contract(observations)
-        statements = {
-            item["statement"]
-            for item in contract["known_preferences_allowed"]
-        }
-        self.assertEqual(len(statements), 3)
-        self.assertTrue(all("Washed" not in item for item in statements))
+        # User decision 2026-07-20: notes are far too sparse to outrank the
+        # rating distribution, so they no longer assert preferences at all.
+        self.assertEqual(contract["known_preferences_allowed"], [])
+        # They are still recorded as observations about the cup, with the
+        # evidence ids intact, so nothing is lost.
+        topics = {row["topic"]: row for row in contract["note_observations"]}
+        self.assertIn("提到风味清晰度", topics)
+        self.assertEqual(topics["提到风味清晰度"]["note_count"], 2)
+        self.assertNotIn(
+            "statement", topics["提到风味清晰度"],
+            "note observations must not carry preference statements",
+        )
+        self.assertNotIn(
+            "confidence", topics["提到风味清晰度"],
+            "note observations must not carry a confidence score",
+        )
         self.assertEqual(
             contract["required_structure"]["mouthfeel"],
             "证据不足",
@@ -573,8 +583,8 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             self.assertLessEqual(len(narrative), NARRATIVE_LENGTH_RANGE[1])
 
     VALID_NARRATIVE = (
-        "你追求的是一杯主线清楚的咖啡：入口时风味自己亮起来，酸和甜互相托住而不打架。"
-        "你不排斥实验性的处理方式，但要求它服务于干净的表达。"
+        "这份画像目前只建立在很少的评分之上，看的是你实际喝完给出的分布，"
+        "而不是零散的文字描述。现在能说的只有方向：你会为表达清楚、干净的杯子加分。"
         "至于口感与余韵的具体偏好，证据不足，还需要更多实饮记录来回答。"
     )
     NARRATIVE_ASSERTIONS = {
@@ -937,3 +947,24 @@ class ScaleIndependenceTests(unittest.TestCase):
         families = {row["category"] for row in contract["likely_sensory_families"]}
         self.assertIn("fruit.citrus", families)
         self.assertNotIn("fruit.pome", families)
+
+
+class HeadlineGuardrailTests(unittest.TestCase):
+    def test_headline_claiming_an_undersampled_dimension_is_rejected(self) -> None:
+        # The exact miss that happened on 2026-07-20: a headline asserting a
+        # clean finish, when 余韵 is explicitly undersampled and the user had
+        # never said anything about the finish. 收尾 was not in the term list.
+        contract = build_profile_contract([
+            observation("base", name="Base", score=2, categories=["fruit.citrus"]),
+        ])
+        summary = {
+            "headline": "要风味说得清楚，也要收尾是干净的",
+            "narrative": (
+                "这份画像目前只建立在很少的评分之上，看的是你实际喝完给出的分布，"
+                "而不是零散的文字描述。现在能说的只有方向：你会为表达清楚、干净的杯子加分。"
+                "至于醇厚度的具体偏好，证据不足，还需要更多实饮记录来回答。"
+            ),
+            "confidence": 0.6,
+        }
+        violations = validate_model_narrative(summary, contract, {})
+        self.assertIn("unhedged_undersampled_dimension", violations)
