@@ -42,6 +42,7 @@ def observation(
     categories: list[str],
     quality_signals: list[str] | None = None,
     substantive: bool = False,
+    farm: str = "",
 ) -> dict:
     return {
         "id": observation_id,
@@ -52,7 +53,7 @@ def observation(
             "roaster": "Test",
             "name": name,
             "origin": "Test Origin",
-            "farm": "",
+            "farm": farm,
             "variety": "Test Variety",
             "process": "Washed",
         },
@@ -316,6 +317,66 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         self.assertEqual(false_match["rated_observations"], 0)
         self.assertEqual(true_match["rated_observations"], 1)
         self.assertEqual(true_match["matched_tokens"], ["heza"])
+
+    def test_farm_only_overlap_classified_and_downweighted(self) -> None:
+        # The farm name is embedded in the historical bean name, which is the
+        # realistic trap: "Las Margaritas Sudan Rume" (loved) vs a different
+        # coffee from the same Las Margaritas farm.
+        history = [
+            observation(
+                "sudan_rume",
+                name="Las Margaritas Sudan Rume",
+                farm="Las Margaritas",
+                score=4,
+                categories=["spice_herbal", "fruit.citrus"],
+            ),
+        ]
+        same_farm_different_coffee = direct_history_match(
+            {"name": "Margaritas 日晒瑰夏", "farm": "Las Margaritas"},
+            history,
+        )
+        same_coffee = direct_history_match(
+            {"name": "Las Margaritas Sudan Rume", "farm": "Las Margaritas"},
+            history,
+        )
+        self.assertEqual(same_farm_different_coffee["match_scope"], "farm_only")
+        self.assertEqual(same_farm_different_coffee["farm_only_observations"], 1)
+        self.assertEqual(same_farm_different_coffee["name_matched_observations"], 0)
+        self.assertEqual(same_coffee["match_scope"], "name")
+        self.assertEqual(same_coffee["name_matched_observations"], 1)
+
+    def test_candidate_prior_downweights_farm_only_history_bonus(self) -> None:
+        history = [
+            observation(
+                "sudan_rume",
+                name="Las Margaritas Sudan Rume",
+                farm="Las Margaritas",
+                score=4,
+                categories=["spice_herbal"],
+            ),
+        ]
+        packet = evaluator.build_evidence_packet(history)
+
+        def bonus(name: str) -> float:
+            return evaluator.candidate_prior(
+                {
+                    "id": "cand",
+                    "name": name,
+                    "farm": "Las Margaritas",
+                    "descriptors": [],
+                    "origin": "",
+                    "process": "",
+                },
+                packet,
+                history,
+            )["deterministic_prior"]["direct_history_bonus"]
+
+        full = bonus("Las Margaritas Sudan Rume")
+        farm_only = bonus("Margaritas 日晒瑰夏")
+        self.assertEqual(full, 10.0)
+        self.assertAlmostEqual(
+            farm_only, 10.0 * evaluator.FARM_ONLY_MATCH_WEIGHT, places=1
+        )
 
     def test_live_shortlist_excludes_unavailable_candidates(self) -> None:
         candidates = [

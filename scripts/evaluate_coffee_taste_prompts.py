@@ -35,6 +35,12 @@ PRODUCT_VERSION = "v1"
 FRONTIER_MIN_FIT = 60.0
 # Narrative length band in characters; must match the prompt spec (90-180).
 NARRATIVE_LENGTH_RANGE = (90, 180)
+# Sharing a farm is much weaker evidence than sharing the actual coffee: the
+# same farm sells different varieties/processes that taste very different
+# (e.g. Las Margaritas Sudan Rume washed vs a natural Gesha from the same
+# farm). Farm-only identity overlap therefore earns a fraction of the direct
+# history bonus instead of the full amount. Uncalibrated like the bonus itself.
+FARM_ONLY_MATCH_WEIGHT = 1.0 / 3.0
 
 
 def read_json(path: Path) -> Any:
@@ -795,10 +801,21 @@ def direct_history_match(
         return {
             "matched_tokens": [],
             "rated_observations": 0,
+            "name_matched_observations": 0,
+            "farm_only_observations": 0,
+            "match_scope": None,
             "weighted_rating": None,
             "observation_ids": [],
         }
+    # Farm names are routinely embedded in bean names ("Las Margaritas Sudan
+    # Rume"), so a plain name-token intersection cannot tell "same coffee"
+    # from "same farm, different coffee". Classify overlap tokens instead:
+    # any token contributed by a farm field on either side is a farm token;
+    # a match whose overlap has no non-farm token is farm-only.
+    candidate_farm_tokens = identity_tokens(str(candidate.get("farm") or ""))
     matches = []
+    name_matched = 0
+    farm_only = 0
     for item in observations:
         score = item["rating"].get("score")
         weight = float(item["evidence"].get("rating_weight") or 0)
@@ -808,8 +825,18 @@ def direct_history_match(
             str(item["coffee"].get("name") or ""),
             str(item["coffee"].get("farm") or ""),
         ]))
-        if tokens.intersection(historical_tokens):
-            matches.append(item)
+        overlap = tokens.intersection(historical_tokens)
+        if not overlap:
+            continue
+        historical_farm_tokens = identity_tokens(
+            str(item["coffee"].get("farm") or "")
+        )
+        farm_side_tokens = candidate_farm_tokens | historical_farm_tokens
+        if overlap - farm_side_tokens:
+            name_matched += 1
+        else:
+            farm_only += 1
+        matches.append(item)
     total_weight = sum(float(item["evidence"]["rating_weight"]) for item in matches)
     weighted_rating = (
         sum(
@@ -831,6 +858,11 @@ def direct_history_match(
             )
         }),
         "rated_observations": len(matches),
+        "name_matched_observations": name_matched,
+        "farm_only_observations": farm_only,
+        "match_scope": (
+            "name" if name_matched else ("farm_only" if farm_only else None)
+        ),
         "weighted_rating": round(weighted_rating, 3) if weighted_rating is not None else None,
         "observation_ids": [item["id"] for item in matches],
     }
@@ -890,6 +922,10 @@ def candidate_prior(
         and history_match["weighted_rating"] >= 3
     ):
         history_bonus = min(18.0, 10.0 + 4.0 * (history_match["rated_observations"] - 1))
+        if history_match["match_scope"] == "farm_only":
+            # Same farm but no shared coffee identity: a hint, not a rating
+            # of this candidate. See FARM_ONLY_MATCH_WEIGHT.
+            history_bonus *= FARM_ONLY_MATCH_WEIGHT
     # Uncalibrated heuristic like the other bonuses: candidates sharing flavor
     # families concentrated in the user's Great/Loved tier get a small capped
     # lift, because tier concentration is the strongest affective signal in a
@@ -1535,8 +1571,15 @@ def ground_recommendation(
             for category in candidate.get("descriptor_categories", [])
         ]
         history_reason = (
-            f"历史中有 {history_match.get('rated_observations')} 条名称或处理站直接重合的"
-            f"评分记录，加权评分为 {history_match.get('weighted_rating')}/4。"
+            (
+                f"历史中有 {history_match.get('rated_observations')} 条同庄园但不同豆款的"
+                f"评分记录（加权 {history_match.get('weighted_rating')}/4）；庄园相同"
+                "不等于风味相同，此信号已按低权重计入。"
+                if history_match.get("match_scope") == "farm_only"
+                else
+                f"历史中有 {history_match.get('rated_observations')} 条名称或处理站直接重合的"
+                f"评分记录，加权评分为 {history_match.get('weighted_rating')}/4。"
+            )
             if history_match.get("rated_observations")
             else (
                 f"候选声明覆盖{'、'.join(category_labels)}，这些家族在历史评分中"
