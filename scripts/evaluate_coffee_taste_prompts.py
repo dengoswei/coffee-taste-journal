@@ -43,6 +43,10 @@ PRODUCT_VERSION = "v1"
 FRONTIER_MIN_FIT = 60.0
 # Narrative length band in characters; must match the prompt spec (90-180).
 NARRATIVE_LENGTH_RANGE = (90, 180)
+# Minimum share of the rating range (0-100) for a flavor family to be reported
+# as a likely preference. Kept as a share, not a raw score, so it does not
+# silently break when the rating scale changes — it did exactly that once.
+LIKELY_FAMILY_MIN_SHARE = 60.0
 # Sharing a farm is much weaker evidence than sharing the actual coffee: the
 # same farm sells different varieties/processes that taste very different
 # (e.g. Las Margaritas Sudan Rume washed vs a natural Gesha from the same
@@ -462,11 +466,14 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
             "confidence": 0.58,
         })
 
+    # Expressed as a share of the rating range rather than a raw score, so the
+    # gate survives a change to the scale itself. 60 corresponds to the old
+    # "2.8 out of 1-4" threshold.
     likely_rows = [
         row for row in packet["category_stats"]
         if row["observations"] >= 3
         and row["weighted_rating"] is not None
-        and row["weighted_rating"] >= 2.8
+        and normalized_rating(row["weighted_rating"]) >= LIKELY_FAMILY_MIN_SHARE
         and row["contrast"] > 1
     ][:7]
     likely_families = [

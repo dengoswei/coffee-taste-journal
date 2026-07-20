@@ -917,3 +917,23 @@ class VocabularyCanonicalizationTests(unittest.TestCase):
         self.assertEqual(payload["process"], "Anaerobic Natural")
         # The original survives for traceability.
         self.assertEqual(payload["process_source"], "84小时厌氧日晒")
+
+
+class ScaleIndependenceTests(unittest.TestCase):
+    def test_likely_families_survive_the_rating_scale(self) -> None:
+        # Regression: the likely-family gate was a raw ">= 2.8", calibrated for
+        # the old 1-4 scale. On the 0-3 scale nothing could clear it and the
+        # section silently emptied out.
+        observations = [
+            observation(f"cit_{i}", name=f"Citrus {i}", score=score,
+                        categories=["fruit.citrus"])
+            for i, score in enumerate([3, 3, 2, 2, 2])
+        ] + [
+            observation(f"pome_{i}", name=f"Pome {i}", score=score,
+                        categories=["fruit.pome"])
+            for i, score in enumerate([1, 1, 0])
+        ]
+        contract = build_profile_contract(observations)
+        families = {row["category"] for row in contract["likely_sensory_families"]}
+        self.assertIn("fruit.citrus", families)
+        self.assertNotIn("fruit.pome", families)
