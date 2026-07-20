@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_coffee_taste_dataset import (
+    RATING_LABELS,
     RATING_SCORES,
     build_entity_summaries,
     category_matches,
@@ -58,7 +59,7 @@ def observation(
             "process": "Washed",
         },
         "rating": {
-            "label": "Liked" if score >= 3 else "Ok",
+            "label": RATING_LABELS[score],
             "score": score,
             "explicit": True,
         },
@@ -147,7 +148,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             observation(
                 "clear_acid",
                 name="Coffee A",
-                score=3,
+                score=2,
                 categories=["fruit.citrus"],
                 quality_signals=[
                     "clarity_positive",
@@ -158,7 +159,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             observation(
                 "clear_clean",
                 name="Coffee B",
-                score=4,
+                score=3,
                 categories=["fruit.stone"],
                 quality_signals=[
                     "clarity_positive",
@@ -170,7 +171,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             observation(
                 "lower",
                 name="Coffee C",
-                score=2,
+                score=1,
                 categories=["fruit.berry"],
             ),
         ]
@@ -218,9 +219,9 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         )
 
     def test_entity_summary_not_double_counted_after_dedup(self) -> None:
-        first = observation("dup_a", name="Yemen Test", score=4, categories=["fruit.dried"])
-        second = observation("dup_b", name="Yemen Test", score=4, categories=["fruit.dried"])
-        third = observation("other", name="Yemen Test", score=3, categories=["fruit.citrus"])
+        first = observation("dup_a", name="Yemen Test", score=3, categories=["fruit.dried"])
+        second = observation("dup_b", name="Yemen Test", score=3, categories=["fruit.dried"])
+        third = observation("other", name="Yemen Test", score=2, categories=["fruit.citrus"])
         for item in (first, second, third):
             item["entity_id"] = "entity_yemen_test"
         first["dedupe_key"] = "yemen_dup"
@@ -230,7 +231,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         self.assertEqual(len(summaries), 1)
         summary = summaries[0]
         self.assertEqual(summary["rating_count"], 2)
-        self.assertEqual(summary["weighted_rating"], 3.5)
+        self.assertEqual(summary["weighted_rating"], 2.5)
 
     def test_parse_app_unknown_verdict_label_degrades_gracefully(self) -> None:
         store = {
@@ -296,13 +297,13 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             observation(
                 "salto",
                 name="El Salto Dona Eira",
-                score=3,
+                score=2,
                 categories=["fruit.citrus"],
             ),
             observation(
                 "heza",
                 name="Heza Gishubi",
-                score=3,
+                score=2,
                 categories=["fruit.berry"],
             ),
         ]
@@ -327,7 +328,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
                 "sudan_rume",
                 name="Las Margaritas Sudan Rume",
                 farm="Las Margaritas",
-                score=4,
+                score=3,
                 categories=["spice_herbal", "fruit.citrus"],
             ),
         ]
@@ -351,7 +352,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
                 "sudan_rume",
                 name="Las Margaritas Sudan Rume",
                 farm="Las Margaritas",
-                score=4,
+                score=3,
                 categories=["spice_herbal"],
             ),
         ]
@@ -547,13 +548,13 @@ class CoffeeTastePipelineTests(unittest.TestCase):
 
     def test_fallback_narrative_satisfies_length_spec(self) -> None:
         minimal = build_profile_contract([
-            observation("plain", name="Plain", score=3, categories=["fruit.citrus"]),
+            observation("plain", name="Plain", score=2, categories=["fruit.citrus"]),
         ])
         rich_observations = [
             observation(
                 "rich",
                 name="Rich",
-                score=4,
+                score=3,
                 categories=["fruit.stone"],
                 quality_signals=[
                     "clarity_positive",
@@ -586,7 +587,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             observation(
                 "base",
                 name="Base",
-                score=3,
+                score=2,
                 categories=["fruit.citrus"],
                 quality_signals=["acid_sweet_balance_positive"],
                 substantive=True,
@@ -671,11 +672,11 @@ class CoffeeTastePipelineTests(unittest.TestCase):
 
     def _tiered_observations(self) -> list[dict]:
         return [
-            observation("great_a", name="Great A", score=4, categories=["fruit.dried", "fruit.tropical"]),
-            observation("great_b", name="Great B", score=4, categories=["fruit.dried", "fruit.berry"]),
-            observation("great_c", name="Great C", score=4, categories=["fruit.berry"]),
-            observation("good_a", name="Good A", score=3, categories=["fruit.citrus"]),
-            observation("ok_a", name="Ok A", score=2, categories=["fruit.pome"]),
+            observation("loved_a", name="Loved A", score=3, categories=["fruit.dried", "fruit.tropical"]),
+            observation("loved_b", name="Loved B", score=3, categories=["fruit.dried", "fruit.berry"]),
+            observation("loved_c", name="Loved C", score=3, categories=["fruit.berry"]),
+            observation("liked_a", name="Liked A", score=2, categories=["fruit.citrus"]),
+            observation("ok_a", name="Ok A", score=1, categories=["fruit.pome"]),
         ]
 
     def test_top_tier_signal_requires_multiple_great_observations(self) -> None:
@@ -690,9 +691,9 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         )
         self.assertEqual(dried["top_tier_count"], 2)
         self.assertEqual(dried["top_tier_total"], 3)
-        self.assertEqual(dried["evidence_ids"], ["great_a", "great_b"])
+        self.assertEqual(dried["evidence_ids"], ["loved_a", "loved_b"])
         self.assertIn(dried["statement"], contract["likely_preferences_allowed"])
-        # fruit.tropical appears in only one Great observation: no signal.
+        # fruit.tropical appears in only one Loved observation: no signal.
         self.assertNotIn("fruit.tropical", signal_categories)
 
     def test_narrative_may_mention_top_tier_family(self) -> None:
@@ -739,7 +740,7 @@ class CoffeeTastePipelineTests(unittest.TestCase):
     def test_candidate_prior_roaster_bonus_only_with_history(self) -> None:
         observations = self._tiered_observations()
         for item in observations:
-            item["coffee"]["roaster"] = "Loved Roaster" if item["rating"]["score"] == 4 else "Meh Roaster"
+            item["coffee"]["roaster"] = "Loved Roaster" if item["rating"]["score"] == 3 else "Meh Roaster"
         packet = evaluator.build_evidence_packet(observations)
 
         def prior(roaster: str) -> dict:

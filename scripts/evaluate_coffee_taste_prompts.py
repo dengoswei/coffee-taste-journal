@@ -16,7 +16,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from build_coffee_taste_dataset import category_matches, normalized_text, quality_matches
+from build_coffee_taste_dataset import (
+    RATING_NEGATIVE_MAX,
+    RATING_POSITIVE_MIN,
+    RATING_SCORE_MAX,
+    category_matches,
+    normalized_rating,
+    normalized_text,
+    quality_matches,
+)
 
 
 DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
@@ -214,7 +222,7 @@ def weighted_feature_stats(
             row["observations"] += 1
             row["score_weighted"] += score * weight
             row["rating_weight"] += weight
-            if score >= 3:
+            if score >= RATING_POSITIVE_MIN:
                 row["positive_weight"] += weight
             else:
                 row["lower_weight"] += weight
@@ -236,7 +244,7 @@ def weighted_feature_stats(
 # writes tasting notes, so tier concentration is the strongest affective signal
 # available; it stays "likely" evidence because descriptors are still mostly
 # seller or mixed-source claims.
-TOP_TIER_SCORE = 4
+TOP_TIER_SCORE = RATING_SCORE_MAX
 # A family must appear in at least this many top-tier coffees to count as a
 # concentration signal.
 TOP_TIER_MIN_OBSERVATIONS = 2
@@ -356,7 +364,7 @@ CATEGORY_LABELS = {
 def evidence_ids_for_signal(
     observations: list[dict[str, Any]],
     signals: set[str],
-    minimum_score: int = 3,
+    minimum_score: int = RATING_POSITIVE_MIN,
 ) -> list[str]:
     return [
         item["id"]
@@ -378,7 +386,8 @@ def evidence_ids_for_category(
         item for item in observations
         if category in item["sensory"].get("descriptor_categories", [])
         and item["rating"].get("score") is not None
-        and ((item["rating"]["score"] >= 3) if positive else (item["rating"]["score"] <= 2))
+        and ((item["rating"]["score"] >= RATING_POSITIVE_MIN) if positive
+             else (item["rating"]["score"] <= RATING_NEGATIVE_MAX))
     ]
     matches.sort(
         key=lambda item: (
@@ -424,7 +433,7 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
         item["id"]
         for item in observations
         if item["evidence"].get("substantive_first_person_note")
-        and item["rating"].get("score", 0) >= 3
+        and item["rating"].get("score", 0) >= RATING_POSITIVE_MIN
         and any(term in normalized_key(item.get("user_note")) for term in ("温度", "冷", "cool"))
     ]
     variability_ids = evidence_ids_for_signal(
@@ -885,7 +894,7 @@ def candidate_prior(
             0.0,
             min(
                 100.0,
-                ((category_stats[normalized_key(category)]["weighted_rating"] - 1) / 3) * 100,
+                normalized_rating(category_stats[normalized_key(category)]["weighted_rating"]),
             ),
         )
         for category in categories
@@ -896,11 +905,11 @@ def candidate_prior(
     origin_row = origin_stats.get(normalized_key(candidate.get("origin")))
     process_row = process_stats.get(normalized_key(candidate.get("process")))
     origin_fit = (
-        max(0.0, min(100.0, ((origin_row["weighted_rating"] - 1) / 3) * 100))
+        normalized_rating(origin_row["weighted_rating"])
         if origin_row and origin_row["weighted_rating"] is not None else 50.0
     )
     process_fit = (
-        max(0.0, min(100.0, ((process_row["weighted_rating"] - 1) / 3) * 100))
+        normalized_rating(process_row["weighted_rating"])
         if process_row and process_row["weighted_rating"] is not None else 50.0
     )
     fit = sensory_fit * 0.75 + origin_fit * 0.15 + process_fit * 0.10
@@ -919,7 +928,7 @@ def candidate_prior(
     if (
         history_match["rated_observations"] >= 1
         and history_match["weighted_rating"] is not None
-        and history_match["weighted_rating"] >= 3
+        and history_match["weighted_rating"] >= RATING_POSITIVE_MIN
     ):
         history_bonus = min(18.0, 10.0 + 4.0 * (history_match["rated_observations"] - 1))
         if history_match["match_scope"] == "farm_only":
@@ -943,7 +952,7 @@ def candidate_prior(
     roaster_row = roaster_stats.get(normalized_key(candidate.get("roaster")))
     roaster_bonus = 0.0
     if roaster_row and roaster_row["weighted_rating"] is not None:
-        roaster_scaled = ((roaster_row["weighted_rating"] - 1) / 3) * 100
+        roaster_scaled = normalized_rating(roaster_row["weighted_rating"])
         roaster_bonus = max(-3.0, min(3.0, (roaster_scaled - 50.0) * 0.09))
     fit = min(100.0, fit + quality_bonus + history_bonus + top_tier_bonus + roaster_bonus)
 
@@ -1115,7 +1124,7 @@ def enrich_candidates_with_analogs(
                 ),
             })
         positive = sorted(
-            (row for row in rows if row["rating_score"] >= 3),
+            (row for row in rows if row["rating_score"] >= RATING_POSITIVE_MIN),
             key=lambda row: (
                 -row["similarity"],
                 -row["rating_score"],
@@ -1573,12 +1582,12 @@ def ground_recommendation(
         history_reason = (
             (
                 f"历史中有 {history_match.get('rated_observations')} 条同庄园但不同豆款的"
-                f"评分记录（加权 {history_match.get('weighted_rating')}/4）；庄园相同"
+                f"评分记录（加权 {history_match.get('weighted_rating')}/{RATING_SCORE_MAX}）；庄园相同"
                 "不等于风味相同，此信号已按低权重计入。"
                 if history_match.get("match_scope") == "farm_only"
                 else
                 f"历史中有 {history_match.get('rated_observations')} 条名称或处理站直接重合的"
-                f"评分记录，加权评分为 {history_match.get('weighted_rating')}/4。"
+                f"评分记录，加权评分为 {history_match.get('weighted_rating')}/{RATING_SCORE_MAX}。"
             )
             if history_match.get("rated_observations")
             else (

@@ -22,6 +22,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO / "scripts"))
 
+from build_coffee_taste_dataset import RATING_LABELS, RATING_SCORE_MAX  # noqa: E402
 from evaluate_coffee_taste_prompts import (  # noqa: E402
     TOP_TIER_MIN_OBSERVATIONS,
     build_evidence_packet,
@@ -29,14 +30,11 @@ from evaluate_coffee_taste_prompts import (  # noqa: E402
 
 PRIVATE = REPO / "private" / "coffee_taste"
 
-# Canonical like-levels, worst to best. Both label families map onto the same
-# 0-4 scale (app Verdict / curated Flomo labels).
+# Canonical like-levels, worst to best, on the 0-3 scale. Legacy labels from
+# both families collapse onto these: the user confirmed Ok == So So ==
+# General, so there are four levels, not five.
 TIERS = [
-    (0, "Disliked", ["Disliked"]),
-    (1, "So So / General", ["So So", "General"]),
-    (2, "Ok", ["Ok", "OK"]),
-    (3, "Liked / Good", ["Liked", "Good"]),
-    (4, "Loved / Great", ["Loved", "Great"]),
+    (score, label) for score, label in enumerate(RATING_LABELS)
 ]
 # Below this an entity/roaster/family cannot meaningfully move the profile.
 THIN_THRESHOLD = 2
@@ -54,7 +52,7 @@ def main() -> int:
     packet = build_evidence_packet(obs)
 
     tier_counts = {}
-    for score, name, _labels in TIERS:
+    for score, name in TIERS:
         tier_counts[name] = sum(1 for o in rated if o["rating"]["score"] == score)
 
     sources = Counter(o["source"] for o in obs)
@@ -127,14 +125,14 @@ def main() -> int:
     print()
     print("| 档位 | 数量 | 占比 |")
     print("|---|---|---|")
-    for _score, name, _labels in reversed(TIERS):
+    for _score, name in reversed(TIERS):
         n = tier_counts[name]
         pct = f"{n / len(rated) * 100:.0f}%" if rated else "—"
         print(f"| {name} | {n} | {pct} |")
     print()
     print("### 烘焙商覆盖")
     print()
-    print("| 烘焙商 | 记录数 | 平均分(0-4) |")
+    print(f"| 烘焙商 | 记录数 | 平均分(0-{RATING_SCORE_MAX}) |")
     print("|---|---|---|")
     for name, n, avg in roasters:
         print(f"| {name} | {n} | {avg} |")

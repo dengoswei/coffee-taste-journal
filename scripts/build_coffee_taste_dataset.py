@@ -50,19 +50,48 @@ APP_ENTITY_OVERRIDES = {
 # never collapse because only curated Flomo entries carry dedupe_key.
 APP_DEDUPE_OVERRIDES: dict[str, str] = {}
 
-# Two label families share this scale: the app Verdict enum
-# (Loved/Liked/Ok/Disliked) and curated Flomo labels (Great/Good/OK/So So/General).
+# Canonical like-level scale, worst to best. Two label families feed it: the
+# app Verdict enum (Loved/Liked/Ok/Disliked) and curated Flomo labels
+# (Great/Good/OK/So So/General). The user confirmed 2026-07-20 that "Ok",
+# "So So" and "General" all mean the same thing to them, so the scale is four
+# levels rather than five, and every legacy label normalizes onto the English
+# app vocabulary. Keeping one vocabulary matters because the tier counts drive
+# the top-tier signal — two spellings of the same tier would split it.
+RATING_LABELS = ("Disliked", "Ok", "Liked", "Loved")
+RATING_SCORE_MIN = 0
+RATING_SCORE_MAX = len(RATING_LABELS) - 1
+# "Positive" means Liked or better; "negative" means Ok or worse. Import these
+# rather than hardcoding 2 / 1 so the scale has a single source of truth.
+RATING_POSITIVE_MIN = 2
+RATING_NEGATIVE_MAX = 1
+
 RATING_SCORES = {
     "Disliked": 0,
-    "General": 1,
+    "Ok": 1,
+    "OK": 1,
     "So So": 1,
-    "Ok": 2,
-    "OK": 2,
-    "Liked": 3,
-    "Good": 3,
-    "Loved": 4,
-    "Great": 4,
+    "General": 1,
+    "Liked": 2,
+    "Good": 2,
+    "Loved": 3,
+    "Great": 3,
 }
+
+# Legacy label -> canonical English label.
+RATING_CANONICAL_LABELS = {
+    label: RATING_LABELS[score] for label, score in RATING_SCORES.items()
+}
+
+
+def canonical_rating_label(label: Any) -> Any:
+    """Return the canonical English label, leaving unknown labels untouched."""
+    return RATING_CANONICAL_LABELS.get(label, label)
+
+
+def normalized_rating(value: float) -> float:
+    """Map a rating (or weighted average) on the 0-3 scale onto 0-100."""
+    span = RATING_SCORE_MAX - RATING_SCORE_MIN
+    return max(0.0, min(100.0, ((value - RATING_SCORE_MIN) / span) * 100))
 
 CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
     "fruit.berry": (
@@ -233,7 +262,7 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
         user_quality_signals = quality_matches([tasting_note]) if substantive else []
         claimed_quality_signals = quality_matches(descriptors)
         details = log.get("details") or {}
-        rating_label = log["verdict"]
+        rating_label = canonical_rating_label(log["verdict"])
         rating_score = RATING_SCORES.get(rating_label)
         rating_limitations = (
             [] if rating_score is not None
@@ -291,7 +320,7 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
         # entered — it just lacks a specific cup behind it. Treat it as an
         # explicit but lower-weight rating rather than discarding it; without
         # this fallback these ratings were silently dropped to weight 0.
-        bean_verdict = coffee.get("verdict")
+        bean_verdict = canonical_rating_label(coffee.get("verdict"))
         bean_score = RATING_SCORES.get(bean_verdict) if bean_verdict else None
         has_bean_rating = bean_score is not None
         observations.append({
@@ -343,7 +372,9 @@ def enrich_flomo(raw: dict[str, Any]) -> dict[str, Any]:
     observation.setdefault("context", {})
     observation.setdefault("user_note", "")
     rating = observation.setdefault("rating", {})
-    label = rating.get("label")
+    label = canonical_rating_label(rating.get("label"))
+    if label is not None:
+        rating["label"] = label
     rating.setdefault("score", RATING_SCORES.get(label))
     rating.setdefault("explicit", label is not None)
     descriptors = observation.setdefault("sensory", {}).setdefault("descriptors", [])
