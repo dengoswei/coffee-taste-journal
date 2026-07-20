@@ -839,3 +839,81 @@ class CoffeeTastePipelineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VocabularyCanonicalizationTests(unittest.TestCase):
+    def test_process_variants_collapse_to_one_bucket(self) -> None:
+        import build_coffee_taste_dataset as builder
+        for raw in ("Washed", "WASHED", "Washed Process", "水洗处理",
+                    "水洗处理 WASHED", "WASHED 水洗", "Fully washed",
+                    "Spring-water cold-fermented washed"):
+            self.assertEqual(builder.canonical_process(raw), "Washed", raw)
+        for raw in ("ANAEROBIC NATURAL", "Anaerobic natural", "Natural anaerobic",
+                    "84小时厌氧日晒", "厌氧日晒 (ANAEROBIC NATURAL)",
+                    "Alchemy anaerobic natural XCI"):
+            self.assertEqual(builder.canonical_process(raw), "Anaerobic Natural", raw)
+        # Carbonic maceration must win over the bare "natural"/"washed" rules.
+        self.assertEqual(
+            builder.canonical_process(
+                "Multi-pass selection of ripest cherries, carbonic maceration "
+                "in glass wine globes, controlled drying and resting"
+            ),
+            "Carbonic Maceration",
+        )
+
+    def test_gesha_spellings_collapse(self) -> None:
+        import build_coffee_taste_dataset as builder
+        for raw in ("Gesha", "Geisha", "GESHA 瑰夏", "瑰夏"):
+            self.assertEqual(builder.canonical_variety(raw), "Gesha", raw)
+        for raw in ("原生种", "原生种 HEIRLOOM"):
+            self.assertEqual(builder.canonical_variety(raw), "Heirloom", raw)
+
+    def test_origin_casing_merges(self) -> None:
+        import build_coffee_taste_dataset as builder
+        self.assertEqual(builder.canonical_origin("PERU"), "Peru")
+        self.assertEqual(builder.canonical_origin("Peru"), "Peru")
+        self.assertEqual(
+            builder.canonical_origin("Colombia / Ethiopia"), "Colombia / Ethiopia"
+        )
+
+    def test_bilingual_farm_keeps_latin_half(self) -> None:
+        import build_coffee_taste_dataset as builder
+        self.assertEqual(
+            builder.strip_redundant_chinese("食叶蚁台地农场 KUKIPATA BELEN"),
+            "KUKIPATA BELEN",
+        )
+        self.assertEqual(
+            builder.strip_redundant_chinese("艾莉娅旖旎 Iria-ini FCS"), "Iria-ini FCS"
+        )
+        # Chinese-only names fall back to the explicit translation table, never
+        # to an empty string.
+        self.assertEqual(builder.strip_redundant_chinese("莓果乐园"), "Berry Paradise")
+        self.assertEqual(builder.strip_redundant_chinese("未知豆名"), "未知豆名")
+
+    def test_chinese_descriptors_translate_and_still_categorize(self) -> None:
+        import build_coffee_taste_dataset as builder
+        self.assertEqual(builder.translate_descriptor("番石榴"), "guava")
+        self.assertEqual(
+            category_matches([builder.translate_descriptor("番石榴")]),
+            ["fruit.tropical"],
+        )
+        self.assertEqual(
+            category_matches([builder.translate_descriptor("红茶感")]), ["tea"]
+        )
+        # Unknown terms pass through untouched rather than being dropped.
+        self.assertEqual(builder.translate_descriptor("某种新风味"), "某种新风味")
+
+    def test_roaster_names_are_never_translated(self) -> None:
+        import build_coffee_taste_dataset as builder
+        payload = builder.coffee_payload({
+            "roaster": "有容乃大",
+            "name": "布拉 卡拉莫 74158",
+            "origin": "ETHIOPIA",
+            "process": "84小时厌氧日晒",
+        })
+        self.assertEqual(payload["roaster"], "有容乃大")
+        self.assertEqual(payload["name"], "Bura Keramo 74158")
+        self.assertEqual(payload["origin"], "Ethiopia")
+        self.assertEqual(payload["process"], "Anaerobic Natural")
+        # The original survives for traceability.
+        self.assertEqual(payload["process_source"], "84小时厌氧日晒")

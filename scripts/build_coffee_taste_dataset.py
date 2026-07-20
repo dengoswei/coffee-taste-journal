@@ -93,6 +93,142 @@ def normalized_rating(value: float) -> float:
     span = RATING_SCORE_MAX - RATING_SCORE_MIN
     return max(0.0, min(100.0, ((value - RATING_SCORE_MIN) / span) * 100))
 
+# --- Vocabulary canonicalization -------------------------------------------
+# Coffee metadata arrives in two languages and several spellings of the same
+# thing. Left alone this fragments the evidence: Gesha/Geisha/瑰夏 split one
+# variety across three buckets, "水洗处理 WASHED" never joins "Washed", and
+# PERU vs Peru collide inside prior_stat_map (which keys on the normalized
+# form, so one row silently overwrites the other). Canonicalizing at ingest
+# fixes the counts and, per the user's 2026-07-20 decision, puts everything
+# except roaster names into English. The original string is preserved
+# alongside as *_source so nothing is lost.
+
+DESCRIPTOR_TRANSLATIONS = {
+    "菠萝": "pineapple",
+    "橙子": "orange",
+    "血橙": "blood orange",
+    "柚子": "pomelo",
+    "葡萄柚": "grapefruit",
+    "黄柠檬": "yellow lemon",
+    "黄桃": "yellow peach",
+    "枇杷": "loquat",
+    "梨": "pear",
+    "红布林": "red plum",
+    "黑布林": "black plum",
+    "黑莓": "blackberry",
+    "蔓越莓": "cranberry",
+    "深色葡萄": "dark grape",
+    "百香果": "passionfruit",
+    "芒果": "mango",
+    "番石榴": "guava",
+    "果酱果干": "jammy dried fruit",
+    "蜂蜜甜": "honey sweetness",
+    "红茶感": "black tea",
+    "熟普": "ripe pu'er",
+}
+
+# Bean and farm names with no Latin half anywhere in the source. Kept as an
+# explicit table rather than transliterated on the fly, because a wrong guess
+# at a producer's name is worse than no translation: these are real people and
+# places. Entries marked "transliteration" still need confirming against the
+# roaster's own Latin spelling.
+NAME_TRANSLATIONS = {
+    "莓果乐园": "Berry Paradise",
+    # Same coffee the app records as "BURA KERAMO 74158" (both map to
+    # entity app_bura_keramo_74158), so this spelling is confirmed.
+    "布拉 卡拉莫 74158": "Bura Keramo 74158",
+    # Transliteration — the Latin spelling of 卡旺基 is unconfirmed. The farm
+    # (Iria-ini FCS, Nyeri, Kenya) is confirmed from the same record.
+    "米莉x卡旺基处理站": "Mili x Kawangi Washing Station",
+    # Transliteration — Peruvian farm, Latin spelling unconfirmed.
+    "赏花庄园": "Shanghua Estate",
+}
+
+VARIETY_CANONICAL = {
+    "geisha": "Gesha",
+    "gesha": "Gesha",
+    "gesha 瑰夏": "Gesha",
+    "瑰夏": "Gesha",
+    "原生种": "Heirloom",
+    "原生种 heirloom": "Heirloom",
+    "heirloom": "Heirloom",
+    "sl9*": "SL9",
+}
+
+# Checked in order; first hit wins, so put the specific patterns first.
+PROCESS_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("carbonic", "maceration"), "Carbonic Maceration"),
+    (("anaerobic washed", "厌氧水洗"), "Anaerobic Washed"),
+    (("anaerobic", "厌氧", "anoxic"), "Anaerobic Natural"),
+    (("semi-washed", "semi washed", "半水洗"), "Semi-washed"),
+    (("honey", "蜜处理"), "Honey"),
+    (("washed", "水洗"), "Washed"),
+    (("natural", "日晒"), "Natural"),
+    (("blend", "拼配"), "Blend"),
+)
+
+
+def translate_descriptor(term: str) -> str:
+    """Map a known Chinese flavor term to its English equivalent."""
+    stripped = str(term).strip()
+    return DESCRIPTOR_TRANSLATIONS.get(stripped, stripped)
+
+
+def canonical_variety(value: str) -> str:
+    stripped = str(value or "").strip()
+    if not stripped:
+        return ""
+    return VARIETY_CANONICAL.get(normalized_text(stripped), stripped)
+
+
+def canonical_process(value: str) -> str:
+    """Bucket a free-form process string into a coarse canonical label.
+
+    Deliberately coarse: the point is to make process_stats countable, not to
+    preserve every detail. The full original stays in coffee.process_source.
+    """
+    stripped = str(value or "").strip()
+    if not stripped:
+        return ""
+    haystack = normalized_text(stripped)
+    for needles, canonical in PROCESS_RULES:
+        if any(needle in haystack for needle in needles):
+            return canonical
+    return stripped
+
+
+def canonical_origin(value: str) -> str:
+    stripped = str(value or "").strip()
+    if not stripped:
+        return ""
+    # Multi-origin blends keep their separator but normalize each side.
+    if "/" in stripped:
+        return " / ".join(
+            part.strip().title() for part in stripped.split("/") if part.strip()
+        )
+    return stripped.title()
+
+
+def strip_redundant_chinese(value: str) -> str:
+    """Drop the Chinese half of a bilingual field when the Latin half stands alone.
+
+    Farm and estate names are routinely written as "食叶蚁台地农场 KUKIPATA
+    BELEN" — the Latin part is the name used everywhere else, so keeping both
+    just makes identity matching noisier.
+    """
+    stripped = str(value or "").strip()
+    if not stripped:
+        return ""
+    if stripped in NAME_TRANSLATIONS:
+        return NAME_TRANSLATIONS[stripped]
+    latin = re.sub(r"[㐀-鿿]+", " ", stripped)
+    latin = re.sub(r"\s+", " ", latin).strip(" -–—/|,")
+    # Require something substantial, not a stray initial.
+    if len(re.sub(r"[^A-Za-z]", "", latin)) >= 3:
+        return latin
+    return stripped
+
+
 CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
     "fruit.berry": (
         "berry", "berries", "blackberry", "blueberry", "cranberry", "raspberry",
@@ -236,14 +372,33 @@ def app_entity_id(coffee: dict[str, Any]) -> str:
 
 
 def coffee_payload(coffee: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "roaster": coffee.get("roaster") or "",
-        "name": coffee.get("name") or "",
-        "origin": coffee.get("origin") or "",
-        "farm": coffee.get("farm") or "",
-        "variety": coffee.get("variety") or "",
-        "process": coffee.get("process") or "",
+    """Normalize coffee metadata to the canonical vocabulary.
+
+    Roaster is left verbatim on purpose (user decision 2026-07-20): a roaster's
+    name is its identity, and translating 有容乃大 would make it unfindable.
+    Everything else is canonicalized so the stats count the same thing once.
+    """
+    payload = {
+        "roaster": (coffee.get("roaster") or "").strip(),
+        "name": strip_redundant_chinese(coffee.get("name") or ""),
+        "origin": canonical_origin(coffee.get("origin") or ""),
+        "farm": strip_redundant_chinese(coffee.get("farm") or ""),
+        "variety": canonical_variety(coffee.get("variety") or ""),
+        "process": canonical_process(coffee.get("process") or ""),
     }
+    # Keep the originals whenever canonicalization actually changed something,
+    # so a surprising bucket can always be traced back to the source string.
+    for field, original in (
+        ("name", coffee.get("name")),
+        ("origin", coffee.get("origin")),
+        ("farm", coffee.get("farm")),
+        ("variety", coffee.get("variety")),
+        ("process", coffee.get("process")),
+    ):
+        original = (original or "").strip()
+        if original and original != payload[field]:
+            payload[f"{field}_source"] = original
+    return payload
 
 
 def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
@@ -258,7 +413,10 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
         logs_by_coffee[coffee["id"]].append(log)
         tasting_note = (log.get("tastingNote") or "").strip()
         substantive = normalized_text(tasting_note) not in PLACEHOLDER_NOTES
-        descriptors = [str(item).strip() for item in coffee.get("flavorNotes", []) if str(item).strip()]
+        descriptors = [
+            translate_descriptor(item)
+            for item in coffee.get("flavorNotes", []) if str(item).strip()
+        ]
         user_quality_signals = quality_matches([tasting_note]) if substantive else []
         claimed_quality_signals = quality_matches(descriptors)
         details = log.get("details") or {}
@@ -315,7 +473,10 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
     for coffee in store.get("coffees", []):
         if logs_by_coffee.get(coffee["id"]):
             continue
-        descriptors = [str(item).strip() for item in coffee.get("flavorNotes", []) if str(item).strip()]
+        descriptors = [
+            translate_descriptor(item)
+            for item in coffee.get("flavorNotes", []) if str(item).strip()
+        ]
         # A bean-level verdict with no brew log is still a real rating the user
         # entered — it just lacks a specific cup behind it. Treat it as an
         # explicit but lower-weight rating rather than discarding it; without
@@ -371,15 +532,20 @@ def enrich_flomo(raw: dict[str, Any]) -> dict[str, Any]:
     observation.setdefault("source", "flomo_curated")
     observation.setdefault("context", {})
     observation.setdefault("user_note", "")
+    # Curated entries go through the same canonicalization as app records,
+    # otherwise "Fully washed" and "Washed" stay separate buckets.
+    observation["coffee"] = coffee_payload(observation.get("coffee") or {})
     rating = observation.setdefault("rating", {})
     label = canonical_rating_label(rating.get("label"))
     if label is not None:
         rating["label"] = label
     rating.setdefault("score", RATING_SCORES.get(label))
     rating.setdefault("explicit", label is not None)
-    descriptors = observation.setdefault("sensory", {}).setdefault("descriptors", [])
-    observation["sensory"].setdefault("descriptor_origin", "user_note_or_menu_claim")
-    observation["sensory"]["descriptor_categories"] = category_matches(descriptors)
+    sensory = observation.setdefault("sensory", {})
+    descriptors = [translate_descriptor(item) for item in sensory.setdefault("descriptors", [])]
+    sensory["descriptors"] = descriptors
+    sensory.setdefault("descriptor_origin", "user_note_or_menu_claim")
+    sensory["descriptor_categories"] = category_matches(descriptors)
     evidence = observation.setdefault("evidence", {})
     evidence.setdefault("rating_weight", 0.75 if rating.get("explicit") else 0.0)
     evidence.setdefault("descriptor_weight", 0.55 if descriptors else 0.0)
