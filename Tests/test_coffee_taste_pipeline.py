@@ -968,3 +968,98 @@ class HeadlineGuardrailTests(unittest.TestCase):
         }
         violations = validate_model_narrative(summary, contract, {})
         self.assertIn("unhedged_undersampled_dimension", violations)
+
+
+class FailLoudlyTests(unittest.TestCase):
+    """Every silent regression so far had the same shape: a section quietly
+    emptied while the evidence to fill it existed. These prove the pipeline now
+    says so instead."""
+
+    def _codes(self, contract: dict, severity: str | None = None) -> set[str]:
+        return {
+            row["code"] for row in contract["diagnostics"]
+            if severity is None or row["severity"] == severity
+        }
+
+    def test_import_rejects_a_threshold_off_the_rating_scale(self) -> None:
+        original = evaluator.TOP_TIER_SCORE
+        try:
+            evaluator.TOP_TIER_SCORE = evaluator.RATING_SCORE_MAX + 1
+            with self.assertRaises(evaluator.ContractIntegrityError):
+                evaluator._self_check_thresholds()
+        finally:
+            evaluator.TOP_TIER_SCORE = original
+        evaluator._self_check_thresholds()
+
+    def test_import_rejects_a_share_threshold_outside_0_100(self) -> None:
+        original = evaluator.LIKELY_FAMILY_MIN_SHARE
+        try:
+            # This is literally the old bug: 2.8 was a raw score on a 1-4 scale,
+            # meaningless once compared against a 0-100 share.
+            evaluator.LIKELY_FAMILY_MIN_SHARE = 2.8
+            evaluator._self_check_thresholds()
+        finally:
+            evaluator.LIKELY_FAMILY_MIN_SHARE = original
+        # 2.8 is technically inside 0-100, so the import check cannot catch it —
+        # the contract diagnostic below is what covers this case.
+
+    def test_reports_the_original_regression_as_an_error(self) -> None:
+        observations = [
+            observation(f"cit_{i}", name=f"Citrus {i}", score=score,
+                        categories=["fruit.citrus"])
+            for i, score in enumerate([3, 3, 2, 2, 2, 2])
+        ]
+        healthy = build_profile_contract(observations)
+        # A warning about the missing negative tier is expected here; what must
+        # not appear is an error, because nothing is miscalibrated yet.
+        self.assertEqual(self._codes(healthy, "error"), set())
+        self.assertTrue(healthy["likely_sensory_families"])
+
+        original = evaluator.LIKELY_FAMILY_MIN_SHARE
+        try:
+            # Simulate the miscalibration: a threshold no family can reach.
+            evaluator.LIKELY_FAMILY_MIN_SHARE = 99.9
+            broken = build_profile_contract(observations)
+        finally:
+            evaluator.LIKELY_FAMILY_MIN_SHARE = original
+        self.assertEqual(broken["likely_sensory_families"], [])
+        self.assertIn(
+            "likely_families_empty_despite_evidence", self._codes(broken, "error")
+        )
+        finding = next(
+            row for row in broken["diagnostics"]
+            if row["code"] == "likely_families_empty_despite_evidence"
+        )
+        # The message must name the actual numbers, so the fix is obvious.
+        self.assertIn("best_share", finding["detail"])
+        self.assertGreater(finding["detail"]["positive_observations"], 0)
+
+    def test_thin_data_is_not_reported_as_an_error(self) -> None:
+        # Two observations legitimately produce no likely families. That is a
+        # data state, not a bug, and must stay quiet.
+        contract = build_profile_contract([
+            observation("a", name="A", score=2, categories=["fruit.citrus"]),
+            observation("b", name="B", score=1, categories=["fruit.pome"]),
+        ])
+        self.assertEqual(contract["likely_sensory_families"], [])
+        self.assertEqual(self._codes(contract, "error"), set())
+
+    def test_unmapped_rating_label_is_an_error(self) -> None:
+        broken = observation("weird", name="Weird", score=2, categories=["fruit.citrus"])
+        broken["rating"] = {"label": "Fantastic", "score": None, "explicit": True}
+        contract = build_profile_contract([
+            broken,
+            *[
+                observation(f"ok_{i}", name=f"Ok {i}", score=2, categories=["fruit.citrus"])
+                for i in range(5)
+            ],
+        ])
+        self.assertIn("unmapped_rating_labels", self._codes(contract, "error"))
+
+    def test_missing_negative_samples_is_a_warning(self) -> None:
+        contract = build_profile_contract([
+            observation(f"pos_{i}", name=f"Pos {i}", score=3, categories=["fruit.citrus"])
+            for i in range(6)
+        ])
+        self.assertIn("no_negative_observations", self._codes(contract, "warning"))
+        self.assertNotIn("no_negative_observations", self._codes(contract, "error"))

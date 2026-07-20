@@ -23,6 +23,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO / "scripts"))
 
+from build_coffee_taste_dataset import RATING_SCORE_MAX  # noqa: E402
 from evaluate_coffee_taste_prompts import (  # noqa: E402
     TOP_TIER_MIN_OBSERVATIONS,
     build_evidence_packet,
@@ -54,6 +55,12 @@ def main() -> int:
         "--skip-tests",
         action="store_true",
         help="Skip the unit-test gate (not recommended).",
+    )
+    parser.add_argument(
+        "--ignore-integrity-errors",
+        action="store_true",
+        help="Write the report even when contract diagnostics report an error. "
+             "Only for confirmed false positives.",
     )
     args = parser.parse_args()
 
@@ -97,6 +104,32 @@ def main() -> int:
     observations = dataset["observations"]
     contract = build_profile_contract(observations)
     packet = build_evidence_packet(observations)
+
+    # Fail loudly. A profile section that empties out because a threshold is
+    # miscalibrated looks exactly like one that empties out because the data is
+    # thin — and the report renders either way. Refuse to produce a report the
+    # pipeline itself believes is broken.
+    diagnostics = contract.get("diagnostics", [])
+    errors = [row for row in diagnostics if row["severity"] == "error"]
+    warnings = [row for row in diagnostics if row["severity"] == "warning"]
+    for row in errors:
+        print(f"ERROR   [{row['code']}] {row['message']}", file=sys.stderr)
+        if row.get("detail"):
+            print(f"        detail: {json.dumps(row['detail'], ensure_ascii=False)}",
+                  file=sys.stderr)
+    for row in warnings:
+        print(f"WARNING [{row['code']}] {row['message']}", file=sys.stderr)
+    if errors:
+        print(
+            f"\nRefusing to write a profile with {len(errors)} integrity "
+            "error(s). These indicate a bug in the pipeline, not thin data; "
+            "fix the threshold or the ingest path and re-run. "
+            "Pass --ignore-integrity-errors only if you have confirmed the "
+            "finding is a false positive.",
+            file=sys.stderr,
+        )
+        if not args.ignore_integrity_errors:
+            return 3
     cases_path = PRIVATE / "eval_cases.json"
     assertions = (
         json.loads(cases_path.read_text()).get("profile_assertions", {})
@@ -145,31 +178,34 @@ def main() -> int:
         "",
         *[f"- {reason}" for reason in kept.get("confidence_reasons", [])],
         "",
-        "### 已知偏好（有第一人称文字直接支持）",
-        "",
-        *(
-            [
-                f"- {item['statement']}（置信度 {item['confidence']}；"
-                f"证据：{', '.join(item['evidence_ids'])}）"
-                for item in contract["known_preferences_allowed"]
-            ] or ["- 暂无"]
-        ),
-        "",
-        "### 高分层集中信号（Great/Loved 层，评分集中是最强的情感信号）",
+        "### 主证据：高分层集中信号（Loved 层的风味家族重合度）",
         "",
         *(
             [
                 f"- {row['category']}：{row['top_tier_count']} 支高分豆带此家族描述"
                 for row in top_tier
-            ] or ["- 暂无（高分层不足 2 支重合家族）"]
+            ] or [f"- 暂无（高分层不足 {TOP_TIER_MIN_OBSERVATIONS} 支重合家族）"]
         ),
         "",
-        "### 可能偏好（评分与风味家族的相关性，多为卖方/混合来源描述）",
+        "### 主证据：评分与风味家族的相关性",
         "",
         *[
-            f"- {fam['label']}（{fam['observations']} 条记录，加权评分 {fam['weighted_rating']}/4）"
+            f"- {fam['label']}（{fam['observations']} 条记录，"
+            f"加权评分 {fam['weighted_rating']}/{RATING_SCORE_MAX}）"
             for fam in contract["likely_sensory_families"]
         ],
+        "",
+        "### 笔记线索（不是偏好结论）",
+        "",
+        "> 第一人称笔记样本极少，只作为「为什么」的候选假说保留，不参与任何偏好判定。",
+        "",
+        *(
+            [
+                f"- {row['topic']}（{row['note_count']} 条；"
+                f"证据：{', '.join(row['evidence_ids'])}）"
+                for row in contract.get("note_observations", [])
+            ] or ["- 暂无"]
+        ),
         "",
         "### 外在相关性（只是相关，不当作因果偏好）",
         "",
@@ -182,6 +218,11 @@ def main() -> int:
         "### 数据质量与局限",
         "",
         *[f"- {limitation}" for limitation in contract["data_quality"]["limitations"]],
+        *(
+            ["", "### 完整性告警", ""] +
+            [f"- [{row['code']}] {row['message']}" for row in warnings]
+            if warnings else []
+        ),
         "",
         "### 杯感结构（逐维状态）",
         "",
@@ -204,7 +245,8 @@ def main() -> int:
         "rated_observations": stats["rated_observations"],
         "collapsed_duplicates": stats["collapsed_duplicates"],
         "top_tier_families": top_tier,
-        "known_preferences": len(contract["known_preferences_allowed"]),
+        "diagnostics": diagnostics,
+        "note_observations": len(contract.get("note_observations", [])),
         "likely_families": len(contract["likely_sensory_families"]),
     }, ensure_ascii=False, indent=2))
     return 0

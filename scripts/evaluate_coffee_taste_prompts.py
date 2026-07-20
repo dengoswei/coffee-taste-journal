@@ -20,6 +20,7 @@ from build_coffee_taste_dataset import (
     RATING_NEGATIVE_MAX,
     RATING_POSITIVE_MIN,
     RATING_SCORE_MAX,
+    RATING_SCORE_MIN,
     category_matches,
     normalized_rating,
     normalized_text,
@@ -47,6 +48,54 @@ NARRATIVE_LENGTH_RANGE = (90, 180)
 # as a likely preference. Kept as a share, not a raw score, so it does not
 # silently break when the rating scale changes — it did exactly that once.
 LIKELY_FAMILY_MIN_SHARE = 60.0
+# Minimum observations before a family is eligible at all.
+LIKELY_FAMILY_MIN_OBSERVATIONS = 3
+
+
+class ContractIntegrityError(AssertionError):
+    """A profile section is empty for a reason that cannot be the data."""
+
+
+def _self_check_thresholds() -> None:
+    """Fail at import if a threshold cannot be satisfied on the current scale.
+
+    Every silent regression in this pipeline so far has had the same shape: a
+    constant calibrated against one rating scale, compared against a value on
+    another. Nothing raises — a section just quietly empties. These checks make
+    that class of mistake impossible to ship, because the module will not load.
+    """
+    share_bounded = {
+        "LIKELY_FAMILY_MIN_SHARE": LIKELY_FAMILY_MIN_SHARE,
+        "FRONTIER_MIN_FIT": FRONTIER_MIN_FIT,
+    }
+    for name, value in share_bounded.items():
+        if not 0.0 <= value <= 100.0:
+            raise ContractIntegrityError(
+                f"{name}={value} is compared against a 0-100 share but lies "
+                "outside that range."
+            )
+    score_bounded = {
+        "TOP_TIER_SCORE": TOP_TIER_SCORE,
+        "RATING_POSITIVE_MIN": RATING_POSITIVE_MIN,
+        "RATING_NEGATIVE_MAX": RATING_NEGATIVE_MAX,
+    }
+    for name, value in score_bounded.items():
+        if not RATING_SCORE_MIN <= value <= RATING_SCORE_MAX:
+            raise ContractIntegrityError(
+                f"{name}={value} is compared against a raw rating score but "
+                f"lies outside the {RATING_SCORE_MIN}-{RATING_SCORE_MAX} scale."
+            )
+    if normalized_rating(RATING_SCORE_MAX) != 100.0:
+        raise ContractIntegrityError(
+            "normalized_rating does not map the top of the scale to 100; "
+            "every share-based threshold is therefore unreachable."
+        )
+    low, high = NARRATIVE_LENGTH_RANGE
+    if not 0 < low < high:
+        raise ContractIntegrityError(
+            f"NARRATIVE_LENGTH_RANGE={NARRATIVE_LENGTH_RANGE} is not a usable band."
+        )
+
 # Sharing a farm is much weaker evidence than sharing the actual coffee: the
 # same farm sells different varieties/processes that taste very different
 # (e.g. Las Margaritas Sudan Rume washed vs a natural Gesha from the same
@@ -422,6 +471,126 @@ def correlation_statements(
     ]
 
 
+def contract_diagnostics(
+    observations: list[dict[str, Any]],
+    packet: dict[str, Any],
+    likely_families: list[dict[str, Any]],
+    top_tier_signals: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Distinguish "thin data" from "broken gate" for every derived section.
+
+    A section that is empty because the user has only tasted five coffees is
+    correct and should render as such. A section that is empty while the
+    evidence to fill it plainly exists means a threshold is miscalibrated —
+    and that is the failure this pipeline keeps hitting, always silently. Each
+    check below therefore fires only when the preconditions for a non-empty
+    section are met, so an "error" here really is a bug and not a data state.
+
+    Severity "error" is meant to stop the caller; "warning" is meant to be
+    shown to the user alongside the report.
+    """
+    findings: list[dict[str, Any]] = []
+    rated = [
+        item for item in observations
+        if item["rating"].get("score") is not None
+    ]
+    positives = [
+        item for item in rated
+        if item["rating"]["score"] >= RATING_POSITIVE_MIN
+    ]
+    eligible_families = [
+        row for row in packet["category_stats"]
+        if row["observations"] >= LIKELY_FAMILY_MIN_OBSERVATIONS
+        and row["weighted_rating"] is not None
+    ]
+
+    if eligible_families and not likely_families and len(positives) >= 5:
+        best = max(
+            normalized_rating(row["weighted_rating"]) for row in eligible_families
+        )
+        findings.append({
+            "code": "likely_families_empty_despite_evidence",
+            "severity": "error",
+            "message": (
+                f"{len(eligible_families)} flavor families meet the observation "
+                f"minimum and {len(positives)} observations are rated positive, "
+                f"yet none cleared LIKELY_FAMILY_MIN_SHARE={LIKELY_FAMILY_MIN_SHARE}. "
+                f"Best family reaches {best:.1f}. The gate is almost certainly "
+                "calibrated against a different rating scale."
+            ),
+            "detail": {
+                "eligible_families": len(eligible_families),
+                "positive_observations": len(positives),
+                "best_share": round(best, 1),
+                "threshold": LIKELY_FAMILY_MIN_SHARE,
+            },
+        })
+
+    top_tier_observations = [
+        item for item in rated if item["rating"]["score"] >= TOP_TIER_SCORE
+    ]
+    if len(top_tier_observations) >= TOP_TIER_MIN_OBSERVATIONS * 2 and not top_tier_signals:
+        findings.append({
+            "code": "top_tier_signals_empty_despite_top_tier_observations",
+            "severity": "error",
+            "message": (
+                f"{len(top_tier_observations)} observations sit in the top tier "
+                "but no family reached the concentration threshold. Expected at "
+                "least one unless every top-tier coffee has disjoint descriptors."
+            ),
+            "detail": {"top_tier_observations": len(top_tier_observations)},
+        })
+
+    unmapped = [
+        item["id"] for item in observations
+        if item["rating"].get("label") and item["rating"].get("score") is None
+    ]
+    if unmapped:
+        findings.append({
+            "code": "unmapped_rating_labels",
+            "severity": "error",
+            "message": (
+                f"{len(unmapped)} observations carry a rating label that maps to "
+                "no score, so they are silently excluded from every statistic."
+            ),
+            "detail": {"observation_ids": unmapped[:10]},
+        })
+
+    uncategorized = [
+        item["id"] for item in observations
+        if item["sensory"].get("descriptors")
+        and not item["sensory"].get("descriptor_categories")
+    ]
+    if rated and len(uncategorized) > len(observations) * 0.2:
+        findings.append({
+            "code": "many_descriptors_match_no_family",
+            "severity": "warning",
+            "message": (
+                f"{len(uncategorized)} of {len(observations)} observations have "
+                "descriptors that match no flavor family — the lexicon is likely "
+                "missing terms, and those coffees contribute nothing to the "
+                "family statistics."
+            ),
+            "detail": {"observation_ids": uncategorized[:10]},
+        })
+
+    if rated and not any(
+        item["rating"]["score"] <= RATING_NEGATIVE_MAX for item in rated
+    ):
+        findings.append({
+            "code": "no_negative_observations",
+            "severity": "warning",
+            "message": (
+                "No observation sits at or below the negative threshold, so the "
+                "profile describes only the upper part of the taste space and "
+                "cannot locate a lower bound."
+            ),
+            "detail": {},
+        })
+
+    return findings
+
+
 def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]:
     packet = build_evidence_packet(observations)
     clarity_ids = evidence_ids_for_signal(observations, {"clarity_positive"})
@@ -663,6 +832,9 @@ def build_profile_contract(observations: list[dict[str, Any]]) -> dict[str, Any]
             *correlation_statements(packet["variety_stats"], "品种", limit=2),
         ],
         "top_tier_signals": top_tier_signals,
+        "diagnostics": contract_diagnostics(
+            observations, packet, likely_families, top_tier_signals,
+        ),
         "likely_preferences_allowed": [
             *[signal["statement"] for signal in top_tier_signals],
             *[
@@ -2565,3 +2737,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# Runs at import: a miscalibrated threshold must break the module, not a report.
+_self_check_thresholds()

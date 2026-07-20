@@ -13,12 +13,56 @@ invent taste claims the pipeline can't back.
 
 Core principle: **every number and preference statement comes from the
 deterministic code; you author only the emotive language, and only within
-the guardrails.** The user rarely writes tasting notes — Great/Loved rating
-concentration is the primary preference signal, not notes.
+the guardrails.**
 
 Data lives under `private/coffee_taste/` (gitignored — never commit anything
 from there). Read `references/data-schemas.md` before writing observation or
 candidate JSON.
+
+## Ratings are the evidence. Notes are not.
+
+The preference signal is the **rating distribution over what the user
+actually drank** — which flavor families concentrate in the Loved tier, how
+families correlate with score across all observations. Never derive a stated
+preference from the user's written notes.
+
+This is a decision the user made on 2026-07-20, and the reasoning generalizes:
+extracting "you prefer X" from someone's own words assumes they can articulate
+coffee evaluation in the vocabulary the model expects. That holds for a trained
+taster. It does not hold for most people, including this user, who writes notes
+rarely and casually. Here it had produced three high-confidence "known
+preferences" resting on three notes, one of which was a single cup of SAVAGE
+COFFEES RADIANCE that scored Ok the next day on the same recipe — an
+in-the-moment reaction to one brew, promoted to a stable trait.
+
+So: `known_preferences_allowed` is always empty by design. Notes survive as
+`note_observations` (topic + evidence ids, no statement, no confidence) and are
+worth mentioning as *hypotheses about why*, explicitly marked as n=1 or n=2 —
+never above the rating evidence.
+
+**But the ratings are not a neutral sample, and you must say so.** The user
+buys what they expect to like, so the distribution is heavily positive
+(currently 0 Disliked, 67% Liked) and self-selected. It reliably answers
+"among beans you'd buy, which suit you better"; it cannot answer "where is
+your lower bound". That is an argument for logging negatives, not for going
+back to notes. When a bean disappoints, getting it recorded is worth more
+than ten more Liked entries.
+
+## Never paper over an integrity error
+
+`refresh_profile.py` exits **3** and writes nothing when the contract's
+diagnostics contain an error. That is deliberate: this pipeline's recurring
+failure mode is a section going quietly blank because a threshold was
+calibrated against an older rating scale, which is indistinguishable from a
+section that is blank because the data is thin. The diagnostics separate the
+two — an error only fires when the evidence to fill the section demonstrably
+exists.
+
+When you hit one: read the `detail` payload, which names the actual counts and
+the threshold, and fix the cause. Do not reach for `--ignore-integrity-errors`
+to get a report out, and never hand the user a profile produced with it
+without saying so. Warnings (thin roasters, no negative samples, unmapped
+descriptors) do not block; surface them alongside the report.
 
 ## Always state the evidence base
 
