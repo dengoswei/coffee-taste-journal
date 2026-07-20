@@ -68,6 +68,11 @@ CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
     "fruit.berry": (
         "berry", "berries", "blackberry", "blueberry", "cranberry", "raspberry",
         "strawberry", "redcurrant", "blackcurrant", "elderberry", "mulberry",
+        # Pomegranate is WCR "other fruit"; its tart red-fruit character sits
+        # closest to this family. Deliberately English-only: CJK matching is
+        # substring-based, so adding 石榴 would also match 番石榴 (guava,
+        # already mapped to fruit.tropical).
+        "pomegranate",
         "莓", "覆盆子", "草莓", "蓝莓", "蔓越莓", "黑莓", "红醋栗", "黑醋栗", "桑葚",
     ),
     "fruit.citrus": (
@@ -85,8 +90,8 @@ CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
         "荔枝", "木瓜",
     ),
     "fruit.dried": (
-        "raisin", "dried", "date", "prune", "fruit leather", "果干", "葡萄干",
-        "椰枣", "西梅",
+        "raisin", "dried", "date", "prune", "fruit leather", "fig", "figs",
+        "果干", "葡萄干", "椰枣", "西梅", "无花果",
     ),
     "fruit.grape": (
         "grape", "grapes", "concord", "wine", "葡萄", "葡萄酒", "红酒",
@@ -98,9 +103,11 @@ CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
         "melon", "honeydew", "watermelon", "rock melon", "哈密瓜", "甜瓜", "西瓜",
     ),
     "floral": (
-        "floral", "jasmine", "honeysuckle", "hibiscus", "rose", "lavender",
-        "chamomile", "flower", "花香", "茉莉", "金银花", "玫瑰", "薰衣草",
-        "洋甘菊",
+        "floral", "florals", "jasmine", "honeysuckle", "hibiscus", "rose",
+        "lavender", "chamomile", "flower", "flowers", "blossom",
+        # No bare 花: CJK matching is substring-based and 花 also appears in
+        # 无花果 (fig) and 花生 (peanut).
+        "花香", "茉莉", "金银花", "玫瑰", "薰衣草", "洋甘菊", "牡丹",
     ),
     "tea": (
         "tea", "earl grey", "pu'er", "puer", "black tea", "green tea", "oolong",
@@ -280,17 +287,26 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
         if logs_by_coffee.get(coffee["id"]):
             continue
         descriptors = [str(item).strip() for item in coffee.get("flavorNotes", []) if str(item).strip()]
+        # A bean-level verdict with no brew log is still a real rating the user
+        # entered — it just lacks a specific cup behind it. Treat it as an
+        # explicit but lower-weight rating rather than discarding it; without
+        # this fallback these ratings were silently dropped to weight 0.
+        bean_verdict = coffee.get("verdict")
+        bean_score = RATING_SCORES.get(bean_verdict) if bean_verdict else None
+        has_bean_rating = bean_score is not None
         observations.append({
             "id": f"app_exposure_{coffee['id'].lower()}",
             "entity_id": app_entity_id(coffee),
-            "source": "app_coffee_exposure",
+            "source": (
+                "app_coffee_verdict" if has_bean_rating else "app_coffee_exposure"
+            ),
             "source_ref": f"{source_path}#coffees/{coffee['id']}",
             "date": None,
             "coffee": coffee_payload(coffee),
             "rating": {
-                "label": None,
-                "score": None,
-                "explicit": False,
+                "label": bean_verdict if has_bean_rating else None,
+                "score": bean_score,
+                "explicit": has_bean_rating,
             },
             "sensory": {
                 "descriptors": descriptors,
@@ -302,10 +318,18 @@ def parse_app(store: dict[str, Any], source_path: Path) -> list[dict[str, Any]]:
             "user_note": coffee.get("notes") or "",
             "context": {},
             "evidence": {
-                "rating_weight": 0.0,
-                "descriptor_weight": 0.2,
+                "rating_weight": 0.6 if has_bean_rating else 0.0,
+                "descriptor_weight": 0.35 if has_bean_rating else 0.2,
                 "substantive_first_person_note": False,
-                "limitations": ["Exposure only; no brew-level rating."],
+                "limitations": (
+                    [
+                        "Bean-level verdict with no brew log; no specific cup "
+                        "or brew parameters behind this rating.",
+                        "Flavor descriptors come from coffee metadata, not "
+                        "confirmed perception.",
+                    ] if has_bean_rating
+                    else ["Exposure only; no brew-level rating."]
+                ),
             },
             "provenance_refs": [f"app:{coffee['id']}"],
         })
