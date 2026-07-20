@@ -67,8 +67,8 @@ RATING_SCORES = {
 CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
     "fruit.berry": (
         "berry", "berries", "blackberry", "blueberry", "cranberry", "raspberry",
-        "strawberry", "redcurrant", "blackcurrant", "elderberry", "莓", "覆盆子",
-        "草莓", "蓝莓", "蔓越莓", "黑莓", "红醋栗", "黑醋栗",
+        "strawberry", "redcurrant", "blackcurrant", "elderberry", "mulberry",
+        "莓", "覆盆子", "草莓", "蓝莓", "蔓越莓", "黑莓", "红醋栗", "黑醋栗", "桑葚",
     ),
     "fruit.citrus": (
         "citrus", "orange", "tangerine", "mandarin", "lemon", "lime", "grapefruit",
@@ -103,8 +103,8 @@ CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
         "洋甘菊",
     ),
     "tea": (
-        "tea", "earl grey", "pu'er", "puer", "black tea", "green tea", "红茶",
-        "绿茶", "伯爵茶", "普洱", "熟普",
+        "tea", "earl grey", "pu'er", "puer", "black tea", "green tea", "oolong",
+        "红茶", "绿茶", "伯爵茶", "普洱", "熟普", "乌龙", "白茶",
     ),
     "sweet.browning": (
         "honey", "sugar", "caramel", "molasses", "toffee", "brown sugar", "jam",
