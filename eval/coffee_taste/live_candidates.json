@@ -1,17 +1,372 @@
 {
-  "schema_version": 1,
-  "checked_at": "2026-07-19",
-  "purpose": "User-provided live shortlist (chat message 2026-07-19). Descriptors keep the seller's original Chinese wording plus direct English glosses for lexicon matching; glosses add no new claims.",
+  "schema_version": 2,
+  "checked_at": "2026-07-20",
+  "purpose": "User-provided live shortlist rebuilt ENTIRELY from the authoritative 16-row CSV (candidates.csv, user-declared source of truth 2026-07-20). Replaces all prior candidate data. Descriptors keep the seller's original Chinese wording plus English glosses for lexicon matching; glosses add no new claims.",
   "curation_notes": [
-    "Roaster attribution corrected by the user 2026-07-19: block 1 = Mirra (Banko Taratu, Alina Solano SL9, Acacia Pacamara, Acacia Gesha); block 2 = Hatch (Cerro Azul mixed washed Gesha, Esmeralda Red Noria 5, Fellow Gesha); block 3 = Tanat (Margaritas natural Gesha, Sudan Rume, Acacia Hills Gesha, Jhon Saenz SL9). History spelling 'Tanant' unified to 'Tanat' (same roaster, one-letter variance in the curated flomo entry).",
-    "Availability is assumed in_stock as of 2026-07-19 because the user supplied these as current purchase options; no prices provided, only pack sizes.",
-    "Historical-overlap notes referencing app_* entities are informational only; the app export is absent on this machine (flomo-only dataset).",
-    "2026-07-19 update: user reported liking Sudan Rume from FriedHats and Tanat (good~great); both moved to rated history. Added Hatch Santamaria Panama Geisha and FriedHats Colombia Sudan Rume as candidates. The FriedHats Colombia Sudan Rume is a repurchase-type candidate (known-good), not a discovery."
+    "Source: candidates.csv (16 rows), user said '用这份 cvs 数据, 这个是准确的' (2026-07-20). Every candidate maps 1:1 to a CSV row.",
+    "Two data errors from the prior list are corrected here: Santamaria Estate altitude is BLANK per the label (prior invented '1550-1950'); Acacia Pacamara flavor is 'Tropical soursop 刺果番荔枝' (prior wrote 'lychee').",
+    "Roaster stored short (Subtext/FriedHats/Hatch/Mirra/Tanat) to match rated-history spelling for the roaster-affinity bonus; roaster_full keeps the CSV's full name incl. country. Tanat = Tanat Coffee / Kawa Coffee (France).",
+    "Two candidates are also rated history (both Great, 复购型已知好豆): live_friedhats_las_margaritas_sudan_rume and live_tanat_las_margaritas_sudan_rume_natural. Kept as candidates, flagged — not dropped.",
+    "Seller: all 16 are listed via Urlicht Coffee / 原光咖啡 (转售/代购渠道).",
+    "accolades: structured competition/quality provenance (Copa de Oro, COE, Tanzania PCA). Extrinsic, human-judgment only — NOT scored by candidate_prior. Same stance as region/estate reputation: recorded, not fed into fit.",
+    "provenance_reputation: estate/region tags from references/prestige-regions-estates.md (Tier 1 estate, Tier 2-B estate, Tier 2-A region allowlist). Also extrinsic, scored:false. Unlisted origins/estates carry an empty list = null (the normal state, not a demerit). Note CGLE farms sit in Valle del Cauca, which is NOT an A-list department, so those carry an estate tag but no region tag."
   ],
   "candidates": [
     {
+      "id": "live_subtext_maria_delgado",
+      "roaster": "Subtext",
+      "roaster_full": "Subtext Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Maria Delgado",
+      "origin": "Colombia",
+      "region": "Nariño, Buesaco - El Choco / San Antonio",
+      "farm": "Maria Delgado",
+      "variety": "Caturra",
+      "process": "Washed",
+      "altitude_m": "2200",
+      "weight_grams": "250",
+      "descriptors": [
+        "青柠",
+        "lime",
+        "核果",
+        "stone fruit",
+        "蜜瓜",
+        "melon"
+      ],
+      "seller_notes": "官方风味: Lime, Stone Fruit, Melon; 口感清甜、优雅、鲜活酸质 (Sweet, Elegant, Vibrant Acidity)。处理法: Washed — de-pulped, 17 小时发酵, 露台日晒 12 天。连续第六年购买; San Antonio 微产区。250g。烘焙商 Subtext Coffee (Canada)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 250
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "region",
+          "tier": "tier_2",
+          "name": "Nariño, Colombia",
+          "basis": "A-list department (CoE + Best of Nariño)",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "historical_overlap": ""
+    },
+    {
+      "id": "live_friedhats_las_margaritas_sudan_rume",
+      "roaster": "FriedHats",
+      "roaster_full": "FRIEDHATS",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Las Margaritas Sudan Rume Washed",
+      "origin": "Colombia",
+      "region": "Caicedonia, Valle del Cauca",
+      "farm": "Las Margaritas",
+      "variety": "Sudan Rume",
+      "process": "Washed",
+      "altitude_m": "1570-1760",
+      "weight_grams": null,
+      "descriptors": [
+        "薄荷",
+        "mint",
+        "橙子",
+        "orange",
+        "豆蔻面包卷",
+        "cardamom bun",
+        "cardamom"
+      ],
+      "seller_notes": "官方风味: Mint, Orange, Cardamom bun。处理法: Washed (Omni 烘焙)。生产者 Rigoberto Herrera / Café Granja La Esperanza · Las Margaritas。★ 已评分历史: 你给过 FriedHats Las Margaritas Sudan Rume = Great (复购型已知好豆)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_1",
+          "name": "Café Granja La Esperanza (Las Margaritas)",
+          "basis": "CGLE — Tier 1 estate (BoP-winning Geisha, SCAA Triple Crown)",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "historical_overlap": "已评分历史同名匹配 (Great, 复购型已知好豆)。"
+    },
+    {
+      "id": "live_subtext_valdeir_tomazini",
+      "roaster": "Subtext",
+      "roaster_full": "Subtext Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Valdeir Tomazini Washed",
+      "origin": "Brazil",
+      "region": "Castello, Espírito Santo",
+      "farm": "Sítio Tomazini",
+      "variety": "Catucaí 785",
+      "process": "Washed",
+      "altitude_m": "800-1200",
+      "weight_grams": "250",
+      "descriptors": [
+        "桑葚",
+        "mulberry",
+        "柑橘精油",
+        "citrus oil",
+        "李子",
+        "plum"
+      ],
+      "seller_notes": "官方风味: Mulberry, Citrus Oil, Plum; 优雅、复杂、鲜活酸质。处理法: Washed。生产者 2015 入选巴西 COE; 与 Sey 长期合作; Catucaí 785 为 2021 WBrC Matt Winton 使用品种。250g。烘焙商 Subtext Coffee (Canada)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 250
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [
+        {
+          "competition": "Cup of Excellence (COE)",
+          "region": "Brazil",
+          "result": "入选 / finalist",
+          "year": 2015,
+          "scope": "producer",
+          "note": "生产者 Valdeir Tomazini 2015 入选巴西 COE。",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "historical_overlap": ""
+    },
+    {
+      "id": "live_hatch_santamaria_estate_l31",
+      "roaster": "Hatch",
+      "roaster_full": "Hatch",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Santamaria Estate Lot L31",
+      "origin": "Panama",
+      "region": "Paso Ancho, Chiriquí",
+      "farm": "Santamaria Estate",
+      "variety": "Geisha",
+      "process": "Natural",
+      "altitude_m": null,
+      "weight_grams": null,
+      "descriptors": [
+        "橙花",
+        "orange blossom",
+        "菠萝",
+        "pineapple",
+        "芒果",
+        "mango",
+        "深色蜂蜜",
+        "dark honey"
+      ],
+      "seller_notes": "官方风味: Orange Blossom, Pineapple, Mango, Dark Honey (香气: Orange Blossom)。处理法: Natural。烘焙 Light (Peak P-095), 中高强度, Funk Elegant。★ 海拔: 标签未标注 (不要臆造)。生产者 Edwin Santamaria。烘焙商 Hatch (Canada)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [],
+      "source_url": "",
+      "historical_overlap": ""
+    },
+    {
+      "id": "live_subtext_hugo_gonzalez_copa_de_oro",
+      "roaster": "Subtext",
+      "roaster_full": "Subtext Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Copa de Oro Grand Champion — Hugo Gonzalez",
+      "origin": "Colombia",
+      "region": "Huila, San Agustín",
+      "farm": "Finca Villa Sofía",
+      "variety": "Gesha",
+      "process": "Washed",
+      "altitude_m": "1900",
+      "weight_grams": "200",
+      "descriptors": [
+        "花香",
+        "floral",
+        "芒果",
+        "mango",
+        "草莓",
+        "strawberry"
+      ],
+      "seller_notes": "官方风味: Floral, Mango, Strawberry; 多汁、复杂、明亮。处理法: Washed — 带果 3 天发酵, 去果皮, 干发酵 72 小时。2025 Copa de Oro 金杯赛总冠军。净含量以海报 200g 为准 (袋面示意图标 150g)。烘焙商 Subtext Coffee (Canada)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [
+        {
+          "competition": "Copa de Oro",
+          "region": "Huila, Colombia",
+          "result": "Grand Champion",
+          "year": 2025,
+          "scope": "lot",
+          "note": "Huila 著名生豆竞赛,该批次为总冠军批次。",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [
+        {
+          "axis": "region",
+          "tier": "tier_2",
+          "name": "Huila, Colombia",
+          "basis": "A-list department (CoE + Best of Huila)",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "historical_overlap": ""
+    },
+    {
+      "id": "live_hatch_hle_noria_5_fb",
+      "roaster": "Hatch",
+      "roaster_full": "Hatch",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "HLE Red Label Noria 5 FB Geisha",
+      "origin": "Panama",
+      "region": "Jaramillo, Boquete",
+      "farm": "Hacienda La Esmeralda",
+      "variety": "Geisha",
+      "process": "Washed",
+      "altitude_m": "1700",
+      "weight_grams": "100",
+      "descriptors": [
+        "花香",
+        "floral",
+        "甘蔗",
+        "sugarcane",
+        "金银花",
+        "honeysuckle",
+        "桃子",
+        "peach",
+        "葡萄",
+        "grape"
+      ],
+      "seller_notes": "官方风味: Floral, Sugarcane, Honeysuckle, Peach, Grape。处理法: Washed — 去果皮, 低温发酵 72h, 高架床慢干 10 天。烘焙 Light (Peak P-132)。翡翠庄园红标瑰夏, Noria 地块, 采收 2026-01-15, 26 产季。100g。烘焙商 Hatch (Canada)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_1",
+          "name": "Hacienda La Esmeralda",
+          "basis": "Tier 1 estate — the Panama Geisha benchmark",
+          "scored": false
+        },
+        {
+          "axis": "region",
+          "tier": "tier_2",
+          "name": "Boquete, Panama",
+          "basis": "A-list district (Best of Panama)",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "historical_overlap": ""
+    },
+    {
+      "id": "live_hatch_cerro_azul",
+      "roaster": "Hatch",
+      "roaster_full": "Hatch",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Cerro Azul Hybrid Washed Geisha",
+      "origin": "Colombia",
+      "region": "Valle del Cauca",
+      "farm": "Cerro Azul",
+      "variety": "Geisha",
+      "process": "Hybrid Washed",
+      "altitude_m": "1752-1941",
+      "weight_grams": "100",
+      "descriptors": [
+        "茉莉",
+        "jasmine",
+        "油桃",
+        "nectarine",
+        "杏脯",
+        "apricot",
+        "雷司令",
+        "riesling"
+      ],
+      "seller_notes": "官方风味: Jasmine, Nectarine, Apricot, Riesling (香气: Jasmine, Nectarine)。处理法: Hybrid Washed (Washed; 混合发酵)。烘焙 Light (Peak P-012)。生产者 Café Granja La Esperanza · Rigoberto & Luis Eduardo Herrera; 哥伦比亚最早成功种植瑰夏的农场之一, Hatch 招牌豆。100g。烘焙商 Hatch (Canada)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_1",
+          "name": "Café Granja La Esperanza (Cerro Azul)",
+          "basis": "CGLE — Tier 1 estate; Cerro Azul Geisha won Best of Panama",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "historical_overlap": ""
+    },
+    {
+      "id": "live_hatch_inmaculada_fellows",
+      "roaster": "Hatch",
+      "roaster_full": "Hatch",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Inmaculada Fellows Geisha",
+      "origin": "Colombia",
+      "region": "Pichindé",
+      "farm": "Inmaculada",
+      "variety": "Geisha",
+      "process": "Washed",
+      "altitude_m": "1750-2000",
+      "weight_grams": "200",
+      "descriptors": [
+        "花香",
+        "floral",
+        "黄桃",
+        "yellow peach",
+        "蜂蜜",
+        "honey",
+        "红茶",
+        "black tea"
+      ],
+      "seller_notes": "官方风味: Floral, Yellow Peach, Honey, Black Tea (香气: Floral, Peach)。处理法: Washed。烘焙 Light (Peak P-127)。生产者 Inmaculada Farm / Holguin Family · Fellows 小农樱桃收集精制项目。200g。烘焙商 Hatch (Canada)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_2",
+          "name": "Finca Inmaculada / Holguín-Ramos",
+          "basis": "Tier 2 (B) estate — rare-variety specialist (Wush Wush, Sudan Rume)",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "historical_overlap": ""
+    },
+    {
       "id": "live_mirra_banko_taratu",
       "roaster": "Mirra",
+      "roaster_full": "Mirra Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
       "name": "Banko Taratu",
       "origin": "Ethiopia",
       "region": "Gedeb",
@@ -19,347 +374,302 @@
       "variety": "74110 / 74112",
       "process": "Washed",
       "altitude_m": "2300",
+      "weight_grams": null,
       "descriptors": [
         "桃子软糖",
-        "茉莉",
-        "蓝莓果酱",
         "peach gummy",
+        "茉莉",
         "jasmine",
+        "蓝莓果酱",
         "blueberry jam"
       ],
-      "seller_notes": "埃塞俄比亚南部格德布镇，当地海拔最高种植园",
+      "seller_notes": "官方风味: Peach gummy, Jasmine, Blueberry jam。处理法: Washed。Banko Taratu 处理站, 当地海拔最高种植园。烘焙商 Mirra Coffee (USA)。",
       "price": {
         "amount": null,
         "currency": "CNY",
         "size_grams": null
       },
-      "availability": "in_stock_listed_2026-07-19",
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "region",
+          "tier": "tier_2",
+          "name": "Gedeb, Gedeo (Yirgacheffe), Ethiopia",
+          "basis": "A-list woreda (Ethiopia CoE)",
+          "scored": false
+        }
+      ],
       "source_url": "",
-      "historical_overlap": "历史中 Ethiopia 水洗豆多为 Good（Nensenbo Mewa、Hadeso），Mesina 为 So So。"
+      "historical_overlap": ""
     },
     {
       "id": "live_mirra_alina_solano_sl9",
       "roaster": "Mirra",
+      "roaster_full": "Mirra Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
       "name": "Alina Solano SL9",
       "origin": "Peru",
       "region": "Cusco",
       "farm": "Alina Solano",
-      "variety": "SL9",
+      "variety": "SL9 (Gesha Inca)",
       "process": "Washed",
       "altitude_m": "2400",
+      "weight_grams": null,
       "descriptors": [
         "椰奶",
-        "阿陶尔芒果",
-        "粉色牡丹花",
         "coconut milk",
+        "阿陶尔福芒果",
         "ataulfo mango",
+        "粉色牡丹花",
         "pink peony"
       ],
-      "seller_notes": "Mirra 首款秘鲁 SL9，秘鲁能豆大年出品；SL9 常被称作印加瑰夏（非瑰夏品种）",
+      "seller_notes": "官方风味: Coconut milk, Ataulfo mango, Pink peony。处理法: Washed。生产者 Alina Solano / Finca Rosaspata。SL9 常称印加瑰夏 (独立品种, 非瑰夏)。Mirra 今年首发 SL9。烘焙商 Mirra Coffee (USA)。",
       "price": {
         "amount": null,
         "currency": "CNY",
         "size_grams": null
       },
-      "availability": "in_stock_listed_2026-07-19",
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [],
       "source_url": "",
-      "historical_overlap": "历史中 Peru 水洗豆两支均为 Good（BIG SUR Peru Gesha、有容乃大 Amazonas Agret Gesha）；另有 app 记录 Peru Kukipata SL9（本机未含 app 数据）。"
+      "historical_overlap": ""
     },
     {
       "id": "live_mirra_acacia_pacamara",
       "roaster": "Mirra",
-      "name": "Acacia 帕卡马拉 AA",
+      "roaster_full": "Mirra Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Acacia Pacamara",
       "origin": "Tanzania",
       "region": "Arusha",
-      "farm": "Acacia Hills",
-      "variety": "Pacamara AA",
+      "farm": "Acacia Estate",
+      "variety": "Pacamara (AA)",
       "process": "Washed",
       "altitude_m": "1800",
+      "weight_grams": null,
       "descriptors": [
         "覆盆子果酱",
-        "柠檬蜜饯",
-        "荔枝",
         "raspberry jam",
+        "柠檬蜜饯",
         "candied lemon",
-        "lychee"
+        "热带刺果番荔枝",
+        "tropical soursop",
+        "soursop"
       ],
-      "seller_notes": "Mirra 连续 3 年采购爆款；2022 坦桑尼亚 PCA 大赛多名次",
+      "seller_notes": "官方风味: Raspberry jam, Candied lemon, Tropical soursop (刺果番荔枝)。★ 修正: 此前误记为 lychee, 权威数据为 soursop。处理法: Washed。Acacia Estate; 连续三年采购; 2022 Tanzania PCA 成绩突出。烘焙商 Mirra Coffee (USA)。",
       "price": {
         "amount": null,
         "currency": "CNY",
         "size_grams": null
       },
-      "availability": "in_stock_listed_2026-07-19",
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [
+        {
+          "competition": "Tanzania PCA",
+          "region": "Tanzania",
+          "result": "成绩突出 / strong placing",
+          "year": 2022,
+          "scope": "estate",
+          "note": "Acacia Estate 2022 Tanzania PCA 成绩突出。",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
       "source_url": "",
-      "historical_overlap": "历史无 Tanzania 记录；覆盆子/柠檬与多支 Good 记录的莓果、柑橘家族重合。"
+      "historical_overlap": ""
     },
     {
       "id": "live_mirra_acacia_gesha",
       "roaster": "Mirra",
-      "name": "Acacia 瑰夏",
+      "roaster_full": "Mirra Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Acacia Gesha",
       "origin": "Tanzania",
       "region": "Arusha",
-      "farm": "Acacia Hills",
+      "farm": "Acacia Estate",
       "variety": "Gesha",
       "process": "Washed",
       "altitude_m": "1800",
+      "weight_grams": null,
       "descriptors": [
         "蜜瓜",
-        "玫瑰",
-        "南非博士茶",
         "melon",
+        "玫瑰",
         "rose",
-        "rooibos tea"
+        "南非博士茶",
+        "rooibos tea",
+        "rooibos"
       ],
-      "seller_notes": "Mirra 最长采购咖啡豆；同庄园 PCA 大赛高分表现",
+      "seller_notes": "官方风味: Melon, Rose, Rooibos tea。处理法: Washed。Acacia Estate; 连续三年采购。烘焙商 Mirra Coffee (USA)。",
       "price": {
         "amount": null,
         "currency": "CNY",
         "size_grams": null
       },
-      "availability": "in_stock_listed_2026-07-19",
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [],
       "source_url": "",
-      "historical_overlap": "历史无 Tanzania 记录；蜜瓜/玫瑰与 Mesina（So So）的瓜果花香组合有部分相似。"
+      "historical_overlap": ""
     },
     {
-      "id": "live_b_cerro_azul_mixed_washed_gesha",
-      "roaster": "Hatch",
-      "name": "希望庄园 Cerro Azul 混合水洗瑰夏",
-      "origin": "Colombia",
-      "region": "考卡山谷",
-      "farm": "Cerro Azul",
-      "variety": "Gesha",
-      "process": "混合水洗 (mixed washed)",
-      "altitude_m": "1752-1941",
-      "descriptors": [
-        "茉莉",
-        "油桃",
-        "杏脯",
-        "雷司令",
-        "jasmine",
-        "nectarine",
-        "dried apricot",
-        "riesling"
-      ],
-      "seller_notes": "哥伦比亚首个规模化种植瑰夏庄园，国际赛事常用豆，招牌款",
-      "price": {
-        "amount": null,
-        "currency": "CNY",
-        "size_grams": 100
-      },
-      "availability": "in_stock_listed_2026-07-19",
-      "source_url": "",
-      "historical_overlap": "历史 Colombia 豆 11 条且整体高分；茉莉/油桃与 El Platanillo Gesha（Good）风味相近。"
-    },
-    {
-      "id": "live_b_esmeralda_red_noria5",
-      "roaster": "Hatch",
-      "name": "翡翠庄园 红标瑰夏 Noria 5 FB",
-      "origin": "Panama",
-      "region": "Boquete Jaramillo",
-      "farm": "Hacienda La Esmeralda / Noria",
-      "variety": "Gesha",
-      "process": "水洗（低温发酵72h，晾晒10天）",
-      "altitude_m": "1700",
-      "descriptors": [
-        "花香",
-        "甘蔗",
-        "金银花",
-        "桃子",
-        "葡萄",
-        "floral",
-        "cane sugar",
-        "honeysuckle",
-        "peach",
-        "grape"
-      ],
-      "seller_notes": "26 新产季；2026-01-15 Noria 地块采摘",
-      "price": {
-        "amount": null,
-        "currency": "CNY",
-        "size_grams": 100
-      },
-      "availability": "in_stock_listed_2026-07-19",
-      "source_url": "",
-      "historical_overlap": "历史 Panama 水洗 Gesha 有唯一 Great（Lost Origin, Boquete）；El Salto、FriedHats Panama Gesha 均 Good。"
-    },
-    {
-      "id": "live_b_fellow_gesha",
-      "roaster": "Hatch",
-      "name": "圣洁庄园 Fellow 瑰夏",
-      "origin": "Colombia",
-      "region": "Pichindé",
-      "farm": "圣洁庄园",
-      "variety": "Gesha",
-      "process": "Washed",
-      "altitude_m": "1750-2000",
-      "descriptors": [
-        "花香",
-        "黄桃",
-        "蜂蜜",
-        "红茶",
-        "floral",
-        "yellow peach",
-        "honey",
-        "black tea"
-      ],
-      "seller_notes": "哥伦比亚知名庄园小农项目，溢价鲜果精细处理，赛事常客",
-      "price": {
-        "amount": null,
-        "currency": "CNY",
-        "size_grams": 200
-      },
-      "availability": "in_stock_listed_2026-07-19",
-      "source_url": "",
-      "historical_overlap": "花香/桃/蜂蜜/茶感与历史多支 Good 记录（Nensenbo Mewa、El Salto Natural 的 earl grey）重合。"
-    },
-    {
-      "id": "live_b_margaritas_natural_gesha",
+      "id": "live_tanat_las_margaritas_natural_gesha",
       "roaster": "Tanat",
-      "name": "希望庄园 Margaritas 日晒瑰夏",
+      "roaster_full": "Tanat Coffee (Kawa Coffee)",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Las Margaritas Natural Gesha",
       "origin": "Colombia",
-      "region": "考卡山谷",
+      "region": "Valle del Cauca",
       "farm": "Las Margaritas",
       "variety": "Gesha",
       "process": "Natural",
       "altitude_m": "1570-1800",
+      "weight_grams": "100",
       "descriptors": [
         "热带水果",
+        "tropical fruits",
         "朗姆酒",
-        "薰衣草",
-        "小豆蔻",
-        "tropical fruit",
         "rum",
+        "薰衣草",
         "lavender",
+        "小豆蔻",
         "cardamom"
       ],
-      "seller_notes": "欧洲擅长烘焙哥伦比亚瑰夏的烘焙商，酒体醇厚酒香",
+      "seller_notes": "官方风味: Tropical fruits, Rum, Lavender, Cardamom。处理法: Natural。生产者 Café Granja La Esperanza · Las Margaritas。100g。烘焙商 Tanat Coffee / Kawa Coffee (France)。",
       "price": {
         "amount": null,
         "currency": "CNY",
         "size_grams": 100
       },
-      "availability": "in_stock_listed_2026-07-19",
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_1",
+          "name": "Café Granja La Esperanza (Las Margaritas)",
+          "basis": "CGLE — Tier 1 estate (BoP-winning Geisha, SCAA Triple Crown)",
+          "scored": false
+        }
+      ],
       "source_url": "",
-      "historical_overlap": "热带水果+酒香与 Lost Origin（Great）、KAWA Nestor Lasso（Great）方向一致，但朗姆/辛香强度更高。"
+      "historical_overlap": ""
     },
     {
-      "id": "live_b_acacia_hills_gesha",
+      "id": "live_tanat_las_margaritas_sudan_rume_natural",
       "roaster": "Tanat",
-      "name": "Acacia Hills 瑰夏",
+      "roaster_full": "Tanat Coffee (Kawa Coffee)",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Las Margaritas Sudan Rume Natural",
+      "origin": "Colombia",
+      "region": "Las Margaritas (CGLE)",
+      "farm": "Las Margaritas",
+      "variety": "Sudan Rume",
+      "process": "Natural",
+      "altitude_m": "1850",
+      "weight_grams": "100",
+      "descriptors": [
+        "豆蔻",
+        "cardamom",
+        "柠檬香桃",
+        "lemon myrtle",
+        "番石榴",
+        "guava",
+        "桉树花",
+        "eucalyptus flower",
+        "eucalyptus"
+      ],
+      "seller_notes": "官方风味: Cardamom, Lemon Myrtle, Guava, Eucalyptus flower。处理法: Natural (海报未写处理法, 文案写日晒/控制日晒)。生产者 Café Granja La Esperanza。100g。★ 已评分历史: 你给过 Tanat Las Margaritas Sudan Rume = Great (复购型已知好豆)。烘焙商 Tanat Coffee / Kawa Coffee (France)。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_1",
+          "name": "Café Granja La Esperanza (Las Margaritas)",
+          "basis": "CGLE — Tier 1 estate (BoP-winning Geisha, SCAA Triple Crown)",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "historical_overlap": "已评分历史同名匹配 (Great, 复购型已知好豆)。"
+    },
+    {
+      "id": "live_tanat_acacia_hills_gesha",
+      "roaster": "Tanat",
+      "roaster_full": "Tanat Coffee (Kawa Coffee)",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Acacia Hills Gesha",
       "origin": "Tanzania",
       "region": "Arusha",
       "farm": "Acacia Hills",
       "variety": "Gesha",
       "process": "Washed",
       "altitude_m": "1900",
+      "weight_grams": "200",
       "descriptors": [
         "柠檬蜜饯",
-        "干果",
-        "香草",
-        "红茶",
         "candied lemon",
+        "干果",
         "dried fruit",
+        "香草",
         "vanilla",
+        "红茶",
         "black tea"
       ],
-      "seller_notes": "2022 坦桑尼亚 PCA 大赛多项名次",
+      "seller_notes": "官方风味: Candied lemon, Dried fruit, Vanilla, Black tea。处理法: Washed。Acacia Hills。200g。烘焙商 Tanat Coffee / Kawa Coffee (France)。",
       "price": {
         "amount": null,
         "currency": "CNY",
         "size_grams": 200
       },
-      "availability": "in_stock_listed_2026-07-19",
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [],
       "source_url": "",
-      "historical_overlap": "柠檬/干果/香草与 Hadeso（Good）、Heza 系列（Good, vanilla）、Yemen Bait Waseel（Great, 果干）家族重合；与 Mirra 的 Acacia 瑰夏为同庄园不同批次。"
+      "historical_overlap": ""
     },
     {
-      "id": "live_b_jhon_saenz_sl9",
+      "id": "live_tanat_jhon_saenz_sl9",
       "roaster": "Tanat",
-      "name": "Jhon Saenz 水洗SL9",
+      "roaster_full": "Tanat Coffee (Kawa Coffee)",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Jhon Saenz Washed SL9",
       "origin": "Peru",
       "region": "Incahuasi",
       "farm": "Jhon Saenz",
-      "variety": "SL9",
-      "process": "水洗（干式发酵36h）",
+      "variety": "SL9 (Inca Gesha)",
+      "process": "Washed",
       "altitude_m": "2290",
+      "weight_grams": "200",
       "descriptors": [
         "红茶",
-        "橙皮",
-        "蜂蜜",
-        "茉莉",
         "black tea",
+        "橙皮",
         "orange peel",
+        "蜂蜜",
         "honey",
+        "茉莉",
         "jasmine"
       ],
-      "seller_notes": "花香细腻柔和，酸甜平衡干净",
+      "seller_notes": "官方风味: Black tea, Orange peel, Honey, Jasmine。处理法: Washed — 干蜜发酵 36h 后水洗。生产者 Jhon Saenz。200g。烘焙商 Tanat Coffee / Kawa Coffee (France)。",
       "price": {
         "amount": null,
         "currency": "CNY",
         "size_grams": 200
       },
-      "availability": "in_stock_listed_2026-07-19",
+      "availability": "in_stock_listed_2026-07-20",
+      "accolades": [],
+      "provenance_reputation": [],
       "source_url": "",
-      "historical_overlap": "橙皮/蜂蜜/茉莉与 Finca El Manantial（Good）、Nensenbo Mewa（Good）高度重合；历史 Peru 水洗均 Good。"
-    },
-    {
-      "id": "live_hatch_santamaria_panama_gesha",
-      "roaster": "Hatch",
-      "name": "Santamaria 巴拿马瑰夏",
-      "origin": "Panama",
-      "region": "Chiriqui 奇里基省",
-      "farm": "Santamaria",
-      "variety": "Geisha",
-      "process": "Natural",
-      "altitude_m": "1550-1950",
-      "descriptors": [
-        "橙花",
-        "菠萝",
-        "芒果",
-        "深色蜂蜜",
-        "orange blossom",
-        "pineapple",
-        "mango",
-        "dark honey"
-      ],
-      "seller_notes": "华丽浓郁、热带花果甜感",
-      "price": {
-        "amount": null,
-        "currency": "CNY",
-        "size_grams": null
-      },
-      "availability": "in_stock_listed_2026-07-19",
-      "source_url": "",
-      "historical_overlap": "历史 Panama 有唯一 Great（Lost Origin, Boquete Gesha）；橙花/菠萝/芒果落在花香+热带家族。"
-    },
-    {
-      "id": "live_friedhats_colombia_sudan_rume",
-      "roaster": "FriedHats",
-      "name": "Las Margaritas Sudan Rume",
-      "origin": "Colombia",
-      "region": "考卡山谷省",
-      "farm": "Las Margaritas",
-      "variety": "Sudan Rume",
-      "process": "Washed",
-      "altitude_m": "1570-1760",
-      "descriptors": [
-        "薄荷",
-        "橙子",
-        "豆蔻面包卷",
-        "mint",
-        "orange",
-        "cardamom"
-      ],
-      "seller_notes": "清爽通透、草本柑橘调",
-      "price": {
-        "amount": null,
-        "currency": "CNY",
-        "size_grams": null
-      },
-      "availability": "in_stock_listed_2026-07-19",
-      "source_url": "",
-      "historical_overlap": "用户已喝过并喜欢 FriedHats/Tanat Sudan Rume（good~great，见历史）；此为当前在售批次，属已知偏好的复购型候选。"
+      "historical_overlap": ""
     }
   ]
 }

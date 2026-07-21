@@ -69,10 +69,39 @@ Top level: `{"schema_version": ..., "checked_at": "...", "purpose": "...",
   "seller_notes": "free text from the seller page",
   "price": {"amount": null, "currency": "CNY", "size_grams": null},
   "availability": "in_stock_listed_2026-07-20",
+  "accolades": [
+    {"competition": "Copa de Oro", "region": "Huila, Colombia",
+     "result": "Grand Champion", "year": 2025, "scope": "lot", "scored": false}
+  ],
+  "provenance_reputation": [
+    {"axis": "estate", "tier": "tier_1", "name": "Hacienda La Esmeralda",
+     "basis": "Tier 1 estate", "scored": false}
+  ],
   "source_url": "",
   "historical_overlap": "note any same-name/same-farm history entries here"
 }
 ```
+
+- `accolades` records extrinsic competition/quality provenance (COE, Copa de
+  Oro, national cupping placings). It is **human-judgment only and NOT read by
+  any scoring code** — `candidate_prior` ignores it, exactly like region and
+  estate reputation. Keep `"scored": false` as a standing reminder. Surface it
+  in the 理性 section as context ("这批生豆客观顶尖"), never as a fit driver.
+  `scope`: `lot` (this exact lot placed), `producer` (the grower has a record),
+  `estate` (the farm has a record).
+- `provenance_reputation` tags the bean's estate/region against the allowlist in
+  `references/prestige-regions-estates.md`. `axis`: `estate` (Tier 1, or Tier 2-B)
+  or `region` (Tier 2-A). Also extrinsic, `"scored": false`, ignored by
+  `candidate_prior`. An **empty list = null**, which is the normal state for most
+  beans — never a demerit; do not invent a tag for an unlisted origin/estate.
+  Note CGLE farms are in Valle del Cauca (not an A-list department), so they carry
+  an estate tag but no region tag. Read that reference before adding tags.
+- Scoring granularity, for reference: fit uses **origin at country level only**
+  (Huila/Nariño collapse to Colombia — no region_stats), **variety not at all**
+  (narrative correlations only), and **farm only via direct history identity**
+  (did the user rate this exact coffee before) — never farm reputation. This is
+  deliberate: at region/farm granularity the history is ~1 observation per cell,
+  too sparse for a prior.
 
 - `roaster` attribution matters: mis-parsing which roaster sells which bean
   silently moves the roaster affinity bonus (this happened once — verify
