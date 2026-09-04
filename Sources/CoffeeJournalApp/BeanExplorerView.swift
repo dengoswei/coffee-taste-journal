@@ -42,8 +42,8 @@ struct BeanExplorerView: View {
                 .padding(.bottom, 28)
             }
             .background(CoffeeTheme.background.ignoresSafeArea())
-            .navigationTitle("Discover")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -55,6 +55,36 @@ struct BeanExplorerView: View {
                     }
                     .accessibilityLabel("Back")
                 }
+                ToolbarItem(placement: .principal) {
+                    Text("Discover")
+                        .font(.headline.weight(.semibold))
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 14) {
+                        PhotosPicker(
+                            selection: $selectedPhotoItems,
+                            maxSelectionCount: max(0, BeanExplorerSession.maximumImageSources - images.count),
+                            matching: .images
+                        ) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.body.weight(.semibold))
+                        }
+                        .disabled(images.count >= BeanExplorerSession.maximumImageSources)
+                        .accessibilityLabel(images.isEmpty ? "Choose photos" : "Add photos")
+
+                        Button {
+                            isShowingCamera = true
+                        } label: {
+                            Image(systemName: "camera")
+                                .font(.body.weight(.semibold))
+                        }
+                        .disabled(
+                            !UIImagePickerController.isSourceTypeAvailable(.camera) ||
+                            session.activeImageSourceCount >= BeanExplorerSession.maximumImageSources
+                        )
+                        .accessibilityLabel("Take a photo")
+                    }
+                }
             }
         }
         .alert("Something went wrong", isPresented: errorBinding) {
@@ -64,6 +94,7 @@ struct BeanExplorerView: View {
         }
         .onAppear {
             restoreCacheIfNeeded()
+            resumeIncompleteScans()
         }
         .onChange(of: selectedPhotoItems) { _, items in
             guard !items.isEmpty else { return }
@@ -86,38 +117,14 @@ struct BeanExplorerView: View {
     }
 
     private var sourceContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                PhotosPicker(
-                    selection: $selectedPhotoItems,
-                    maxSelectionCount: max(0, BeanExplorerSession.maximumImageSources - images.count),
-                    matching: .images
-                ) {
-                    Label(images.isEmpty ? "Choose photos" : "Add photos", systemImage: "photo.on.rectangle.angled")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(CoffeeTheme.accent)
-                .disabled(images.count >= BeanExplorerSession.maximumImageSources)
-
-                Button {
-                    isShowingCamera = true
-                } label: {
-                    Image(systemName: "camera")
-                        .font(.headline)
-                        .frame(width: 22, height: 22)
-                }
-                .buttonStyle(.bordered)
-                .tint(CoffeeTheme.accent)
-                .accessibilityLabel("Take a photo")
-                .disabled(
-                    !UIImagePickerController.isSourceTypeAvailable(.camera) ||
-                    session.activeImageSourceCount >= BeanExplorerSession.maximumImageSources
-                )
-            }
-
-            if !images.isEmpty {
+        Group {
+            if images.isEmpty {
+                Text("Add package photos to start.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
+            } else {
                 LazyVGrid(columns: photoGridColumns, spacing: 12) {
                     ForEach(images) { imageThumbnail($0) }
                 }
@@ -378,6 +385,12 @@ struct BeanExplorerView: View {
                     .background(.ultraThinMaterial, in: Circle())
             }
             .padding(5)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .onTapGesture {
+            // No extra button: tap a failed/cancelled/idle photo to resume extraction.
+            guard sourceCanScan(item.id) else { return }
+            startScan(sourceID: item.id)
         }
         .contextMenu {
             if sourceCanScan(item.id) {
@@ -751,13 +764,23 @@ struct BeanExplorerView: View {
         for source in session.activeSources where source.kind == .image && !imageIDs.contains(source.id) {
             try? session.removeSource(sourceID: source.id)
         }
-        // Drop in-flight uploading markers from a previous process.
+        // In-flight work from a prior process cannot continue — mark cancelled so resume can retry.
         for source in session.activeSources {
             if case .uploading = source.requestState {
                 try? session.cancelRequest(sourceID: source.id)
             }
         }
+        // Keep the photo-loaded session on screen; scoring runs after resumes finish (or now if ready).
         refreshComparison()
+    }
+
+    /// Continue interrupted / failed extractions without a dedicated button.
+    private func resumeIncompleteScans() {
+        for source in session.activeSources where source.kind == .image {
+            guard images.contains(where: { $0.id == source.id }) else { continue }
+            guard sourceCanScan(source.id) else { continue }
+            startScan(sourceID: source.id)
+        }
     }
 
     private func persistCache() {
