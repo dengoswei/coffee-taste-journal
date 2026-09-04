@@ -205,17 +205,18 @@ final class BeanExplorerSessionTests: XCTestCase {
         XCTAssertEqual(session.activeImageSourceCount, 0)
     }
 
-    func testCandidateLimitRejectsNinthWithoutCreatingSource() throws {
+    func testCandidateLimitRejectsOverflowWithoutCreatingSource() throws {
         var session = BeanExplorerSession()
-        for index in 1...8 {
+        let limit = BeanExplorerSession.maximumCandidates
+        for index in 1...limit {
             _ = try session.addManualCandidate(.init(roaster: "Roaster \(index)"))
         }
 
         XCTAssertThrowsError(try session.addManualCandidate(.init(roaster: "Overflow"))) { error in
             XCTAssertEqual(error as? BeanExplorerSessionError, .candidateLimitReached)
         }
-        XCTAssertEqual(session.activeCandidates.count, 8)
-        XCTAssertEqual(session.sources.count, 8)
+        XCTAssertEqual(session.activeCandidates.count, limit)
+        XCTAssertEqual(session.sources.count, limit)
     }
 
     func testCancellingUploadKeepsImageSlotUntilSourceIsRemoved() throws {
@@ -238,7 +239,8 @@ final class BeanExplorerSessionTests: XCTestCase {
     func testImageSourceLimitCountsOnlyActiveImages() throws {
         var session = BeanExplorerSession()
         var sources: [BeanExplorerSource] = []
-        for _ in 1...5 {
+        let limit = BeanExplorerSession.maximumImageSources
+        for _ in 1...limit {
             sources.append(try session.addImageSource())
         }
 
@@ -248,22 +250,24 @@ final class BeanExplorerSessionTests: XCTestCase {
 
         try session.removeSource(sourceID: sources[0].id)
         _ = try session.addImageSource()
-        XCTAssertEqual(session.activeImageSourceCount, 5)
+        XCTAssertEqual(session.activeImageSourceCount, limit)
     }
 
     func testRemovingManualSourceFreesCandidateSlotWithoutReusingIdentity() throws {
         var session = BeanExplorerSession()
         var candidates: [BeanExplorerCandidate] = []
-        for index in 1...8 {
+        let limit = BeanExplorerSession.maximumCandidates
+        for index in 1...limit {
             candidates.append(try session.addManualCandidate(.init(roaster: "Roaster \(index)")))
         }
 
         try session.removeSource(sourceID: candidates[0].sourceID)
         let replacement = try session.addManualCandidate(.init(roaster: "Replacement"))
 
-        XCTAssertEqual(session.activeCandidates.count, 8)
-        XCTAssertEqual(replacement.id, "candidate-009")
-        XCTAssertEqual(replacement.rankOrdinal, 9)
+        XCTAssertEqual(session.activeCandidates.count, limit)
+        let expectedOrdinal = limit + 1
+        XCTAssertEqual(replacement.id, String(format: "candidate-%03d", expectedOrdinal))
+        XCTAssertEqual(replacement.rankOrdinal, expectedOrdinal)
     }
 
     func testStaleExtractionCannotCommitCandidates() throws {

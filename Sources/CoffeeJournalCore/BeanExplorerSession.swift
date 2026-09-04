@@ -140,8 +140,8 @@ public struct BeanExplorerSource: Identifiable, Equatable, Sendable, Codable {
 }
 
 public struct BeanExplorerSession: Equatable, Sendable, Codable {
-    public static let maximumCandidates = 8
-    public static let maximumImageSources = 5
+    public static let maximumCandidates = 20
+    public static let maximumImageSources = 10
 
     public private(set) var sources: [BeanExplorerSource] = []
     public private(set) var candidates: [BeanExplorerCandidate] = []

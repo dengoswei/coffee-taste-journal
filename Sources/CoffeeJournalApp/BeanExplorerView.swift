@@ -654,7 +654,7 @@ struct BeanExplorerView: View {
               scanTasks[sourceID] == nil else { return }
         let remainingCapacity = BeanExplorerSession.maximumCandidates - session.activeCandidates.count
         guard remainingCapacity > 0 else {
-            errorMessage = "This comparison already has eight candidates."
+            errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
             return
         }
 
@@ -693,8 +693,10 @@ struct BeanExplorerView: View {
                 _ = session.failExtraction(request: request)
                 if case BagPhotoScannerError.missingAPIKey = error {
                     errorMessage = error.localizedDescription
+                } else if case BeanExplorerSessionError.candidateLimitReached = error {
+                    errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
                 } else {
-                    errorMessage = "The image could not be read. Touch and hold the photo to try again, or enter the coffee manually."
+                    errorMessage = "The image could not be read. Touch and hold the photo to try again."
                 }
                 refreshComparison()
             }
@@ -937,9 +939,9 @@ struct BeanExplorerView: View {
     private func message(for error: Error) -> String {
         switch error {
         case BeanExplorerSessionError.imageSourceLimitReached:
-            return "This comparison already has five source images."
+            return "This comparison already has \(BeanExplorerSession.maximumImageSources) photos."
         case BeanExplorerSessionError.candidateLimitReached:
-            return "This comparison already has eight candidates."
+            return "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
         case BeanExplorerSessionError.candidateNotFound:
             return "The candidate is no longer available."
         case BeanExplorerImageError.imageTooLarge:
