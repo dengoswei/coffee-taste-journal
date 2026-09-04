@@ -17,6 +17,15 @@ enum DiscoverScanLog {
         log.info(
             "begin source=\(sourceID.uuidString, privacy: .public) rev=\(requestRevision) live=\(hashPrefix(liveHash), privacy: .public) approved=\(hashPrefix(approvedHash), privacy: .public) match=\(match)"
         )
+        if !match {
+            logPromptHashWarning(sourceID: sourceID, liveHash: liveHash, approvedHash: approvedHash)
+        }
+    }
+
+    static func logPromptHashWarning(sourceID: UUID, liveHash: String, approvedHash: String) {
+        log.warning(
+            "prompt_hash_mismatch source=\(sourceID.uuidString, privacy: .public) live=\(hashPrefix(liveHash), privacy: .public) approved=\(hashPrefix(approvedHash), privacy: .public) — continuing scan (warning only)"
+        )
     }
 
     static func logExtractStart(sourceID: UUID) {

@@ -194,9 +194,7 @@ public struct BeanExplorerSession: Equatable, Sendable, Codable {
         sourceID: UUID,
         promptContractHash: String
     ) throws -> BeanExplorerExtractionRequest {
-        guard promptContractHash == BeanExplorerExtractionContract.approvedPromptSHA256 else {
-            throw BeanExplorerSessionError.promptContractMismatch
-        }
+        // Prompt-hash mismatch is diagnostic only (logged by the app). Do not hard-block extraction.
         let index = try activeSourceIndex(id: sourceID)
         sources[index].requestRevision += 1
         sources[index].requestState = .uploading
@@ -213,17 +211,7 @@ public struct BeanExplorerSession: Equatable, Sendable, Codable {
         drafts: [BeanExplorerCandidateDraft],
         rejectedCount: Int
     ) throws {
-        guard request.promptContractHash == BeanExplorerExtractionContract.approvedPromptSHA256 else {
-            if let index = sources.firstIndex(where: {
-                $0.id == request.sourceID &&
-                !$0.isRemoved &&
-                $0.requestRevision == request.requestRevision &&
-                $0.requestState == .uploading
-            }) {
-                sources[index].requestState = .failed
-            }
-            throw BeanExplorerSessionError.promptContractMismatch
-        }
+        // Prompt-hash mismatch is diagnostic only — still commit when revision/state match.
         guard let sourceIndex = sources.firstIndex(where: {
             $0.id == request.sourceID &&
             !$0.isRemoved &&

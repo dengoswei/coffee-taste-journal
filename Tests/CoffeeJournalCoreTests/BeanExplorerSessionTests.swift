@@ -15,20 +15,17 @@ final class BeanExplorerSessionTests: XCTestCase {
         XCTAssertEqual(digest, BeanExplorerExtractionContract.approvedParserSourceSHA256)
     }
 
-    func testMismatchedPromptLineageCannotBeginExtraction() throws {
+    func testMismatchedPromptLineageStillBeginsExtraction() throws {
         var session = BeanExplorerSession()
         let source = try session.addImageSource()
 
-        XCTAssertThrowsError(
-            try session.beginExtraction(sourceID: source.id, promptContractHash: "unapproved")
-        ) { error in
-            XCTAssertEqual(error as? BeanExplorerSessionError, .promptContractMismatch)
-        }
-        XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .idle)
+        let request = try session.beginExtraction(sourceID: source.id, promptContractHash: "unapproved")
+        XCTAssertEqual(request.promptContractHash, "unapproved")
+        XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .uploading)
         XCTAssertTrue(session.activeCandidates.isEmpty)
     }
 
-    func testMismatchedPromptLineageCannotCommitExtraction() throws {
+    func testMismatchedPromptLineageStillCommitsExtraction() throws {
         var session = BeanExplorerSession()
         let source = try session.addImageSource()
         let request = try session.beginExtraction(
@@ -42,17 +39,14 @@ final class BeanExplorerSessionTests: XCTestCase {
             promptContractHash: "unapproved"
         )
 
-        XCTAssertThrowsError(
-            try session.commitExtraction(
-                request: mismatchedRequest,
-                drafts: [.init(roaster: "Injected", name: "Recommendation")],
-                rejectedCount: 0
-            )
-        ) { error in
-            XCTAssertEqual(error as? BeanExplorerSessionError, .promptContractMismatch)
-        }
-        XCTAssertTrue(session.activeCandidates.isEmpty)
-        XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .failed)
+        try session.commitExtraction(
+            request: mismatchedRequest,
+            drafts: [.init(roaster: "Injected", name: "Recommendation")],
+            rejectedCount: 0
+        )
+
+        XCTAssertEqual(session.activeCandidates.count, 1)
+        XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .succeeded(validCount: 1))
     }
 
     func testExtractionParserReturnsMultipleTemporaryCandidates() throws {

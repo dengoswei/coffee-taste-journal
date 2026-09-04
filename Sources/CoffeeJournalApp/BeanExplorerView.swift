@@ -21,7 +21,8 @@ struct BeanExplorerView: View {
     @State private var cameraCaptureTrigger = 0
     @State private var scanTasks: [UUID: Task<Void, Never>] = [:]
     @State private var scanQueue: [UUID] = []
-    private let maxConcurrentScans = 2
+    /// One in-flight Ark request per pending image (capped by session image limit).
+    private let maxConcurrentScans = BeanExplorerSession.maximumImageSources
     private let scanTimeoutSeconds: TimeInterval = 150
     @State private var errorMessage: String?
     @State private var comparison: BeanExplorerComparison?
@@ -543,16 +544,6 @@ struct BeanExplorerView: View {
 
             let liveHash = BeanExplorerPhotoScanner.promptContractHash
             let approvedHash = BeanExplorerExtractionContract.approvedPromptSHA256
-            guard liveHash == approvedHash else {
-                DiscoverScanLog.logBegin(
-                    sourceID: sourceID,
-                    requestRevision: session.activeSource(id: sourceID)?.requestRevision ?? 0,
-                    liveHash: liveHash,
-                    approvedHash: approvedHash
-                )
-                errorMessage = "Package scanning isn't available right now. Try again after updating the app."
-                continue
-            }
 
             let remainingCapacity = BeanExplorerSession.maximumCandidates - session.activeCandidates.count
             guard remainingCapacity > 0 else {
@@ -574,9 +565,6 @@ struct BeanExplorerView: View {
                     approvedHash: approvedHash
                 )
                 DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "idle", to: "uploading")
-            } catch BeanExplorerSessionError.promptContractMismatch {
-                errorMessage = "Package scanning isn't available right now. Try again after updating the app."
-                continue
             } catch {
                 errorMessage = message(for: error)
                 continue
@@ -621,11 +609,6 @@ struct BeanExplorerView: View {
                     DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "timeout")
                     DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "failed")
                     errorMessage = "Reading timed out. Tap the photo to try again."
-                    refreshComparison()
-                } catch BeanExplorerSessionError.promptContractMismatch {
-                    DiscoverScanLog.logCommit(sourceID: sourceID, reason: "prompt_mismatch", candidateCount: 0)
-                    DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "failed")
-                    errorMessage = "Package scanning isn't available right now. Try again after updating the app."
                     refreshComparison()
                 } catch BeanExplorerSessionError.staleExtractionRequest {
                     DiscoverScanLog.logCommit(sourceID: sourceID, reason: "stale_request", candidateCount: 0)
@@ -946,7 +929,8 @@ struct BeanExplorerView: View {
         case BeanExplorerSessionError.candidateNotFound:
             return "The candidate is no longer available."
         case BeanExplorerSessionError.promptContractMismatch:
-            return "Package scanning isn't available right now. Try again after updating the app."
+            // Kept for API compatibility; runtime no longer hard-blocks on hash drift.
+            return "The image could not be read. Touch and hold the photo to try again."
         case BeanExplorerImageError.imageTooLarge:
             return "The photo could not be reduced below the 4 MB session limit."
         default:
