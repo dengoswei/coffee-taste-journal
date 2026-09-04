@@ -27,7 +27,6 @@ struct BeanExplorerView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    introContent
                     sourceContent
                     if isScanning {
                         scanningContent
@@ -82,10 +81,6 @@ struct BeanExplorerView: View {
         }
     }
 
-    private var introContent: some View {
-        Text("Find your next coffee")
-            .font(.title2.bold())
-    }
 
     private var sourceContent: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -149,9 +144,6 @@ struct BeanExplorerView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(scorableCandidateCount < 2 ? "Add more coffees to compare" : "Comparison in progress")
                 .font(.subheadline.weight(.semibold))
-            Text("Add photos of coffee packages. The recommendation will appear when at least two coffees can be scored.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
         .coffeeCard()
     }
@@ -164,7 +156,7 @@ struct BeanExplorerView: View {
                     title: "Best match",
                     symbol: "checkmark.seal.fill",
                     score: comparison.bestSupportedMatch,
-                    explanation: "The strongest supported match in this group. Fit ranks these options; it is not a purchase guarantee.",
+                    explanation: nil,
                     prominent: true
                 )
 
@@ -174,7 +166,7 @@ struct BeanExplorerView: View {
                             title: "Worth exploring",
                             symbol: "sparkles",
                             score: frontier,
-                            explanation: frontierExplanation(frontier),
+                            explanation: nil,
                             prominent: false
                         )
                     }
@@ -235,7 +227,7 @@ struct BeanExplorerView: View {
         title: String,
         symbol: String,
         score: BeanExplorerScore,
-        explanation: String,
+        explanation: String?,
         prominent: Bool
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -251,9 +243,11 @@ struct BeanExplorerView: View {
                 scoreMetric("Fit", value: score.fit)
                 scoreMetric("Novelty", value: score.novelty)
             }
-            Text(explanation)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            if let explanation, !explanation.isEmpty {
+                Text(explanation)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .coffeeCard()
     }
