@@ -59,6 +59,28 @@ struct BagPhotoScanner: Sendable {
     }
 }
 
+private final class HTTPResponseProbe: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _status: Int?
+    private var _bytes = 0
+
+    var status: Int? {
+        lock.lock(); defer { lock.unlock() }
+        return _status
+    }
+
+    var bytes: Int {
+        lock.lock(); defer { lock.unlock() }
+        return _bytes
+    }
+
+    func record(status: Int, bytes: Int) {
+        lock.lock(); defer { lock.unlock() }
+        _status = status
+        _bytes = bytes
+    }
+}
+
 struct BeanExplorerPhotoScanner: Sendable {
     static let contractID = BeanExplorerExtractionContract.contractID
     private let client: ArkResponsesClient
@@ -73,14 +95,55 @@ struct BeanExplorerPhotoScanner: Sendable {
             .joined()
     }
 
-    func scan(imageData: Data, remainingCapacity: Int) async throws -> BeanExplorerExtractionResult {
-        let content = try await client.extract(
-            imageData: imageData,
-            systemPrompt: Self.systemPrompt,
-            userPrompt: Self.userPrompt,
-            maxOutputTokens: 3000
-        )
-        return try BeanExplorerExtractionParser().parse(content, remainingCapacity: remainingCapacity)
+    func scan(imageData: Data, remainingCapacity: Int, sourceID: UUID) async throws -> BeanExplorerExtractionResult {
+        let started = Date()
+        DiscoverScanLog.logExtractStart(sourceID: sourceID)
+        let probe = HTTPResponseProbe()
+        do {
+            let content = try await client.extract(
+                imageData: imageData,
+                systemPrompt: Self.systemPrompt,
+                userPrompt: Self.userPrompt,
+                maxOutputTokens: 3000,
+                didReceiveResponse: { status, bytes in
+                    probe.record(status: status, bytes: bytes)
+                }
+            )
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractSuccess(
+                sourceID: sourceID,
+                status: probe.status ?? 0,
+                bytes: probe.bytes,
+                durationMs: durationMs
+            )
+            return try BeanExplorerExtractionParser().parse(content, remainingCapacity: remainingCapacity)
+        } catch let error as URLError where error.code == .timedOut {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "timeout", durationMs: durationMs)
+            throw error
+        } catch is CancellationError {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "cancel", durationMs: durationMs)
+            throw CancellationError()
+        } catch let error as BagPhotoScannerError {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            switch error {
+            case .requestFailed(let statusCode):
+                DiscoverScanLog.logExtractFailure(
+                    sourceID: sourceID,
+                    reason: "http",
+                    status: statusCode,
+                    durationMs: durationMs
+                )
+            default:
+                DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "error", durationMs: durationMs)
+            }
+            throw error
+        } catch {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "error", durationMs: durationMs)
+            throw error
+        }
     }
 }
 
@@ -178,7 +241,8 @@ struct ArkResponsesClient: Sendable {
         imageData: Data,
         systemPrompt: String,
         userPrompt: String,
-        maxOutputTokens: Int
+        maxOutputTokens: Int,
+        didReceiveResponse: (@Sendable (Int, Int) -> Void)? = nil
     ) async throws -> String {
         let credentials = try credentialsLoader()
         let jpegData = try compressedJPEGData(from: imageData)
@@ -222,6 +286,7 @@ struct ArkResponsesClient: Sendable {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw BagPhotoScannerError.invalidResponse
         }
+        didReceiveResponse?(httpResponse.statusCode, data.count)
         guard (200..<300).contains(httpResponse.statusCode) else {
             throw BagPhotoScannerError.requestFailed(statusCode: httpResponse.statusCode)
         }

@@ -15,19 +15,44 @@ final class BeanExplorerSessionTests: XCTestCase {
         XCTAssertEqual(digest, BeanExplorerExtractionContract.approvedParserSourceSHA256)
     }
 
+    func testMismatchedPromptLineageCannotBeginExtraction() throws {
+        var session = BeanExplorerSession()
+        let source = try session.addImageSource()
+
+        XCTAssertThrowsError(
+            try session.beginExtraction(sourceID: source.id, promptContractHash: "unapproved")
+        ) { error in
+            XCTAssertEqual(error as? BeanExplorerSessionError, .promptContractMismatch)
+        }
+        XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .idle)
+        XCTAssertTrue(session.activeCandidates.isEmpty)
+    }
+
     func testMismatchedPromptLineageCannotCommitExtraction() throws {
         var session = BeanExplorerSession()
         let source = try session.addImageSource()
-        let request = try session.beginExtraction(sourceID: source.id, promptContractHash: "unapproved")
-
-        let committed = try session.commitExtraction(
-            request: request,
-            drafts: [.init(roaster: "Injected", name: "Recommendation")],
-            rejectedCount: 0
+        let request = try session.beginExtraction(
+            sourceID: source.id,
+            promptContractHash: BeanExplorerExtractionContract.approvedPromptSHA256
+        )
+        let mismatchedRequest = BeanExplorerExtractionRequest(
+            sourceID: request.sourceID,
+            sourceRevision: request.sourceRevision,
+            requestRevision: request.requestRevision,
+            promptContractHash: "unapproved"
         )
 
-        XCTAssertFalse(committed)
+        XCTAssertThrowsError(
+            try session.commitExtraction(
+                request: mismatchedRequest,
+                drafts: [.init(roaster: "Injected", name: "Recommendation")],
+                rejectedCount: 0
+            )
+        ) { error in
+            XCTAssertEqual(error as? BeanExplorerSessionError, .promptContractMismatch)
+        }
         XCTAssertTrue(session.activeCandidates.isEmpty)
+        XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .failed)
     }
 
     func testExtractionParserReturnsMultipleTemporaryCandidates() throws {
@@ -276,12 +301,16 @@ final class BeanExplorerSessionTests: XCTestCase {
         let staleRequest = try session.beginExtraction(sourceID: source.id, promptContractHash: BeanExplorerExtractionContract.approvedPromptSHA256)
         let currentRequest = try session.beginExtraction(sourceID: source.id, promptContractHash: BeanExplorerExtractionContract.approvedPromptSHA256)
 
-        let staleCommitted = try session.commitExtraction(
-            request: staleRequest,
-            drafts: [.init(roaster: "Stale", name: "Result")],
-            rejectedCount: 0
-        )
-        let currentCommitted = try session.commitExtraction(
+        XCTAssertThrowsError(
+            try session.commitExtraction(
+                request: staleRequest,
+                drafts: [.init(roaster: "Stale", name: "Result")],
+                rejectedCount: 0
+            )
+        ) { error in
+            XCTAssertEqual(error as? BeanExplorerSessionError, .staleExtractionRequest)
+        }
+        try session.commitExtraction(
             request: currentRequest,
             drafts: [
                 .init(roaster: "April", name: "Volcan Azul"),
@@ -289,9 +318,6 @@ final class BeanExplorerSessionTests: XCTestCase {
             ],
             rejectedCount: 1
         )
-
-        XCTAssertFalse(staleCommitted)
-        XCTAssertTrue(currentCommitted)
         XCTAssertEqual(session.activeCandidates.map(\.id), ["candidate-001", "candidate-002"])
         XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .partialSuccess(validCount: 2, rejectedCount: 1))
     }
@@ -302,13 +328,15 @@ final class BeanExplorerSessionTests: XCTestCase {
         let request = try session.beginExtraction(sourceID: source.id, promptContractHash: BeanExplorerExtractionContract.approvedPromptSHA256)
 
         try session.cancelRequest(sourceID: source.id)
-        let committed = try session.commitExtraction(
-            request: request,
-            drafts: [.init(roaster: "Late response")],
-            rejectedCount: 0
-        )
-
-        XCTAssertFalse(committed)
+        XCTAssertThrowsError(
+            try session.commitExtraction(
+                request: request,
+                drafts: [.init(roaster: "Late response")],
+                rejectedCount: 0
+            )
+        ) { error in
+            XCTAssertEqual(error as? BeanExplorerSessionError, .staleExtractionRequest)
+        }
         XCTAssertTrue(session.activeCandidates.isEmpty)
         XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .cancelled)
     }
@@ -319,13 +347,15 @@ final class BeanExplorerSessionTests: XCTestCase {
         let request = try session.beginExtraction(sourceID: source.id, promptContractHash: BeanExplorerExtractionContract.approvedPromptSHA256)
 
         XCTAssertTrue(session.failExtraction(request: request))
-        let committed = try session.commitExtraction(
-            request: request,
-            drafts: [.init(roaster: "Late response")],
-            rejectedCount: 0
-        )
-
-        XCTAssertFalse(committed)
+        XCTAssertThrowsError(
+            try session.commitExtraction(
+                request: request,
+                drafts: [.init(roaster: "Late response")],
+                rejectedCount: 0
+            )
+        ) { error in
+            XCTAssertEqual(error as? BeanExplorerSessionError, .staleExtractionRequest)
+        }
         XCTAssertEqual(session.activeSource(id: source.id)?.requestState, .failed)
     }
 
@@ -345,7 +375,7 @@ final class BeanExplorerSessionTests: XCTestCase {
         var session = BeanExplorerSession()
         let source = try session.addImageSource()
         let request = try session.beginExtraction(sourceID: source.id, promptContractHash: BeanExplorerExtractionContract.approvedPromptSHA256)
-        _ = try session.commitExtraction(
+        try session.commitExtraction(
             request: request,
             drafts: [.init(roaster: "April"), .init(roaster: "Manhattan")],
             rejectedCount: 0

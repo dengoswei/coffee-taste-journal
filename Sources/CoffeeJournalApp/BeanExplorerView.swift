@@ -541,6 +541,19 @@ struct BeanExplorerView: View {
             guard let image = images.first(where: { $0.id == sourceID }) else { continue }
             guard scanTasks[sourceID] == nil else { continue }
 
+            let liveHash = BeanExplorerPhotoScanner.promptContractHash
+            let approvedHash = BeanExplorerExtractionContract.approvedPromptSHA256
+            guard liveHash == approvedHash else {
+                DiscoverScanLog.logBegin(
+                    sourceID: sourceID,
+                    requestRevision: session.activeSource(id: sourceID)?.requestRevision ?? 0,
+                    liveHash: liveHash,
+                    approvedHash: approvedHash
+                )
+                errorMessage = "Package scanning isn't available right now. Try again after updating the app."
+                continue
+            }
+
             let remainingCapacity = BeanExplorerSession.maximumCandidates - session.activeCandidates.count
             guard remainingCapacity > 0 else {
                 errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
@@ -552,8 +565,18 @@ struct BeanExplorerView: View {
             do {
                 request = try session.beginExtraction(
                     sourceID: sourceID,
-                    promptContractHash: BeanExplorerPhotoScanner.promptContractHash
+                    promptContractHash: liveHash
                 )
+                DiscoverScanLog.logBegin(
+                    sourceID: sourceID,
+                    requestRevision: request.requestRevision,
+                    liveHash: liveHash,
+                    approvedHash: approvedHash
+                )
+                DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "idle", to: "uploading")
+            } catch BeanExplorerSessionError.promptContractMismatch {
+                errorMessage = "Package scanning isn't available right now. Try again after updating the app."
+                continue
             } catch {
                 errorMessage = message(for: error)
                 continue
@@ -568,34 +591,48 @@ struct BeanExplorerView: View {
                     let result = try await withTimeout(seconds: scanTimeoutSeconds) {
                         try await BeanExplorerPhotoScanner().scan(
                             imageData: image.data,
-                            remainingCapacity: remainingCapacity
+                            remainingCapacity: remainingCapacity,
+                            sourceID: sourceID
                         )
                     }
                     try Task.checkCancellation()
-                    let committed = try session.commitExtraction(
+                    try session.commitExtraction(
                         request: request,
                         drafts: result.candidates,
                         rejectedCount: result.rejectedCount
                     )
-                    if committed {
-                        for candidate in session.activeCandidates where candidate.sourceID == sourceID {
-                            trustCandidateIfPossible(candidate.id)
-                        }
-                    } else {
-                        // Prompt/revision mismatch left the source in .uploading otherwise.
-                        _ = session.failExtraction(request: request)
-                        errorMessage = "The image could not be read. Touch and hold the photo to try again."
+                    DiscoverScanLog.logCommit(
+                        sourceID: sourceID,
+                        reason: "ok",
+                        candidateCount: result.candidates.count
+                    )
+                    let endState = result.rejectedCount > 0 ? "partialSuccess" : "succeeded"
+                    DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: endState)
+                    for candidate in session.activeCandidates where candidate.sourceID == sourceID {
+                        trustCandidateIfPossible(candidate.id)
                     }
                     refreshComparison()
                 } catch is CancellationError {
                     try? session.cancelRequest(sourceID: sourceID)
+                    DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "cancelled")
                     refreshComparison()
                 } catch is TimeoutError {
                     _ = session.failExtraction(request: request)
+                    DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "timeout")
+                    DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "failed")
                     errorMessage = "Reading timed out. Tap the photo to try again."
+                    refreshComparison()
+                } catch BeanExplorerSessionError.promptContractMismatch {
+                    DiscoverScanLog.logCommit(sourceID: sourceID, reason: "prompt_mismatch", candidateCount: 0)
+                    DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "failed")
+                    errorMessage = "Package scanning isn't available right now. Try again after updating the app."
+                    refreshComparison()
+                } catch BeanExplorerSessionError.staleExtractionRequest {
+                    DiscoverScanLog.logCommit(sourceID: sourceID, reason: "stale_request", candidateCount: 0)
                     refreshComparison()
                 } catch {
                     _ = session.failExtraction(request: request)
+                    DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "failed")
                     if case BagPhotoScannerError.missingAPIKey = error {
                         errorMessage = error.localizedDescription
                     } else if case BeanExplorerSessionError.candidateLimitReached = error {
@@ -908,6 +945,8 @@ struct BeanExplorerView: View {
             return "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
         case BeanExplorerSessionError.candidateNotFound:
             return "The candidate is no longer available."
+        case BeanExplorerSessionError.promptContractMismatch:
+            return "Package scanning isn't available right now. Try again after updating the app."
         case BeanExplorerImageError.imageTooLarge:
             return "The photo could not be reduced below the 4 MB session limit."
         default:

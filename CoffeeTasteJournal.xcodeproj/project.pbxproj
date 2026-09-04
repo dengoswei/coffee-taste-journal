@@ -23,6 +23,7 @@
 		78332B15C33DDEDE62B6DE0D /* BeanExplorerExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19FBB60289F46855866D162D /* BeanExplorerExtraction.swift */; };
 		7E84328F8BFD3A759F438A90 /* BeanExplorerExtractionContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACEE583B525AD462A7ECB93 /* BeanExplorerExtractionContract.swift */; };
 		8721416473F6A58AA3947C18 /* BeanExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF24AD8709E604DE603D9D9 /* BeanExplorerView.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* DiscoverScanLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C6D /* DiscoverScanLog.swift */; };
 		27984BEA1ACC407D81798711 /* CoffeeDescriptorNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607DDACB7DC0463BB9851532 /* CoffeeDescriptorNormalizer.swift */; };
 		9135DF14CF6044BC1161E397 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733D90120682C6DDB93A8F77 /* Models.swift */; };
 		94BD2C9AC025200EA2F5C64E /* BagPhotoScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B92F6180AC390F19A8E032C /* BagPhotoScanner.swift */; };
@@ -127,6 +128,7 @@
 		C406BA5EED8E9D241C027BF3 /* BeanExplorerScoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerScoring.swift; sourceTree = "<group>"; };
 		CCE602F5F55B2FB8CC287ECE /* BeanExplorerProfileResource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerProfileResource.swift; sourceTree = "<group>"; };
 		DFF24AD8709E604DE603D9D9 /* BeanExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerView.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C6D /* DiscoverScanLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverScanLog.swift; sourceTree = "<group>"; };
 		607DDACB7DC0463BB9851532 /* CoffeeDescriptorNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeeDescriptorNormalizer.swift; sourceTree = "<group>"; };
 		E0B0D1D8BA82E2619F6466BD /* profile-prior.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "profile-prior.json"; sourceTree = "<group>"; };
 		E138423FDB9840E15596526B /* BeanExplorerScoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerScoringTests.swift; sourceTree = "<group>"; };
@@ -233,6 +235,7 @@
 				0C9E99F54E7734C54CB5A424 /* BeanExplorerGeneratedContract.swift */,
 				43823121429BCF43F9701ED7 /* BeanExplorerPersistence.swift */,
 				CCE602F5F55B2FB8CC287ECE /* BeanExplorerProfileResource.swift */,
+				B2C3D4E5F60718293A4B5C6D /* DiscoverScanLog.swift */,
 				DFF24AD8709E604DE603D9D9 /* BeanExplorerView.swift */,
 				607DDACB7DC0463BB9851532 /* CoffeeDescriptorNormalizer.swift */,
 				6636D643B05C92D53B399038 /* BeansView.swift */,
@@ -435,6 +438,7 @@
 				6765BE814F5551972EE01656 /* BeanExplorerGeneratedContract.swift in Sources */,
 				B7EE412D176B877FC5525763 /* BeanExplorerPersistence.swift in Sources */,
 				FD05B62F4482EEC41CD68761 /* BeanExplorerProfileResource.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* DiscoverScanLog.swift in Sources */,
 				8721416473F6A58AA3947C18 /* BeanExplorerView.swift in Sources */,
 				27984BEA1ACC407D81798711 /* CoffeeDescriptorNormalizer.swift in Sources */,
 				F7676B67938894F4F2E42F18 /* BeansView.swift in Sources */,

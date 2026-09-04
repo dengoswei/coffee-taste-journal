@@ -6,6 +6,8 @@ public enum BeanExplorerSessionError: Error, Equatable, Sendable {
     case sourceNotFound
     case candidateNotFound
     case unresolvedCandidateFields(Set<String>)
+    case promptContractMismatch
+    case staleExtractionRequest
 }
 
 public enum BeanExplorerFieldProvenance: String, Equatable, Sendable, Codable {
@@ -192,6 +194,9 @@ public struct BeanExplorerSession: Equatable, Sendable, Codable {
         sourceID: UUID,
         promptContractHash: String
     ) throws -> BeanExplorerExtractionRequest {
+        guard promptContractHash == BeanExplorerExtractionContract.approvedPromptSHA256 else {
+            throw BeanExplorerSessionError.promptContractMismatch
+        }
         let index = try activeSourceIndex(id: sourceID)
         sources[index].requestRevision += 1
         sources[index].requestState = .uploading
@@ -203,14 +208,21 @@ public struct BeanExplorerSession: Equatable, Sendable, Codable {
         )
     }
 
-    @discardableResult
     public mutating func commitExtraction(
         request: BeanExplorerExtractionRequest,
         drafts: [BeanExplorerCandidateDraft],
         rejectedCount: Int
-    ) throws -> Bool {
+    ) throws {
         guard request.promptContractHash == BeanExplorerExtractionContract.approvedPromptSHA256 else {
-            return false
+            if let index = sources.firstIndex(where: {
+                $0.id == request.sourceID &&
+                !$0.isRemoved &&
+                $0.requestRevision == request.requestRevision &&
+                $0.requestState == .uploading
+            }) {
+                sources[index].requestState = .failed
+            }
+            throw BeanExplorerSessionError.promptContractMismatch
         }
         guard let sourceIndex = sources.firstIndex(where: {
             $0.id == request.sourceID &&
@@ -219,7 +231,7 @@ public struct BeanExplorerSession: Equatable, Sendable, Codable {
             $0.requestRevision == request.requestRevision &&
             $0.requestState == .uploading
         }) else {
-            return false
+            throw BeanExplorerSessionError.staleExtractionRequest
         }
         guard activeCandidates.count + drafts.count <= Self.maximumCandidates else {
             throw BeanExplorerSessionError.candidateLimitReached
@@ -245,7 +257,6 @@ public struct BeanExplorerSession: Equatable, Sendable, Codable {
         } else {
             sources[sourceIndex].requestState = .succeeded(validCount: drafts.count)
         }
-        return true
     }
 
     public mutating func cancelRequest(sourceID: UUID) throws {
