@@ -16,6 +16,10 @@ public struct BeanExplorerScoreCandidate: Equatable, Sendable {
     public let confirmedFields: Set<String>
     public let fieldProvenance: [String: BeanExplorerFieldProvenance]
     public let unresolvedFields: Set<String>
+    
+    /// Pre-matched flavor family IDs from normalize step.
+    /// If provided, these are used directly instead of matching descriptors against lexicon.
+    public let preMatchedFamilies: [String]?
 
     public init(
         id: String,
@@ -27,7 +31,8 @@ public struct BeanExplorerScoreCandidate: Equatable, Sendable {
         isConfirmed: Bool,
         confirmedFields: Set<String> = [],
         fieldProvenance: [String: BeanExplorerFieldProvenance] = [:],
-        unresolvedFields: Set<String> = []
+        unresolvedFields: Set<String> = [],
+        preMatchedFamilies: [String]? = nil
     ) {
         self.id = id
         self.roaster = roaster
@@ -39,6 +44,7 @@ public struct BeanExplorerScoreCandidate: Equatable, Sendable {
         self.confirmedFields = confirmedFields
         self.fieldProvenance = fieldProvenance
         self.unresolvedFields = unresolvedFields
+        self.preMatchedFamilies = preMatchedFamilies
     }
 }
 
@@ -300,9 +306,18 @@ public struct BeanExplorerScorer: Sendable {
         guard !normalized(candidate.name).isEmpty else { return "Full coffee name is required." }
         guard !normalized(candidate.origin).isEmpty else { return "Origin is required." }
         guard !normalized(candidate.process).isEmpty else { return "Process is required." }
-        guard !matchedKeys(parts: candidate.descriptors, vocabulary: profile.lexicon.categoryTerms).isEmpty else {
+        
+        // Check families: either pre-matched or matched from lexicon
+        let hasMatchedFamilies: Bool
+        if let preMatched = candidate.preMatchedFamilies {
+            hasMatchedFamilies = !preMatched.isEmpty
+        } else {
+            hasMatchedFamilies = !matchedKeys(parts: candidate.descriptors, vocabulary: profile.lexicon.categoryTerms).isEmpty
+        }
+        guard hasMatchedFamilies else {
             return "Add at least one seller flavor note recognized by the profile."
         }
+        
         let scoreFields: Set<String> = ["roaster", "name", "origin", "process", "flavor_notes"]
         guard scoreFields.isSubset(of: candidate.confirmedFields) else {
             return "Confirm every field used by the scorer."
@@ -315,7 +330,15 @@ public struct BeanExplorerScorer: Sendable {
 
     private func score(_ candidate: BeanExplorerScoreCandidate) -> BeanExplorerScore {
         let config = profile.scoring
-        let categories = matchedKeys(parts: candidate.descriptors, vocabulary: profile.lexicon.categoryTerms)
+        
+        // Use pre-matched families if provided (from normalize step), otherwise match against lexicon
+        let categories: [String]
+        if let preMatched = candidate.preMatchedFamilies {
+            categories = preMatched.sorted()
+        } else {
+            categories = matchedKeys(parts: candidate.descriptors, vocabulary: profile.lexicon.categoryTerms)
+        }
+        
         let qualitySignals = matchedKeys(parts: candidate.descriptors, vocabulary: profile.lexicon.qualityTerms)
         let categoryStats = statMap(profile.statistics.categoryStats)
         let originStats = statMap(profile.statistics.originStats)

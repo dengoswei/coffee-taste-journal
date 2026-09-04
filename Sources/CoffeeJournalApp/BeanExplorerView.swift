@@ -801,18 +801,86 @@ struct BeanExplorerView: View {
             persistCache()
             return
         }
-        do {
-            let profile = try BeanExplorerProfileResource.load()
-            let result = try BeanExplorerScorer(profile: profile).compare(scoreCandidates)
-            guard result.ranking.count >= 2 else {
-                throw BeanExplorerScoringError.insufficientCandidates
+        
+        Task {
+            do {
+                let profile = try BeanExplorerProfileResource.load()
+                let scorer = try BeanExplorerScorer(profile: profile)
+                
+                // Normalize candidates before scoring
+                var normalizedCandidates: [BeanExplorerScoreCandidate] = []
+                for candidate in scoreCandidates {
+                    let normalized = try await normalizeCandidate(candidate, profile: profile)
+                    normalizedCandidates.append(normalized)
+                }
+                
+                let result = try scorer.compare(normalizedCandidates)
+                guard result.ranking.count >= 2 else {
+                    throw BeanExplorerScoringError.insufficientCandidates
+                }
+                
+                await MainActor.run {
+                    comparison = result
+                    persistCache()
+                }
+            } catch {
+                await MainActor.run {
+                    comparison = nil
+                    let errorMsg: String
+                    if let normError = error as? CoffeeDescriptorNormalizerError {
+                        errorMsg = "Flavor note normalization failed: \(normError.localizedDescription)"
+                    } else {
+                        errorMsg = "The taste profile could not be verified."
+                    }
+                    errorMessage = errorMsg
+                    persistCache()
+                }
             }
-            comparison = result
-        } catch {
-            comparison = nil
-            errorMessage = "The taste profile could not be verified."
         }
-        persistCache()
+    }
+    
+    @MainActor
+    private func normalizeCandidate(
+        _ candidate: BeanExplorerScoreCandidate,
+        profile: BeanExplorerProfile
+    ) async throws -> BeanExplorerScoreCandidate {
+        // Skip normalize if descriptors/origin/process are already English
+        // or if Ark is not configured (development/testing scenario)
+        guard needsNormalize(candidate) else {
+            return candidate
+        }
+        
+        // Try normalize with retry; on failure → surface error, do NOT fall back to lexicon
+        let normalizer = CoffeeDescriptorNormalizer(profile: profile)
+        let normalized = try await normalizer.normalize(
+            descriptors: candidate.descriptors,
+            origin: candidate.origin,
+            process: candidate.process
+        )
+        
+        // Return candidate with normalized families and canonical origin/process
+        return BeanExplorerScoreCandidate(
+            id: candidate.id,
+            roaster: candidate.roaster,
+            name: candidate.name,
+            origin: normalized.origin ?? candidate.origin,
+            process: normalized.process ?? candidate.process,
+            descriptors: normalized.descriptorTermsKeptForDisplay,
+            isConfirmed: candidate.isConfirmed,
+            confirmedFields: candidate.confirmedFields,
+            fieldProvenance: candidate.fieldProvenance,
+            unresolvedFields: candidate.unresolvedFields,
+            preMatchedFamilies: normalized.flavorFamilies
+        )
+    }
+    
+    private func needsNormalize(_ candidate: BeanExplorerScoreCandidate) -> Bool {
+        // Simple heuristic: check if descriptors contain non-ASCII characters
+        // which likely indicates Chinese/non-English terms
+        let hasNonASCII = candidate.descriptors.contains { descriptor in
+            descriptor.unicodeScalars.contains { !$0.isASCII }
+        }
+        return hasNonASCII
     }
 
     private func restoreCacheIfNeeded() {
