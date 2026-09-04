@@ -86,7 +86,7 @@ struct BeanExplorerView: View {
         .onChange(of: selectedPhotoItems) { _, items in
             guard !items.isEmpty else { return }
             selectedPhotoItems = []
-            Task { await refreshWithPhotoItems(items) }
+            Task { await loadPhotoItems(items) }
         }
         .fullScreenCover(isPresented: $isShowingCamera) {
             cameraCapture
@@ -139,15 +139,16 @@ struct BeanExplorerView: View {
             HStack(spacing: 10) {
                 PhotosPicker(
                     selection: $selectedPhotoItems,
-                    maxSelectionCount: BeanExplorerSession.maximumImageSources,
+                    maxSelectionCount: max(0, BeanExplorerSession.maximumImageSources - images.count),
                     matching: .images
                 ) {
-                    Label(images.isEmpty ? "Choose photos" : "Replace photos", systemImage: "photo.on.rectangle.angled")
+                    Label(images.isEmpty ? "Choose photos" : "Add photos", systemImage: "photo.on.rectangle.angled")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(CoffeeTheme.accent)
+                .disabled(images.count >= BeanExplorerSession.maximumImageSources)
 
                 Button {
                     isShowingCamera = true
@@ -177,7 +178,7 @@ struct BeanExplorerView: View {
                 }
             }
 
-            Text("Photos are processed by your configured vision service and stay out of Beans. This comparison is kept when you close; Choose photos starts fresh, or clear it from the menu.")
+            Text("Photos are processed by your configured vision service and stay out of Beans. This comparison is kept when you close. Add photos appends to existing images; use Clear comparison from the menu to start fresh.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -441,10 +442,22 @@ struct BeanExplorerView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .accessibilityLabel("Selected coffee package image")
 
-            sourceStatus(item.id)
+            VStack(alignment: .trailing, spacing: 4) {
+                Button {
+                    removeImage(item)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.white, Color.red.opacity(0.9))
+                }
+                .accessibilityLabel("Remove photo")
                 .padding(6)
-                .background(.ultraThinMaterial, in: Circle())
-                .padding(5)
+
+                sourceStatus(item.id)
+                    .padding(6)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .padding(5)
         }
         .contextMenu {
             if sourceCanScan(item.id) {
@@ -574,24 +587,6 @@ struct BeanExplorerView: View {
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
         )
-    }
-
-    @MainActor
-    private func refreshWithPhotoItems(_ items: [PhotosPickerItem]) async {
-        clearComparison(persist: false)
-        for item in items {
-            do {
-                guard let data = try await item.loadTransferable(type: Data.self),
-                      let image = UIImage(data: data) else {
-                    errorMessage = "The selected photo could not be read."
-                    continue
-                }
-                addImage(image)
-            } catch {
-                errorMessage = "Could not load a selected photo: \(error.localizedDescription)"
-            }
-        }
-        persistCache()
     }
 
     @MainActor
