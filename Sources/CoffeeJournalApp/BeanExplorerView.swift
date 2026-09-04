@@ -19,8 +19,6 @@ struct BeanExplorerView: View {
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var isShowingCamera = false
     @State private var cameraCaptureTrigger = 0
-    @State private var isShowingManualEntry = false
-    @State private var candidateForEditing: BeanExplorerCandidate?
     @State private var scanTasks: [UUID: Task<Void, Never>] = [:]
     @State private var errorMessage: String?
     @State private var comparison: BeanExplorerComparison?
@@ -29,13 +27,9 @@ struct BeanExplorerView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    introContent
                     sourceContent
                     if isScanning {
                         scanningContent
-                    }
-                    if !session.activeCandidates.isEmpty {
-                        candidatesContent
                     }
                     if comparison != nil {
                         exploreContent
@@ -46,7 +40,7 @@ struct BeanExplorerView: View {
                 .padding(20)
             }
             .background(CoffeeTheme.background.ignoresSafeArea())
-            .navigationTitle("Compare Beans")
+            .navigationTitle("Find Next Coffee")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -56,22 +50,11 @@ struct BeanExplorerView: View {
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Button {
-                            isShowingManualEntry = true
-                        } label: {
-                            Label("Enter coffee manually", systemImage: "square.and.pencil")
+                    if !session.activeSources.isEmpty || !images.isEmpty {
+                        Button("Clear comparison", role: .destructive) {
+                            clearComparison(persist: true)
                         }
-                        .disabled(session.activeCandidates.count >= BeanExplorerSession.maximumCandidates)
-                        if !session.activeSources.isEmpty || !images.isEmpty {
-                            Button("Clear comparison", role: .destructive) {
-                                clearComparison(persist: true)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("More options")
                 }
             }
         }
@@ -91,32 +74,6 @@ struct BeanExplorerView: View {
         .fullScreenCover(isPresented: $isShowingCamera) {
             cameraCapture
         }
-        .sheet(isPresented: $isShowingManualEntry) {
-            ManualExplorerCandidateSheet { draft in
-                do {
-                    let candidate = try session.addManualCandidate(draft)
-                    trustCandidateIfPossible(candidate.id)
-                    refreshComparison()
-                } catch {
-                    errorMessage = message(for: error)
-                }
-            }
-        }
-        .sheet(item: $candidateForEditing) { candidate in
-            ManualExplorerCandidateSheet(
-                title: "Review Candidate",
-                actionTitle: "Save",
-                initialDraft: candidate.draft
-            ) { draft in
-                do {
-                    try session.updateCandidate(id: candidate.id, draft: draft)
-                    trustCandidateIfPossible(candidate.id)
-                    refreshComparison()
-                } catch {
-                    errorMessage = "The candidate is no longer available."
-                }
-            }
-        }
         .onDisappear {
             scanTasks.values.forEach { $0.cancel() }
             scanTasks.removeAll()
@@ -124,15 +81,6 @@ struct BeanExplorerView: View {
         }
     }
 
-    private var introContent: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("Find your next coffee")
-                .font(.title2.bold())
-            Text("Choose one or more package photos. Coffee Journal reads the bags and compares them with your taste profile automatically.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
 
     private var sourceContent: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -166,21 +114,13 @@ struct BeanExplorerView: View {
                 )
             }
 
-            if images.isEmpty {
-                Text("A single photo can contain several coffee packages.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
+            if !images.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         ForEach(images) { imageThumbnail($0) }
                     }
                 }
             }
-
-            Text("Photos are processed by your configured vision service and stay out of Beans. This comparison is kept when you close. Add photos appends to existing images; use Clear comparison from the menu to start fresh.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
         }
     }
 
@@ -199,29 +139,11 @@ struct BeanExplorerView: View {
         .coffeeCard()
     }
 
-    private var candidatesContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Coffee found")
-                    .font(.headline)
-                Spacer()
-                Text("\(session.activeCandidates.count)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-            ForEach(session.activeCandidates) { candidateCard($0) }
-        }
-    }
 
     private var comparisonUnavailableContent: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(scorableCandidateCount == 1 ? "Add one more coffee to compare" : "A few details need attention")
+            Text(scorableCandidateCount < 2 ? "Add more coffees to compare" : "Comparison in progress")
                 .font(.subheadline.weight(.semibold))
-            Text(scorableCandidateCount == 1
-                 ? "The first coffee is ready. Add another photo and the recommendation will appear automatically."
-                 : "Tap a coffee marked Check details to complete the fields needed for matching.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
         .coffeeCard()
     }
@@ -230,44 +152,29 @@ struct BeanExplorerView: View {
     private var exploreContent: some View {
         if let comparison {
             VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("Your recommendation")
-                        .font(.title2.bold())
-                    Text("Based on your taste profile and the flavor notes printed on these bags.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
                 recommendationCard(
                     title: "Best match",
                     symbol: "checkmark.seal.fill",
                     score: comparison.bestSupportedMatch,
-                    explanation: "The strongest supported match in this group. Fit ranks these options; it is not a purchase guarantee.",
+                    explanation: nil,
                     prominent: true
                 )
 
-                if let frontier = comparison.frontierPick {
-                    recommendationCard(
-                        title: "Worth exploring",
-                        symbol: "sparkles",
-                        score: frontier,
-                        explanation: frontierExplanation(frontier),
-                        prominent: false
-                    )
-                } else {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Label("No separate exploration pick", systemImage: "safari")
-                            .font(.headline)
-                        Text("Nothing else in this group combines enough fit with a meaningful new direction.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                if shouldShowFrontierPick(comparison) {
+                    if let frontier = comparison.frontierPick {
+                        recommendationCard(
+                            title: "Worth exploring",
+                            symbol: "sparkles",
+                            score: frontier,
+                            explanation: nil,
+                            prominent: false
+                        )
                     }
-                    .coffeeCard()
                 }
 
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text("Relative ranking")
+                        Text("Ranking")
                             .font(.headline)
                         Spacer(minLength: 8)
                         Text("Fit · Novelty")
@@ -281,23 +188,32 @@ struct BeanExplorerView: View {
                         }
                         rankingRow(rank: entry.rank, score: entry.score, showSimilarFit: entry.showSimilarFit)
                     }
+                    
+                    if !comparison.excluded.isEmpty {
+                        Divider()
+                        ForEach(comparison.excluded, id: \.candidateID) { item in
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.orange)
+                                    .frame(width: 28, alignment: .leading)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(candidateName(item.candidateID))
+                                        .font(.subheadline.weight(.semibold))
+                                    Text("缺信息 · \(item.reason)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer(minLength: 8)
+                            }
+                        }
+                    }
                 }
                 .coffeeCard()
 
-                if !comparison.excluded.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Excluded from ranking")
-                            .font(.headline)
-                        ForEach(comparison.excluded, id: \.candidateID) { item in
-                            Text("\(item.candidateID): \(item.reason)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .coffeeCard()
-                }
-
-                Text("Profile snapshot: \(profileDate(comparison.datasetGeneratedAt)) · \(comparison.ratedObservations) ratings · portable profile \(comparison.profileID.prefix(8)). History adjustment is unavailable. Your ratings are a self-selected sample, so this compares candidates but does not establish your lower preference bound.")
+                Text("Profile snapshot: \(profileDate(comparison.datasetGeneratedAt)) · \(comparison.ratedObservations) ratings")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
 
@@ -311,7 +227,7 @@ struct BeanExplorerView: View {
         title: String,
         symbol: String,
         score: BeanExplorerScore,
-        explanation: String,
+        explanation: String?,
         prominent: Bool
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -327,9 +243,11 @@ struct BeanExplorerView: View {
                 scoreMetric("Fit", value: score.fit)
                 scoreMetric("Novelty", value: score.novelty)
             }
-            Text(explanation)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            if let explanation, !explanation.isEmpty {
+                Text(explanation)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .coffeeCard()
     }
@@ -473,67 +391,6 @@ struct BeanExplorerView: View {
                 Label("Remove photo", systemImage: "trash")
             }
         }
-    }
-
-    private func candidateCard(_ candidate: BeanExplorerCandidate) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(candidate.draft.roaster.isEmpty ? "Roaster missing" : candidate.draft.roaster)
-                        .font(.headline)
-                    Text(candidate.draft.name.isEmpty ? "Coffee name missing" : candidate.draft.name)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Menu {
-                    Button {
-                        candidateForEditing = candidate
-                    } label: {
-                        Label("Edit details", systemImage: "pencil")
-                    }
-                    Button(role: .destructive) {
-                        try? session.removeCandidate(id: candidate.id)
-                        refreshComparison()
-                    } label: {
-                        Label("Remove coffee", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .frame(width: 30, height: 30)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Coffee actions")
-            }
-
-            HStack(spacing: 8) {
-                if !candidate.draft.origin.isEmpty { Text(candidate.draft.origin) }
-                if !candidate.draft.process.isEmpty { Text(candidate.draft.process) }
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-
-            if !candidate.draft.flavorNotes.isEmpty {
-                Text(candidate.draft.flavorNotes.joined(separator: " · "))
-                    .font(.caption)
-                    .foregroundStyle(CoffeeTheme.accent)
-            }
-
-            if scoringIssue(candidate) != nil {
-                Label("Check details", systemImage: "exclamationmark.circle.fill")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.orange)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .onTapGesture { candidateForEditing = candidate }
-        .coffeeCard()
-        .accessibilityAddTraits(.isButton)
-        .accessibilityHint(scoringIssue(candidate) == nil
-                           ? "Double tap to edit the detected details"
-                           : "Double tap to complete details needed for comparison")
     }
 
     private var cameraCapture: some View {
@@ -914,7 +771,6 @@ struct BeanExplorerView: View {
         session.clear()
         images = []
         comparison = nil
-        candidateForEditing = nil
         if persist {
             BeanExplorerPersistence.clear()
         }
@@ -934,6 +790,30 @@ struct BeanExplorerView: View {
         let parser = ISO8601DateFormatter()
         guard let date = parser.date(from: timestamp) else { return timestamp }
         return date.formatted(date: .abbreviated, time: .omitted)
+    }
+    
+    private func shouldShowFrontierPick(_ comparison: BeanExplorerComparison) -> Bool {
+        guard comparison.frontierPick != nil else { return false }
+        
+        // Check if novelty scores are meaningfully different
+        let allNovelties = comparison.ranking.map { $0.novelty }
+        guard !allNovelties.isEmpty else { return false }
+        
+        let maxNovelty = allNovelties.max() ?? 0
+        let minNovelty = allNovelties.min() ?? 0
+        
+        // Show only if there's meaningful novelty differentiation (> 0.05 spread)
+        return maxNovelty - minNovelty > 0.05
+    }
+    
+    private func candidateName(_ candidateID: String) -> String {
+        guard let candidate = session.activeCandidates.first(where: { $0.id == candidateID }) else {
+            return candidateID
+        }
+        
+        let roaster = candidate.draft.roaster.isEmpty ? "Unknown roaster" : candidate.draft.roaster
+        let name = candidate.draft.name.isEmpty ? "Unknown coffee" : candidate.draft.name
+        return "\(roaster) — \(name)"
     }
 
     private func message(for error: Error) -> String {
@@ -955,94 +835,6 @@ struct BeanExplorerView: View {
 private enum BeanExplorerImageError: Error {
     case invalidImage
     case imageTooLarge
-}
-
-private struct ManualExplorerCandidateSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var roaster: String
-    @State private var name: String
-    @State private var origin: String
-    @State private var farm: String
-    @State private var variety: String
-    @State private var process: String
-    @State private var flavorNotes: String
-
-    let title: String
-    let actionTitle: String
-    let initialDraft: BeanExplorerCandidateDraft
-    let onAdd: (BeanExplorerCandidateDraft) -> Void
-
-    init(
-        title: String = "Manual Candidate",
-        actionTitle: String = "Add",
-        initialDraft: BeanExplorerCandidateDraft = .init(),
-        onAdd: @escaping (BeanExplorerCandidateDraft) -> Void
-    ) {
-        self.title = title
-        self.actionTitle = actionTitle
-        self.initialDraft = initialDraft
-        self.onAdd = onAdd
-        _roaster = State(initialValue: initialDraft.roaster)
-        _name = State(initialValue: initialDraft.name)
-        _origin = State(initialValue: initialDraft.origin)
-        _farm = State(initialValue: initialDraft.farm)
-        _variety = State(initialValue: initialDraft.variety)
-        _process = State(initialValue: initialDraft.process)
-        _flavorNotes = State(initialValue: initialDraft.flavorNotes.joined(separator: ", "))
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Coffee") {
-                    TextField("Roaster", text: $roaster)
-                    TextField("Coffee name", text: $name)
-                    TextField("Origin", text: $origin)
-                    TextField("Farm or producer", text: $farm)
-                    TextField("Variety", text: $variety)
-                    TextField("Process", text: $process)
-                    TextField("Flavor notes, comma separated", text: $flavorNotes, axis: .vertical)
-                }
-                Section {
-                    Text("Manual values stay linked to this comparison source and are kept until you clear the comparison or choose new photos.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(actionTitle) {
-                        onAdd(
-                            .init(
-                                roaster: roaster.trimmingCharacters(in: .whitespacesAndNewlines),
-                                name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                                origin: origin.trimmingCharacters(in: .whitespacesAndNewlines),
-                                farm: farm.trimmingCharacters(in: .whitespacesAndNewlines),
-                                variety: variety.trimmingCharacters(in: .whitespacesAndNewlines),
-                                process: process.trimmingCharacters(in: .whitespacesAndNewlines),
-                                flavorNotes: flavorNotes.explorerFlavorNotes,
-                                evidence: initialDraft.evidence,
-                                uncertainFields: initialDraft.uncertainFields,
-                                boundingBox: initialDraft.boundingBox
-                            )
-                        )
-                        dismiss()
-                    }
-                    .disabled(isDraftEmpty)
-                }
-            }
-        }
-    }
-
-    private var isDraftEmpty: Bool {
-        [roaster, name, origin, farm, variety, process, flavorNotes]
-            .allSatisfy { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-    }
 }
 
 private extension String {

@@ -39,10 +39,10 @@ struct TasteView: View {
                     .background(CoffeeTheme.accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Explore your next coffee")
+                    Text("Find your next coffee")
                         .font(.headline)
                         .foregroundStyle(.primary)
-                    Text("Compare bags against your taste.")
+                    Text("Compare bags against your taste profile.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
