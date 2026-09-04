@@ -608,20 +608,30 @@ struct BeanExplorerView: View {
                     _ = session.failExtraction(request: request)
                     DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "timeout")
                     DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "failed")
-                    errorMessage = "Reading timed out. Tap the photo to try again."
+                    // Per-photo failed badge only — avoid blocking alert spam on batch scans.
                     refreshComparison()
                 } catch BeanExplorerSessionError.staleExtractionRequest {
                     DiscoverScanLog.logCommit(sourceID: sourceID, reason: "stale_request", candidateCount: 0)
                     refreshComparison()
                 } catch {
                     _ = session.failExtraction(request: request)
+                    let reason: String
+                    if case BagPhotoScannerError.requestFailed(let status) = error {
+                        reason = "http_\(status)"
+                    } else if case BagPhotoScannerError.missingAPIKey = error {
+                        reason = "missing_api_key"
+                    } else if case BeanExplorerSessionError.candidateLimitReached = error {
+                        reason = "candidate_limit"
+                    } else {
+                        reason = String(describing: type(of: error))
+                    }
+                    DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: reason)
                     DiscoverScanLog.logStateTransition(sourceID: sourceID, from: "uploading", to: "failed")
+                    // Only hard-alert for config problems the user must fix outside retry.
                     if case BagPhotoScannerError.missingAPIKey = error {
                         errorMessage = error.localizedDescription
                     } else if case BeanExplorerSessionError.candidateLimitReached = error {
                         errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
-                    } else {
-                        errorMessage = "The image could not be read. Touch and hold the photo to try again."
                     }
                     refreshComparison()
                 }
@@ -774,13 +784,17 @@ struct BeanExplorerView: View {
             } catch {
                 await MainActor.run {
                     comparison = nil
-                    let errorMsg: String
+                    DiscoverScanLog.log.info(
+                        "score_fail reason=\(String(describing: error), privacy: .public)"
+                    )
                     if let normError = error as? CoffeeDescriptorNormalizerError {
-                        errorMsg = "Flavor note normalization failed: \(normError.localizedDescription)"
+                        errorMessage = "Flavor note normalization failed: \(normError.localizedDescription)"
+                    } else if error is BeanExplorerScoringError {
+                        // Not enough scorable beans yet — not a hard user-facing failure.
+                        DiscoverScanLog.log.info("score_skip insufficient_or_scoring_error")
                     } else {
-                        errorMsg = "The taste profile could not be verified."
+                        errorMessage = "The taste profile could not be verified."
                     }
-                    errorMessage = errorMsg
                     persistCache()
                 }
             }
