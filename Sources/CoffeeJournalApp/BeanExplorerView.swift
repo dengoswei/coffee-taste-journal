@@ -844,12 +844,12 @@ struct BeanExplorerView: View {
         _ candidate: BeanExplorerScoreCandidate,
         profile: BeanExplorerProfile
     ) async throws -> BeanExplorerScoreCandidate {
-        // Skip normalize if descriptors/origin/process are already English
-        // or if Ark is not configured (development/testing scenario)
-        guard needsNormalize(candidate) else {
+        // Skip normalize only if pre-matched families already set (from prior normalize or test)
+        guard candidate.preMatchedFamilies == nil else {
             return candidate
         }
         
+        // Normalize by default: map descriptors/origin/process to canonical schema
         // Try normalize with retry; on failure → surface error, do NOT fall back to lexicon
         let normalizer = CoffeeDescriptorNormalizer(profile: profile)
         let normalized = try await normalizer.normalize(
@@ -875,12 +875,8 @@ struct BeanExplorerView: View {
     }
     
     private func needsNormalize(_ candidate: BeanExplorerScoreCandidate) -> Bool {
-        // Simple heuristic: check if descriptors contain non-ASCII characters
-        // which likely indicates Chinese/non-English terms
-        let hasNonASCII = candidate.descriptors.contains { descriptor in
-            descriptor.unicodeScalars.contains { !$0.isASCII }
-        }
-        return hasNonASCII
+        // Normalize by default unless pre-matched families already set
+        return candidate.preMatchedFamilies == nil
     }
 
     private func restoreCacheIfNeeded() {

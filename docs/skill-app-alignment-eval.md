@@ -2,6 +2,13 @@
 
 This document describes the alignment evaluation framework for coffee taste scoring, which ensures the App's `Compare Beans` feature matches the gos-coffee-taste skill/repo numeric path within tolerance.
 
+## Product Philosophy
+
+1. **One AI model path** for extract/normalize (App and skill share the same approach/schema) → map 原文 to flavor families + canonical origin/process
+2. **One deterministic scorer** for Fit/Novelty (BeanExplorerScorer / portable_coffee_rank). Model never invents scores
+3. **测试集 measures drift objectively.** When accuracy/drift is bad, then tune prompt/model — do NOT stack extra locks
+4. **Keep the pipe simple**: normalize → score. Retry on hard failure is OK if already present
+
 ## Problem Statement
 
 The App's scoring previously used closed lexicon matching for flavor notes, which failed when:
@@ -9,20 +16,22 @@ The App's scoring previously used closed lexicon matching for flavor notes, whic
 - **Origin/process terms** didn't match English prior keys, causing Novelty to spike to 42.5 instead of ~10
 
 ### Root Cause
-Chinese SEY bean notes showed incorrect ranking:
-- Susan (Colombia) ranked higher than Keramo (Ethiopia) and SL9 (Peru)
-- All three showed Novelty = 42.5 (should be ~10)
+Chinese SEY bean notes showed incorrect scores without normalize:
+- Wrong top-1 (Susan ranked higher than Keramo/SL9)
+- Novelty = 10.0 for all (correct with English origin/process)
 - Missed families: `浆果 → fruit.berry`, `热带水果 → fruit.tropical`, `洛神花 → floral`
 
 ## Solution: Normalize → Score Contract
 
-### Contract (Non-Negotiable)
+### Shared Contract (App and Skill)
 1. **Model does NOT invent Fit/Novelty.** Text model only normalizes bag fields into a fixed schema.
-2. **Scores only from the deterministic scorer** (`BeanExplorerScorer` / `scripts/portable_coffee_rank.py`).
-3. **No closed-vocab fallback in the App scoring hot path.** If normalize fails → **retry** (bounded). Do not silently fall back to lexicon substring matching for scoring.
+2. **Scores only from the deterministic scorer** (`BeanExplorerScorer` / `scripts/portable_coffee_rank.py` — same math).
+3. **Normalize by default** in Compare scoring path. No fragile ASCII-only heuristics as the main design.
 4. **Normalize output must be constrained** to known keys:
    - Flavor families: IDs from profile lexicon (`fruit.berry`, `fruit.citrus`, etc.)
    - Origin/process: canonical strings matching `origin_stats`/`process_stats` feature keys in `profile-prior.json`
+
+**Note**: App Ark normalizer and skill/repo numeric path must use the **same schema and same scorer**. If skill still maps in prose today, follow-up should call the same normalize→score pipe.
 
 ### Implementation
 
@@ -59,44 +68,55 @@ Extract → Normalize → Score (deterministic)
    - `preMatchedFamilies` (from normalize) instead of lexicon matching
    - Canonical `origin`/`process` (from normalize) for prior lookup
 
-## Alignment Test Framework
+## Alignment 测试集 (Test Set) Framework
 
 ### Fixture: `eval/coffee_taste/sey_candidates_2026-09-04.json`
-Three SEY Coffee beans with Chinese + English descriptors:
+Three SEY Coffee beans with Chinese + English descriptors (corrected real bag notes):
 
 | ID | Origin | Process | Fit (Gold) | Novelty (Gold) | Families |
 |----|--------|---------|------------|----------------|----------|
-| `sey_sl9_peru_washed` | Peru | Washed | 69.0 | 10.0 | citrus, stone, browning |
-| `sey_keramo_ethiopia_honey` | Ethiopia | Honey | 68.5 | 10.0 | floral, berry, citrus, tropical |
-| `sey_susan_colombia_washed` | Colombia | Washed | 63.8 | 10.0 | pome, browning, tea |
+| `sey_keramo_ethiopia_honey` | Ethiopia | Honey | 69.3 | 10.0 | berry, citrus, tropical |
+| `sey_sl9_peru_washed` | Peru | Washed | 68.4 | 10.0 | berry, tropical |
+| `sey_susan_colombia_washed` | Colombia | Washed | 67.9 | 10.0 | floral, berry, citrus |
 
-**Expected**: SL9 > Keramo > Susan (in similar-fit band SL9/Keramo, then Susan)
+**Expected**: Keramo > SL9 > Susan (all three in similar-fit band, delta < 1.5)
 
-**Broken lexicon**: Susan would rank higher with Novelty 42.5 on Chinese-only notes.
+**Broken lexicon path**: Without normalize, Chinese descriptors miss families → wrong top-1 (Susan ahead), family mismatch
 
 ### Alignment Script: `scripts/evaluate_skill_app_alignment.py`
 
-Compares gold path (English descriptors) vs test path (Chinese descriptors after normalize):
+Compares gold path (English descriptors) vs test path (Chinese descriptors with or without normalize):
 
-#### Gates
+#### Gates (Objective Drift Meter)
 1. **Top-1 Fit match**: Best candidate must match gold
 2. **Ranking order**: Allow near-ties within `near_tie_fit_delta=1.5`; middle ranks may swap only inside band
-3. **Novelty tolerance**: Per-candidate Novelty within ±5 of gold (42.5 vs 10 must fail)
+3. **Novelty tolerance**: Per-candidate Novelty within ±5 of gold
 4. **Family Jaccard = 1.0**: Matched family sets must equal gold after normalize
 
 #### Usage
 ```bash
-# Default: test Chinese vs English on SEY fixture
+# Test English→English (sanity check)
+python3 scripts/evaluate_skill_app_alignment.py \
+  --test-descriptor-field descriptors_english_only \
+  --gold-descriptor-field descriptors_english_only
+
+# Test Chinese without normalize (should FAIL - shows drift/bug)
 python3 scripts/evaluate_skill_app_alignment.py
 
-# Verbose output
-python3 scripts/evaluate_skill_app_alignment.py -v
+# Test Chinese with stub normalize (should PASS - for CI without live Ark)
+python3 scripts/evaluate_skill_app_alignment.py --stub-normalize
 
-# Custom fixture or profile
-python3 scripts/evaluate_skill_app_alignment.py \
-  --fixture eval/coffee_taste/my_test_cases.json \
-  --profile Sources/CoffeeJournalApp/Resources/TasteProfile/profile-prior.json
+# Verbose output
+python3 scripts/evaluate_skill_app_alignment.py --stub-normalize -v
 ```
+
+**Stub normalize**: For CI testing without live Ark, `--stub-normalize` applies a frozen CN→canonical map:
+- 浆果 → fruit.berry
+- 热带水果 → fruit.tropical
+- 洛神花 → floral
+- 埃塞俄比亚 → Ethiopia
+- 蜜处理 → Honey
+- etc.
 
 Exit code 0 if all gates pass, non-zero otherwise.
 
@@ -132,10 +152,10 @@ See `Tests/CoffeeJournalCoreTests/BeanExplorerScoringTests.swift`:
 
 ## Known Limitations
 
-- **Lexicon may remain for offline eval/gold** but is not used in App scoring hot path
-- **History adjustment unavailable** in portable profile
-- **Direct-history signals missing** in exploration recommendations
-- **Ark availability**: Normalize requires configured Ark API key; development mode may skip normalize for ASCII-only descriptors
+- **Normalize by default** unless `preMatchedFamilies` already set (from prior normalize or test)
+- **Quality signals** not yet normalized (e.g. 酸甜→acid_sweet_balance_positive)
+- **Ark availability**: Normalize requires configured Ark API key; development mode may skip normalize when unavailable
+- **Lexicon remains** for gold/fixture generation but is NOT used in App scoring hot path after normalize
 
 ## Future Work
 

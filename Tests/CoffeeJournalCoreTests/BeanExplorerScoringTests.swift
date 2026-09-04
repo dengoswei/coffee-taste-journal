@@ -302,35 +302,14 @@ final class BeanExplorerScoringTests: XCTestCase {
         // families as English → same ranking and Novelty ~10 (not 42.5).
         let scorer = try BeanExplorerScorer(profile: loadProfile())
         
-        // SL9 Peru Washed: 柑橘/核果/焦糖/蜂蜜 → citrus/stone/browning
-        let sl9 = BeanExplorerScoreCandidate(
-            id: "sey_sl9_peru_washed",
-            roaster: "SEY",
-            name: "SL9 Peru Washed",
-            origin: "Peru",
-            process: "Washed",
-            descriptors: ["柑橘", "核果", "焦糖", "蜂蜜"],
-            isConfirmed: true,
-            confirmedFields: ["roaster", "name", "origin", "process", "flavor_notes"],
-            fieldProvenance: [
-                "roaster": .extracted,
-                "name": .extracted,
-                "origin": .extracted,
-                "process": .extracted,
-                "flavor_notes": .extracted,
-            ],
-            unresolvedFields: [],
-            preMatchedFamilies: ["fruit.citrus", "fruit.stone", "sweet.browning"]
-        )
-        
-        // Keramo Ethiopia Honey: 浆果/热带水果/洛神花/佛手柑 → berry/tropical/floral/citrus
+        // Mate Matiwos Keramo 74158 Honey: 浆果/热带水果/佛手柑 → berry/tropical/citrus
         let keramo = BeanExplorerScoreCandidate(
             id: "sey_keramo_ethiopia_honey",
             roaster: "SEY",
-            name: "Keramo Ethiopia Honey",
+            name: "Mate Matiwos Keramo 74158 Honey",
             origin: "Ethiopia",
             process: "Honey",
-            descriptors: ["浆果", "热带水果", "洛神花", "佛手柑"],
+            descriptors: ["浆果", "热带水果", "佛手柑"],
             isConfirmed: true,
             confirmedFields: ["roaster", "name", "origin", "process", "flavor_notes"],
             fieldProvenance: [
@@ -341,17 +320,38 @@ final class BeanExplorerScoringTests: XCTestCase {
                 "flavor_notes": .extracted,
             ],
             unresolvedFields: [],
-            preMatchedFamilies: ["fruit.berry", "fruit.tropical", "floral", "fruit.citrus"]
+            preMatchedFamilies: ["fruit.berry", "fruit.tropical", "fruit.citrus"]
         )
         
-        // Susan Colombia Washed: 苹果/焦糖/红茶 → pome/browning/tea
+        // Alejandrina Maytan Kukipata SL9 Washed: 热带水果/草莓/柔和酸质 → tropical/berry
+        let sl9 = BeanExplorerScoreCandidate(
+            id: "sey_sl9_peru_washed",
+            roaster: "SEY",
+            name: "Alejandrina Maytan Kukipata SL9 Washed",
+            origin: "Peru",
+            process: "Washed",
+            descriptors: ["热带水果", "草莓", "柔和酸质"],
+            isConfirmed: true,
+            confirmedFields: ["roaster", "name", "origin", "process", "flavor_notes"],
+            fieldProvenance: [
+                "roaster": .extracted,
+                "name": .extracted,
+                "origin": .extracted,
+                "process": .extracted,
+                "flavor_notes": .extracted,
+            ],
+            unresolvedFields: [],
+            preMatchedFamilies: ["fruit.tropical", "fruit.berry"]
+        )
+        
+        // Susan Meneses Pink Bourbon Washed: 洛神花/蓝莓/手指柠檬 → floral/berry/citrus
         let susan = BeanExplorerScoreCandidate(
             id: "sey_susan_colombia_washed",
             roaster: "SEY",
-            name: "Susan Colombia Washed",
+            name: "Susan Meneses Pink Bourbon Washed",
             origin: "Colombia",
             process: "Washed",
-            descriptors: ["苹果", "焦糖", "红茶"],
+            descriptors: ["洛神花", "蓝莓", "手指柠檬"],
             isConfirmed: true,
             confirmedFields: ["roaster", "name", "origin", "process", "flavor_notes"],
             fieldProvenance: [
@@ -362,39 +362,36 @@ final class BeanExplorerScoringTests: XCTestCase {
                 "flavor_notes": .extracted,
             ],
             unresolvedFields: [],
-            preMatchedFamilies: ["fruit.pome", "sweet.browning", "tea"]
+            preMatchedFamilies: ["floral", "fruit.berry", "fruit.citrus"]
         )
         
-        let result = try scorer.compare([sl9, keramo, susan])
+        let result = try scorer.compare([keramo, sl9, susan])
         let byID = Dictionary(uniqueKeysWithValues: result.ranking.map { ($0.candidateID, $0) })
         
-        // Expected ranking: SL9 > Keramo > Susan (SL9/Keramo in similar-fit band)
+        // Expected ranking with corrected bag notes: Keramo > SL9 > Susan (all in similar-fit band)
         XCTAssertEqual(result.ranking.map(\.candidateID), [
-            "sey_sl9_peru_washed",
             "sey_keramo_ethiopia_honey",
+            "sey_sl9_peru_washed",
             "sey_susan_colombia_washed"
         ])
         
-        // Top-1 should be SL9
-        XCTAssertEqual(result.bestSupportedMatch.candidateID, "sey_sl9_peru_washed")
+        // Top-1 should be Keramo
+        XCTAssertEqual(result.bestSupportedMatch.candidateID, "sey_keramo_ethiopia_honey")
         
         // Novelty should be ~10 for all (origin/process resolved, not 42.5)
-        XCTAssertEqual(byID["sey_sl9_peru_washed"]?.novelty, 10.0, accuracy: 0.1)
         XCTAssertEqual(byID["sey_keramo_ethiopia_honey"]?.novelty, 10.0, accuracy: 0.1)
+        XCTAssertEqual(byID["sey_sl9_peru_washed"]?.novelty, 10.0, accuracy: 0.1)
         XCTAssertEqual(byID["sey_susan_colombia_washed"]?.novelty, 10.0, accuracy: 0.1)
         
-        // Fit scores should match gold
-        XCTAssertEqual(byID["sey_sl9_peru_washed"]?.fit, 69.0, accuracy: 0.5)
-        XCTAssertEqual(byID["sey_keramo_ethiopia_honey"]?.fit, 68.5, accuracy: 0.5)
-        XCTAssertEqual(byID["sey_susan_colombia_washed"]?.fit, 63.8, accuracy: 0.5)
+        // Fit scores should match gold (within 0.5 tolerance)
+        XCTAssertEqual(byID["sey_keramo_ethiopia_honey"]?.fit, 69.3, accuracy: 0.5)
+        XCTAssertEqual(byID["sey_sl9_peru_washed"]?.fit, 68.4, accuracy: 0.5)
+        XCTAssertEqual(byID["sey_susan_colombia_washed"]?.fit, 67.9, accuracy: 0.5)
         
-        // SL9 and Keramo should be in similar-fit band
-        XCTAssertEqual(result.fitBands.count, 2)
+        // All three should be in similar-fit band (delta < 1.5)
+        XCTAssertEqual(result.fitBands.count, 1)
         XCTAssertTrue(result.fitBands[0].isSimilarFit)
-        XCTAssertTrue(result.fitBands[0].scores.contains { $0.candidateID == "sey_sl9_peru_washed" })
-        XCTAssertTrue(result.fitBands[0].scores.contains { $0.candidateID == "sey_keramo_ethiopia_honey" })
-        XCTAssertFalse(result.fitBands[1].isSimilarFit)
-        XCTAssertEqual(result.fitBands[1].scores[0].candidateID, "sey_susan_colombia_washed")
+        XCTAssertEqual(result.fitBands[0].scores.count, 3)
     }
 
     private func candidate(

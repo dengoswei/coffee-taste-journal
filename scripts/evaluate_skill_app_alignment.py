@@ -32,6 +32,53 @@ NOVELTY_TOLERANCE = 5.0
 NEAR_TIE_FIT_DELTA = 1.5
 
 
+# Stub normalize map for SEY 测试集 (test set)
+# Maps Chinese terms to canonical profile keys without live Ark
+STUB_NORMALIZE_MAP = {
+    # Flavor notes
+    "浆果": ["fruit.berry"],
+    "热带水果": ["fruit.tropical"],
+    "佛手柑": ["fruit.citrus"],
+    "洛神花": ["floral"],
+    "蓝莓": ["fruit.berry"],
+    "手指柠檬": ["fruit.citrus"],
+    "草莓": ["fruit.berry"],
+    "柔和酸质": [],  # Quality signal, not a flavor family
+    # Origin
+    "埃塞俄比亚": "Ethiopia",
+    "秘鲁": "Peru",
+    "哥伦比亚": "Colombia",
+    # Process
+    "蜜处理": "Honey",
+    "水洗": "Washed",
+}
+
+
+def stub_normalize_descriptors(
+    descriptors: list[str],
+    origin: str,
+    process: str
+) -> tuple[list[str], str, str]:
+    """Apply stub normalize map to Chinese terms.
+    
+    Returns:
+        (normalized_families, normalized_origin, normalized_process)
+    """
+    families = []
+    for descriptor in descriptors:
+        mapped = STUB_NORMALIZE_MAP.get(descriptor, [])
+        families.extend(mapped)
+    
+    # Deduplicate and sort
+    families = sorted(set(families))
+    
+    # Normalize origin and process
+    normalized_origin = STUB_NORMALIZE_MAP.get(origin, origin)
+    normalized_process = STUB_NORMALIZE_MAP.get(process, process)
+    
+    return families, normalized_origin, normalized_process
+
+
 def load_fixture(path: Path) -> dict[str, Any]:
     """Load test fixture with gold scores."""
     return json.loads(path.read_text())
@@ -44,7 +91,8 @@ def load_profile(path: Path) -> dict[str, Any]:
 
 def build_candidates_with_descriptors(
     fixture: dict[str, Any],
-    descriptor_field: str
+    descriptor_field: str,
+    use_stub_normalize: bool = False
 ) -> list[dict[str, Any]]:
     """Build candidate list using specified descriptor field.
     
@@ -54,17 +102,72 @@ def build_candidates_with_descriptors(
             - 'descriptors' (all CN+EN)
             - 'descriptors_english_only'
             - 'descriptors_chinese_only'
+        use_stub_normalize: Apply stub normalize to map CN→canonical
     """
     candidates = []
     for candidate in fixture["candidates"]:
-        candidates.append({
-            "id": candidate["id"],
-            "roaster": candidate["roaster"],
-            "name": candidate["name"],
-            "origin": candidate["origin"],
-            "process": candidate["process"],
-            "descriptors": candidate.get(descriptor_field, candidate["descriptors"]),
-        })
+        descriptors = candidate.get(descriptor_field, candidate["descriptors"])
+        origin = candidate["origin"]
+        process = candidate["process"]
+        
+        # Apply stub normalize if requested
+        if use_stub_normalize:
+            # Use Chinese origin/process if available, otherwise English
+            origin_to_normalize = candidate.get("origin_zh", origin)
+            process_to_normalize = candidate.get("process_zh", process)
+            
+            families, origin, process = stub_normalize_descriptors(
+                descriptors, origin_to_normalize, process_to_normalize
+            )
+            
+            # Build candidate with pre-matched families and canonical origin/process
+            # The scorer will use these directly instead of lexicon matching
+            candidate_dict = {
+                "id": candidate["id"],
+                "roaster": candidate["roaster"],
+                "name": candidate["name"],
+                "origin": origin,
+                "process": process,
+                "descriptors": descriptors,
+                "is_confirmed": True,
+                "confirmed_fields": ["roaster", "name", "origin", "process", "flavor_notes"],
+                "field_provenance": {
+                    "roaster": "extracted",
+                    "name": "extracted",
+                    "origin": "extracted",
+                    "process": "extracted",
+                    "flavor_notes": "extracted",
+                },
+                "unresolved_fields": [],
+            }
+            # Score with pre-matched families by modifying scorer directly
+            # (portable scorer doesn't have preMatchedFamilies param, so we'll
+            # temporarily replace descriptors with English terms that map to families)
+            
+            # Map families back to representative English terms for portable scorer
+            family_to_term = {
+                "fruit.berry": "berry",
+                "fruit.tropical": "tropical",
+                "fruit.citrus": "citrus",
+                "floral": "floral",
+                "fruit.stone": "stone fruit",
+                "sweet.browning": "caramel",
+                "tea": "tea",
+                "fruit.pome": "apple",
+            }
+            mapped_descriptors = [family_to_term.get(f, f) for f in families]
+            candidate_dict["descriptors"] = mapped_descriptors
+            
+            candidates.append(candidate_dict)
+        else:
+            candidates.append({
+                "id": candidate["id"],
+                "roaster": candidate["roaster"],
+                "name": candidate["name"],
+                "origin": origin,
+                "process": process,
+                "descriptors": descriptors,
+            })
     return candidates
 
 
@@ -221,6 +324,7 @@ def run_alignment_test(
     *,
     test_descriptor_field: str = "descriptors_chinese_only",
     gold_descriptor_field: str = "descriptors_english_only",
+    use_stub_normalize: bool = False,
     verbose: bool = False
 ) -> int:
     """Run alignment test comparing gold vs test scoring paths.
@@ -241,11 +345,13 @@ def run_alignment_test(
         return 1
     
     print(f"\n{'='*80}")
-    print("GOLD PATH: Scoring with {gold_descriptor_field}")
+    print(f"GOLD PATH: Scoring with {gold_descriptor_field}")
     print(f"{'='*80}")
     
     # Score gold path (English descriptors)
-    gold_candidates = build_candidates_with_descriptors(fixture, gold_descriptor_field)
+    gold_candidates = build_candidates_with_descriptors(
+        fixture, gold_descriptor_field, use_stub_normalize=False
+    )
     gold_result = score_candidates(gold_candidates, profile)
     gold_ranking = gold_result["ranking"]
     
@@ -256,11 +362,14 @@ def run_alignment_test(
             print(f"     Families: {row['descriptor_categories']}")
     
     print(f"\n{'='*80}")
-    print(f"TEST PATH: Scoring with {test_descriptor_field}")
+    stub_status = "WITH STUB NORMALIZE" if use_stub_normalize else "WITHOUT NORMALIZE"
+    print(f"TEST PATH: Scoring with {test_descriptor_field} {stub_status}")
     print(f"{'='*80}")
     
-    # Score test path (Chinese descriptors - should match if normalize works)
-    test_candidates = build_candidates_with_descriptors(fixture, test_descriptor_field)
+    # Score test path (Chinese descriptors - with or without stub normalize)
+    test_candidates = build_candidates_with_descriptors(
+        fixture, test_descriptor_field, use_stub_normalize=use_stub_normalize
+    )
     test_result = score_candidates(test_candidates, profile)
     test_ranking = test_result["ranking"]
     
@@ -335,7 +444,7 @@ def main() -> int:
         "--fixture",
         type=Path,
         default=Path("eval/coffee_taste/sey_candidates_2026-09-04.json"),
-        help="Path to test fixture with gold scores"
+        help="Path to test fixture with gold scores (测试集)"
     )
     parser.add_argument(
         "--profile",
@@ -354,6 +463,11 @@ def main() -> int:
         help="Descriptor field for gold path (default: descriptors_english_only)"
     )
     parser.add_argument(
+        "--stub-normalize",
+        action="store_true",
+        help="Apply stub normalize (CN→canonical map) to test path for CI testing without live Ark"
+    )
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose output"
@@ -365,6 +479,7 @@ def main() -> int:
         args.profile,
         test_descriptor_field=args.test_descriptor_field,
         gold_descriptor_field=args.gold_descriptor_field,
+        use_stub_normalize=args.stub_normalize,
         verbose=args.verbose
     )
 
