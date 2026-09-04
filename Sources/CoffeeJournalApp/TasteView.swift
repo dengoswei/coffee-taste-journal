@@ -3,6 +3,7 @@ import SwiftUI
 
 struct TasteView: View {
     let store: CoffeeJournalStore
+    @State private var showingCompareBeans = false
 
     private var summary: TasteSummary {
         TasteAnalyzer.summarize(coffees: store.coffees, logs: store.brewLogs)
@@ -12,6 +13,8 @@ struct TasteView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 tasteMemory
+
+                exploreSection
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Most Loved")
@@ -55,6 +58,43 @@ struct TasteView: View {
         }
         .background(CoffeeTheme.background.ignoresSafeArea())
         .navigationTitle("Taste")
+        .sheet(isPresented: $showingCompareBeans) {
+            CompareBeansView(store: store)
+        }
+    }
+
+    private var exploreSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Explore")
+                .font(.title3)
+                .fontWeight(.semibold)
+
+            Button {
+                showingCompareBeans = true
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Compare Beans")
+                            .font(.headline)
+                            .foregroundStyle(CoffeeTheme.accent)
+                        Text("Scan bags you're choosing between and see which fits your taste")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(CoffeeTheme.accent)
+                }
+                .padding(16)
+            }
+            .background(CoffeeTheme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(CoffeeTheme.divider, lineWidth: 1)
+            )
+        }
     }
 
     private var tasteMemory: some View {
