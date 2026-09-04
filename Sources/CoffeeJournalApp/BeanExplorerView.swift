@@ -270,29 +270,21 @@ struct BeanExplorerView: View {
                     .coffeeCard()
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Relative ranking")
-                        .font(.headline)
-                    ForEach(comparison.fitBands) { band in
-                        if band.isSimilarFit {
-                            Text("Similar Fit")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Relative ranking")
+                            .font(.headline)
+                        Spacer(minLength: 8)
+                        Text("Fit · Novelty")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    ForEach(Array(rankingEntries(from: comparison).enumerated()), id: \.element.score.id) { index, entry in
+                        if index > 0 {
+                            Divider()
                         }
-                        ForEach(band.scores) { score in
-                            HStack(alignment: .firstTextBaseline) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(score.roaster) — \(score.name)")
-                                        .font(.subheadline.weight(.semibold))
-                                    Text(score.matchedFamilies.joined(separator: " · "))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Text("Fit \(score.fit, specifier: "%.1f")")
-                                    .font(.caption.monospacedDigit())
-                            }
-                        }
+                        rankingRow(rank: entry.rank, score: entry.score, showSimilarFit: entry.showSimilarFit)
                     }
                 }
                 .coffeeCard()
@@ -355,6 +347,88 @@ struct BeanExplorerView: View {
             Text(value, format: .number.precision(.fractionLength(1)))
                 .font(.title3.monospacedDigit().bold())
         }
+    }
+
+    private struct RankingEntry: Identifiable {
+        var id: String { score.id }
+        let rank: Int
+        let score: BeanExplorerScore
+        let showSimilarFit: Bool
+    }
+
+    private func rankingEntries(from comparison: BeanExplorerComparison) -> [RankingEntry] {
+        var entries: [RankingEntry] = []
+        var rank = 1
+        for band in comparison.fitBands {
+            var isFirstInBand = true
+            for score in band.scores {
+                entries.append(
+                    RankingEntry(
+                        rank: rank,
+                        score: score,
+                        showSimilarFit: band.isSimilarFit && isFirstInBand
+                    )
+                )
+                isFirstInBand = false
+                rank += 1
+            }
+        }
+        return entries
+    }
+
+    private func rankingRow(rank: Int, score: BeanExplorerScore, showSimilarFit: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if showSimilarFit {
+                Text("Similar Fit")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(CoffeeTheme.accent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(CoffeeTheme.accent.opacity(0.12), in: Capsule())
+            }
+
+            HStack(alignment: .top, spacing: 12) {
+                Text("#\(rank)")
+                    .font(.subheadline.weight(.bold).monospacedDigit())
+                    .foregroundStyle(CoffeeTheme.accent)
+                    .frame(width: 28, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(score.roaster)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                    Text(score.name)
+                        .font(.subheadline.weight(.semibold))
+                        .fixedSize(horizontal: false, vertical: true)
+                    if !score.matchedFamilies.isEmpty {
+                        Text(score.matchedFamilies.joined(separator: " · "))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 8) {
+                    rankingScoreChip(label: "Fit", value: score.fit)
+                    rankingScoreChip(label: "Novelty", value: score.novelty)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func rankingScoreChip(label: String, value: Double) -> some View {
+        VStack(alignment: .trailing, spacing: 1) {
+            Text(label.uppercased())
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value, format: .number.precision(.fractionLength(1)))
+                .font(.subheadline.monospacedDigit().weight(.semibold))
+        }
+        .frame(minWidth: 64, alignment: .trailing)
     }
 
     private func imageThumbnail(_ item: CollectedImage) -> some View {
