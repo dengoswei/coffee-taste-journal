@@ -1,0 +1,247 @@
+{
+  "schema_version": 2,
+  "checked_at": "2026-07-25",
+  "dataset_role": "report_only_unlabeled_candidates",
+  "purpose": "Five Tanat coffees transcribed from user-provided Urlicht Coffee product images. This set is for profile-based recommendation testing only: it contains no outcome labels and must not be used to fit or tune the personal profile.",
+  "source_policy": {
+    "roaster": "Tanat Coffee",
+    "seller": "Urlicht Coffee / 原光咖啡",
+    "descriptor_status": "Seller claims, not verified cup perceptions.",
+    "description_status": "Seller copy transcribed from the supplied images; spelling ambiguities are recorded rather than silently discarded.",
+    "scoring_boundary": "Seller descriptions, accolades, provenance reputation, price, and package size do not affect deterministic fit unless represented by an existing explicitly scored field."
+  },
+  "candidates": [
+    {
+      "id": "tanat_las_margaritas_natural_gesha",
+      "roaster": "Tanat",
+      "roaster_full": "Tanat Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Las Margaritas Natural Gesha",
+      "name_zh": "哥伦比亚 希望庄园 Margaritas 日晒瑰夏",
+      "origin": "Colombia",
+      "region": "Valle del Cauca",
+      "farm": "Café Granja La Esperanza - Las Margaritas",
+      "variety": "Gesha",
+      "process": "Natural",
+      "altitude_m": "1570-1800",
+      "weight_grams": "100",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "热带水果",
+        "tropical fruit",
+        "朗姆酒",
+        "rum",
+        "薰衣草",
+        "lavender",
+        "小豆蔻",
+        "cardamom"
+      ],
+      "source_flavor_text": "热带水果、朗姆酒、薰衣草、小豆蔻",
+      "seller_description": "希望庄园瑰夏，tanat是欧洲最擅长烘焙希望庄园咖啡的烘焙商之一。入口鲜活充满异域风情，浓烈热带水果香气扑面而来；丝滑厚重的酒体裹挟温暖朗姆酒气息，赋予整杯酒般丰润质感。尾韵更为雅致，柔和薰衣草花香交织小豆蔻淡淡的辛香，余韵悠长。",
+      "seller_notes": "卖家声称入口鲜活、热带水果浓烈、酒体丝滑厚重并带朗姆酒气息，尾韵有薰衣草与小豆蔻。上述均为卖家描述，需实饮验证。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "candidate_set_provided_2026-07-25",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_1",
+          "name": "Café Granja La Esperanza (Las Margaritas)",
+          "basis": "Curated prestige reference; contextual only.",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/coffee/3604.PNG",
+      "historical_overlap": "Same roaster and same estate appear in rated history; this Gesha lot itself is not treated as previously rated."
+    },
+    {
+      "id": "tanat_alo_bore_washed_74158",
+      "roaster": "Tanat",
+      "roaster_full": "Tanat Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Alo Bore Washed",
+      "name_zh": "埃塞俄比亚 Alo Bore 水洗",
+      "origin": "Ethiopia",
+      "region": "Sidama",
+      "farm": "Alo Bore",
+      "producer": "Tamiru Tadesse",
+      "variety": "74158",
+      "process": "Washed",
+      "altitude_m": "2400-2550",
+      "weight_grams": "200",
+      "roast_use": "Filter and espresso / 手冲意式通用烘焙",
+      "descriptors": [
+        "白色花香",
+        "white flowers",
+        "西柚",
+        "grapefruit",
+        "水蜜桃",
+        "peach"
+      ],
+      "source_flavor_text": "白色花香、西柚、水蜜桃莉",
+      "transcription_notes": "海报正文末尾显示“水蜜桃莉”，疑似把“水蜜桃、茉莉”合并或排版遗漏；豆袋法文为“Fleurs Blanches, Pêche & Pamplemousse”。为避免新增豆袋未声明的茉莉，规范化 descriptors 采用白花、桃、西柚。",
+      "seller_description": "Tanat招牌埃塞alo&elto，性价比超高。Alo是来自2021年埃塞COE冠军Tamiru Tadesse的项目，是当前最流行的Sidama产区+超高海拔（最高到2600masl）+74158品种+精致处理方案，是当前埃塞的上限代表。",
+      "seller_notes": "卖家声称该项目来自 2021 年埃塞 COE 冠军 Tamiru Tadesse，并称其为 Tanat 招牌与埃塞上限代表；这些质量和性价比表述不进入个人适配分。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-07-25",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "producer_marque",
+          "tier": "tier_2",
+          "name": "Alo Coffee",
+          "basis": "Curated specialty producer-marque reference; contextual only.",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/coffee/3603.PNG",
+      "historical_overlap": "Same roaster appears in rated history; no exact coffee identity match."
+    },
+    {
+      "id": "tanat_alo_chilaka_natural_74158",
+      "roaster": "Tanat",
+      "roaster_full": "Tanat Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Alo Chilaka Natural",
+      "name_zh": "埃塞俄比亚 Alo Chilaka 日晒",
+      "origin": "Ethiopia",
+      "region": "Sidama",
+      "farm": "Alo Chilaka",
+      "producer": "Tamiru Tadesse",
+      "variety": "74158",
+      "process": "Natural",
+      "altitude_m": "2320",
+      "weight_grams": "200",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "蓝莓",
+        "blueberry",
+        "白葡萄",
+        "white grape",
+        "茉莉",
+        "jasmine"
+      ],
+      "source_flavor_text": "蓝莓、白葡萄、茉莉",
+      "seller_description": "Tanat招牌埃塞alo&elto，性价比超高。Alo是来自2021年埃塞COE冠军Tamiru Tadesse的项目，是当前最流行的Sidama产区+超高海拔（最高到2600masl）+74158品种+精致处理方案，是当前埃塞的上限代表。",
+      "seller_notes": "卖家声称该项目来自 2021 年埃塞 COE 冠军 Tamiru Tadesse，并称其为 Tanat 招牌与埃塞上限代表；这些质量和性价比表述不进入个人适配分。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-07-25",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "producer_marque",
+          "tier": "tier_2",
+          "name": "Alo Coffee",
+          "basis": "Curated specialty producer-marque reference; contextual only.",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/coffee/3602.PNG",
+      "historical_overlap": "Same roaster appears in rated history; no exact coffee identity match."
+    },
+    {
+      "id": "tanat_elto_elora_anaerobic_natural_72h",
+      "roaster": "Tanat",
+      "roaster_full": "Tanat Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Elto Elora 72h Anaerobic Natural",
+      "name_zh": "埃塞俄比亚 Elto Elora 厌氧72小时",
+      "origin": "Ethiopia",
+      "region": "Sidama",
+      "farm": "Elto Elora",
+      "variety": "74110, 74112",
+      "process": "72h Anaerobic Natural",
+      "altitude_m": "2200",
+      "weight_grams": "200",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "蜜橘",
+        "mandarin orange",
+        "杨桃",
+        "star fruit",
+        "草莓花",
+        "strawberry flower",
+        "西柚",
+        "grapefruit"
+      ],
+      "source_flavor_text": "蜜橘、杨桃、草莓花、西柚",
+      "seller_description": "Tanat招牌埃塞alo&elto，性价比超高。明亮多汁的酸质，蜜橘与杨桃风味率先展现；随之浮现细腻的草莓花香，尾段萦绕清新明亮的西柚果皮气息。一杯果香充沛、冲击力十足的咖啡。",
+      "seller_notes": "卖家声称酸质明亮多汁、果香充沛且冲击力强；厌氧处理与这些杯中特征都需实饮验证。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-07-25",
+      "accolades": [],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/coffee/3601.PNG",
+      "historical_overlap": "Same roaster appears in rated history; no exact coffee identity match."
+    },
+    {
+      "id": "tanat_alo_mosto_anaerobic_natural_74158",
+      "roaster": "Tanat",
+      "roaster_full": "Tanat Coffee",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Alo Mosto Anaerobic Natural",
+      "name_zh": "埃塞俄比亚 Alo Mosto 发酵",
+      "origin": "Ethiopia",
+      "region": "Sidama",
+      "farm": "Alo Mosto",
+      "producer": "Tamiru Tadesse",
+      "variety": "74158",
+      "process": "Mosto Anaerobic Natural",
+      "altitude_m": "2240",
+      "weight_grams": "200",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "菠萝",
+        "pineapple",
+        "乳酸发酵草莓",
+        "lacto-fermented strawberry",
+        "草莓",
+        "strawberry",
+        "椰子",
+        "coconut"
+      ],
+      "source_flavor_text": "菠萝、乳酸发酵草莓、椰子",
+      "seller_description": "Tanat招牌埃塞alo&elto，性价比超高。Alo是来自2021年埃塞COE冠军Tamiru Tadesse的项目，是当前最流行的Sidama产区+超高海拔（最高到2600masl）+74158品种+精致处理方案，是当前埃塞的上限代表。",
+      "seller_notes": "卖家声称该项目来自 2021 年埃塞 COE 冠军 Tamiru Tadesse，并称其为 Tanat 招牌与埃塞上限代表；乳酸发酵草莓是明确的卖家风味线索，需重点验证发酵感是否抢戏。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-07-25",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "producer_marque",
+          "tier": "tier_2",
+          "name": "Alo Coffee",
+          "basis": "Curated specialty producer-marque reference; contextual only.",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/coffee/3600.PNG",
+      "historical_overlap": "Same roaster appears in rated history; no exact coffee identity match."
+    }
+  ]
+}

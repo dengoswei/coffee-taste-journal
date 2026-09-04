@@ -197,3 +197,99 @@ Verified downstream scope:
   reviewed again.
 - The approved gate remains repeat-verifiable because the append-only decision
   log was not one of its preregistered inputs.
+
+## 2026-09-03: Multi-Bean Explorer Workbench Product Design
+
+Initial review artifact:
+`.generated/sol-max-reviews/20260903-214634-multi-bean-explorer-workbench.md`
+
+Initial gate result: **do not approve**.
+
+Remediated review artifact:
+`.generated/sol-max-reviews/20260903-215409-multi-bean-explorer-workbench-remediation.md`
+
+Remediated gate result: **approve**, no conditions.
+
+Verified downstream scope:
+`adopt the remediated Explorer Workbench office-hours product and interaction specification while keeping implementation and shipment blocked on its explicit gate dependency ledger`
+
+### Accepted And Incorporated
+
+- Exclude missing, conflicted, uncertain, or unconfirmed score inputs instead
+  of allowing neutral Fit or inflated Novelty.
+- Make Frontier Pick nullable, distinct from Best-Supported Match, and dependent
+  on both the Fit gate and an explicit flavor-family familiar bridge.
+- Freeze near-tie, role-collision, and fallback display behavior.
+- Preserve append-only in-session lineage across source regions, raw and
+  normalized values, user edits, merges, supplementary images, and deletions.
+- Define explicit dismissal, backgrounding, cancellation, retry, stale response,
+  crash, process-termination, and memory-eviction behavior.
+- Bound the Ark payload, local caches, temporary files, logs, analytics, crash
+  data, cancellation claim, provider-policy requirement, and local profile
+  artifact.
+- Replace the divergent 50-, 51-, and 53-rating snapshots with one generated,
+  manifest-bound profile and scorer contract before implementation.
+- Replace `Safe Match` with `Best-Supported Match` plus explicit non-probability
+  and non-guarantee copy.
+- Freeze the extraction evaluation dataset shape, annotation process, unweighted
+  metrics, sealed holdout, pass thresholds, and leakage rules before results.
+
+### Rejected
+
+- Reusing the current single-image/single-bag scanner behavior unchanged.
+- Treating nonempty but unsupported or unnormalized origin/process values as
+  sufficient scoring evidence.
+- Using the approved product-design gate as approval for an extraction prompt,
+  model, scorer change, threshold validity, narrative generator, predictive
+  claim, implementation, or shipment.
+- Using the stale visual mockup's `SAFE MATCH` label as acceptance evidence.
+
+### Deferred And Still Blocking Shipment
+
+- Separate protocol-v4 gates for the multi-package extraction schema and prompt,
+  model/provider and retention policy, scorable and scorer-parity changes,
+  numeric ranking thresholds, explanation generation, evaluation definitions,
+  and predictive-validity claims.
+- Creation of the canonical generated profile, the public extraction fixtures,
+  and all preregistered device, privacy, accessibility, and parity evidence.
+
+## 2026-09-04: Bean Explorer Ark Extraction Prototype
+
+Final review artifact:
+`.generated/sol-max-reviews/20260904-000717-bean-explorer-extraction-prototype-copy-remediat.md`
+
+Final gate: **approve**, no conditions.
+
+Approved scope:
+`implement bean-explorer-extraction-v1 in the iOS personal-device prototype using the existing Ark Responses API and configured model, creating only temporary editable Review candidates while preserving Add Bean and excluding scoring, reliability claims, and shipment`
+
+Accepted and implemented:
+
+- Reuse the existing Ark Responses API, Keychain credentials, and configured
+  model endpoint; send one image per request and allow zero-to-many packages.
+- Give the extraction instruction system-level precedence and treat image text
+  as untrusted content.
+- Use an exact, fail-closed temporary extraction schema with per-field evidence,
+  uncertainty, package regions, caps, and stale/cancelled request protection.
+- Use ephemeral cache-disabled networking and sanitized errors without response
+  bodies or decoder details.
+- Disclose remote processing and unresolved provider retention/deletion before
+  first upload, and label every result as fallible prototype output requiring
+  user verification.
+- Keep images and candidates in view/session memory with no path into Beans.
+- Preserve Add Bean behavior with shared-client request/parsing regression tests.
+
+Rejected during remediation:
+
+- A Confirm action inside the extraction-only scope; it was removed because it
+  could imply verified provenance before comparison/scoring semantics are gated.
+- Copy claiming Ark “reads” seller claims; replaced with explicit wording that
+  Ark is asked to extract them and every field may be wrong.
+
+Deferred and still blocked:
+
+- Multi-package reliability claims and model selection conclusions.
+- Recommendation scoring, role thresholds, source-crop/evidence UX, provider
+  policy claims, distribution, and shipment.
+- A revised visual mockup using `Best-Supported Match`; the approved textual
+  specification controls until that visual is regenerated.

@@ -1,0 +1,569 @@
+{
+  "schema_version": 1,
+  "mode": "portable_profile",
+  "dataset_generated_at": "2026-08-02T14:14:27.021210+00:00",
+  "scorer_version": "0e445b82063751dcecf40beb35d39255a7f219c6b0a00bd0bb1a67aff5a88bd4",
+  "privacy": {
+    "classification": "derived_personal_preference_aggregates",
+    "contains_raw_observations": false,
+    "contains_coffee_identities": false,
+    "contains_notes_dates_or_brew_details": false,
+    "history_adjustment_available": false,
+    "roaster_affinity_available": false
+  },
+  "evidence_base": {
+    "rated_observations": 53,
+    "rating_distribution": {
+      "Liked": 34,
+      "Loved": 7,
+      "Ok": 12
+    }
+  },
+  "statistics": {
+    "category_stats": [
+      {
+        "feature": "fruit.citrus",
+        "n": 25,
+        "weighted_rating": 1.973
+      },
+      {
+        "feature": "fruit.stone",
+        "n": 22,
+        "weighted_rating": 1.961
+      },
+      {
+        "feature": "fruit.tropical",
+        "n": 15,
+        "weighted_rating": 2.069
+      },
+      {
+        "feature": "sweet.browning",
+        "n": 14,
+        "weighted_rating": 2.006
+      },
+      {
+        "feature": "floral",
+        "n": 17,
+        "weighted_rating": 1.839
+      },
+      {
+        "feature": "fruit.berry",
+        "n": 18,
+        "weighted_rating": 1.844
+      },
+      {
+        "feature": "fruit.grape",
+        "n": 7,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "fruit.dried",
+        "n": 7,
+        "weighted_rating": 2.03
+      },
+      {
+        "feature": "fruit.pome",
+        "n": 7,
+        "weighted_rating": 1.713
+      },
+      {
+        "feature": "cocoa_nut",
+        "n": 2,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "tea",
+        "n": 7,
+        "weighted_rating": 1.746
+      },
+      {
+        "feature": "spice_herbal",
+        "n": 3,
+        "weighted_rating": 2.351
+      },
+      {
+        "feature": "fruit.melon",
+        "n": 3,
+        "weighted_rating": 1.676
+      },
+      {
+        "feature": "fermented_alcoholic",
+        "n": 1,
+        "weighted_rating": 1.0
+      }
+    ],
+    "origin_stats": [
+      {
+        "feature": "Colombia",
+        "n": 16,
+        "weighted_rating": 1.945
+      },
+      {
+        "feature": "Panama",
+        "n": 8,
+        "weighted_rating": 2.232
+      },
+      {
+        "feature": "Ethiopia",
+        "n": 10,
+        "weighted_rating": 1.709
+      },
+      {
+        "feature": "Kenya",
+        "n": 3,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Peru",
+        "n": 6,
+        "weighted_rating": 1.69
+      },
+      {
+        "feature": "Burundi",
+        "n": 2,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Brazil",
+        "n": 1,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Colombia / Ethiopia",
+        "n": 1,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Ecuador",
+        "n": 1,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Yemen",
+        "n": 1,
+        "weighted_rating": 3.0
+      },
+      {
+        "feature": "Guatemala",
+        "n": 2,
+        "weighted_rating": 1.5
+      }
+    ],
+    "process_stats": [
+      {
+        "feature": "Anaerobic Natural",
+        "n": 8,
+        "weighted_rating": 2.244
+      },
+      {
+        "feature": "Natural",
+        "n": 8,
+        "weighted_rating": 2.251
+      },
+      {
+        "feature": "Washed",
+        "n": 19,
+        "weighted_rating": 1.805
+      },
+      {
+        "feature": "Blend",
+        "n": 1,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Honey",
+        "n": 1,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Semi-washed",
+        "n": 1,
+        "weighted_rating": 2.0
+      },
+      {
+        "feature": "Carbonic Maceration",
+        "n": 2,
+        "weighted_rating": 2.0
+      }
+    ],
+    "roaster_stats": [],
+    "top_tier_families": [
+      {
+        "category": "fruit.citrus",
+        "top_tier_count": 4
+      },
+      {
+        "category": "fruit.stone",
+        "top_tier_count": 4
+      },
+      {
+        "category": "fruit.berry",
+        "top_tier_count": 3
+      },
+      {
+        "category": "fruit.tropical",
+        "top_tier_count": 3
+      },
+      {
+        "category": "floral",
+        "top_tier_count": 2
+      },
+      {
+        "category": "fruit.dried",
+        "top_tier_count": 2
+      },
+      {
+        "category": "spice_herbal",
+        "top_tier_count": 2
+      },
+      {
+        "category": "sweet.browning",
+        "top_tier_count": 2
+      }
+    ]
+  },
+  "lexicon": {
+    "category_terms": {
+      "cocoa_nut": [
+        "chocolate",
+        "cocoa",
+        "cacao",
+        "nut",
+        "nuts",
+        "almond",
+        "marzipan",
+        "praline",
+        "巧克力",
+        "可可",
+        "坚果",
+        "杏仁"
+      ],
+      "fermented_alcoholic": [
+        "ferment",
+        "fermented",
+        "anaerobic",
+        "anoxic",
+        "carbonic",
+        "cognac",
+        "winey",
+        "wine-like",
+        "alcohol",
+        "发酵",
+        "厌氧",
+        "酒"
+      ],
+      "floral": [
+        "floral",
+        "florals",
+        "jasmine",
+        "honeysuckle",
+        "hibiscus",
+        "rose",
+        "lavender",
+        "chamomile",
+        "elderflower",
+        "flower",
+        "flowers",
+        "blossom",
+        "花香",
+        "茉莉",
+        "金银花",
+        "接骨木花",
+        "玫瑰",
+        "薰衣草",
+        "洋甘菊",
+        "牡丹"
+      ],
+      "fruit.berry": [
+        "berry",
+        "berries",
+        "blackberry",
+        "blueberry",
+        "cranberry",
+        "raspberry",
+        "strawberry",
+        "redcurrant",
+        "blackcurrant",
+        "elderberry",
+        "mulberry",
+        "pomegranate",
+        "莓",
+        "覆盆子",
+        "草莓",
+        "蓝莓",
+        "蔓越莓",
+        "黑莓",
+        "红醋栗",
+        "黑醋栗",
+        "桑葚"
+      ],
+      "fruit.citrus": [
+        "citrus",
+        "orange",
+        "tangerine",
+        "mandarin",
+        "lemon",
+        "lime",
+        "grapefruit",
+        "pomelo",
+        "bergamot",
+        "marmalade",
+        "柑橘",
+        "橙",
+        "橘",
+        "柚",
+        "柠檬",
+        "青柠",
+        "佛手柑"
+      ],
+      "fruit.dried": [
+        "raisin",
+        "dried",
+        "date",
+        "prune",
+        "fruit leather",
+        "fig",
+        "figs",
+        "果干",
+        "葡萄干",
+        "椰枣",
+        "西梅",
+        "无花果"
+      ],
+      "fruit.grape": [
+        "grape",
+        "grapes",
+        "concord",
+        "wine",
+        "葡萄",
+        "葡萄酒",
+        "红酒"
+      ],
+      "fruit.melon": [
+        "melon",
+        "honeydew",
+        "watermelon",
+        "rock melon",
+        "哈密瓜",
+        "甜瓜",
+        "西瓜"
+      ],
+      "fruit.pome": [
+        "apple",
+        "pear",
+        "苹果",
+        "梨"
+      ],
+      "fruit.stone": [
+        "peach",
+        "apricot",
+        "nectarine",
+        "plum",
+        "cherry",
+        "loquat",
+        "stone fruit",
+        "stonefruit",
+        "桃",
+        "杏",
+        "李",
+        "布林",
+        "樱桃",
+        "枇杷"
+      ],
+      "fruit.tropical": [
+        "mango",
+        "pineapple",
+        "passionfruit",
+        "passion fruit",
+        "guava",
+        "lychee",
+        "papaya",
+        "granadilla",
+        "tropical",
+        "芒果",
+        "菠萝",
+        "百香果",
+        "番石榴",
+        "荔枝",
+        "木瓜"
+      ],
+      "spice_herbal": [
+        "spice",
+        "spices",
+        "herbal",
+        "eucalyptus",
+        "anise",
+        "lemon balm",
+        "baking spices",
+        "cardamom",
+        "mint",
+        "peppermint",
+        "spearmint",
+        "fig leaf",
+        "fig leaves",
+        "香料",
+        "草本",
+        "桉树",
+        "八角",
+        "豆蔻",
+        "薄荷",
+        "无花果叶"
+      ],
+      "sweet.browning": [
+        "honey",
+        "sugar",
+        "caramel",
+        "molasses",
+        "toffee",
+        "brown sugar",
+        "jam",
+        "vanilla",
+        "sweet",
+        "wafer",
+        "candy",
+        "fudge",
+        "蜂蜜",
+        "红糖",
+        "黑糖",
+        "焦糖",
+        "果酱",
+        "香草",
+        "甜"
+      ],
+      "tea": [
+        "tea",
+        "earl grey",
+        "pu'er",
+        "puer",
+        "black tea",
+        "green tea",
+        "oolong",
+        "红茶",
+        "绿茶",
+        "伯爵茶",
+        "普洱",
+        "熟普",
+        "乌龙",
+        "白茶"
+      ]
+    },
+    "quality_terms": {
+      "acid_sweet_balance_positive": [
+        "acid-sweet",
+        "sweet acidity",
+        "酸甜",
+        "balanced acidity"
+      ],
+      "brew_variability": [
+        "not as good",
+        "没有昨天",
+        "worse"
+      ],
+      "brightness_positive": [
+        "bright",
+        "crisp",
+        "refreshing acidity",
+        "明亮"
+      ],
+      "clarity_positive": [
+        "clear",
+        "clarity",
+        "defined",
+        "obvious",
+        "明显",
+        "清晰"
+      ],
+      "cleanliness_positive": [
+        "clean",
+        "干净",
+        "没有发酵"
+      ],
+      "complexity_positive": [
+        "complex",
+        "complexity",
+        "复杂"
+      ],
+      "creaminess": [
+        "creamy",
+        "cream",
+        "奶油"
+      ],
+      "delicacy_positive": [
+        "delicate",
+        "精致"
+      ],
+      "fermentation_clean_positive": [
+        "no ferment",
+        "没有发酵",
+        "controlled fermentation"
+      ],
+      "juiciness_positive": [
+        "juicy",
+        "juice",
+        "多汁"
+      ]
+    },
+    "matching": "NFKC lowercase; ASCII word boundaries; CJK substring"
+  },
+  "scoring": {
+    "rating_scale": {
+      "min": 0.0,
+      "max": 3.0
+    },
+    "fit_weights": {
+      "sensory": 0.75,
+      "origin": 0.15,
+      "process": 0.1
+    },
+    "unknown_fit": 50.0,
+    "quality_bonus": {
+      "cap": 7.0,
+      "signals": {
+        "clarity_positive": 3.0,
+        "cleanliness_positive": 3.0,
+        "acid_sweet_balance_positive": 3.0,
+        "brightness_positive": 1.5,
+        "juiciness_positive": 1.0
+      }
+    },
+    "top_tier_bonus": {
+      "per_family": 2.5,
+      "cap": 5.0
+    },
+    "roaster_bonus": {
+      "scale": 0.09,
+      "cap": 3.0
+    },
+    "novelty": {
+      "weights": {
+        "category": 0.5,
+        "origin": 0.25,
+        "process": 0.25
+      },
+      "category_full_familiarity_observations": 6,
+      "origin_familiarity": {
+        "known": 80.0,
+        "unknown": 10.0
+      },
+      "process_familiarity": {
+        "known": 80.0,
+        "unknown": 20.0
+      }
+    },
+    "frontier": {
+      "min_fit": 60.0,
+      "novelty_weight": 0.55,
+      "fit_weight": 0.45,
+      "min_top_tier_count": 3,
+      "min_category_observations": 6
+    },
+    "near_tie_fit_delta": 1.5,
+    "history": {
+      "mode": "unavailable_without_private",
+      "fit_bonus": null,
+      "novelty_penalty": null
+    }
+  },
+  "profile_id": "0baa7bac874e6da3365bdf9778dd760e154f34bf42b2089b5b2ac291c8f9c54d",
+  "lexicon_version": "d5968046b7b9736caafbb104fa55086c93645e7f7a25197f4c0b4207a89dc71e"
+}

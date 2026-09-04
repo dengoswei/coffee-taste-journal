@@ -1,4 +1,5 @@
 import CoffeeJournalCore
+import Foundation
 import SwiftUI
 #if canImport(UIKit)
 import PhotosUI
@@ -7,7 +8,10 @@ import UIKit
 
 struct BeansView: View {
     let store: CoffeeJournalStore
-    @State private var searchText = ""
+    @Environment(\.dismissSearch) private var dismissSearch
+    @State private var pastMode: PastBeansMode = .recent
+    @State private var recentSearchText = ""
+    @State private var roasterSearchText = ""
     @State private var isAddingBean = false
 
     var body: some View {
@@ -36,15 +40,39 @@ struct BeansView: View {
             }
 
             Section("Past Beans") {
-                if filteredPastCoffees.isEmpty {
-                    Text(pastEmptyText)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(filteredPastCoffees) { coffee in
-                        NavigationLink {
-                            BeanDetailView(store: store, coffeeID: coffee.id)
-                        } label: {
-                            BeanSummaryRow(store: store, coffee: coffee)
+                Picker("Past Beans view", selection: $pastMode) {
+                    ForEach(PastBeansMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityLabel("Past Beans view")
+
+                switch pastMode {
+                case .recent:
+                    if filteredPastCoffees.isEmpty {
+                        Text(pastEmptyText)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(filteredPastCoffees) { record in
+                            NavigationLink {
+                                BeanDetailView(store: store, coffeeID: record.coffee.id)
+                            } label: {
+                                BeanSummaryRow(store: store, coffee: record.coffee)
+                            }
+                        }
+                    }
+                case .roasters:
+                    if filteredRoasterGroups.isEmpty {
+                        Text(roasterEmptyText)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(filteredRoasterGroups) { group in
+                            NavigationLink {
+                                RoasterPastBeansView(store: store, group: group)
+                            } label: {
+                                PastRoasterRow(group: group)
+                            }
                         }
                     }
                 }
@@ -53,7 +81,10 @@ struct BeansView: View {
         .scrollContentBackground(.hidden)
         .background(CoffeeTheme.background.ignoresSafeArea())
         .navigationTitle("Beans")
-        .searchable(text: $searchText, prompt: "Search roaster, origin, process")
+        .searchable(text: searchBinding, prompt: searchPrompt)
+        .onChange(of: pastMode) { _, _ in
+            dismissSearch()
+        }
         .toolbar {
             Button {
                 isAddingBean = true
@@ -69,32 +100,58 @@ struct BeansView: View {
     private var filteredActiveBags: [CoffeeBag] {
         store.activeBags.filter { bag in
             guard let coffee = store.coffee(for: bag.coffeeID) else { return false }
-            return matchesSearch(coffee)
+            return matchesSearch(coffee, query: recentSearchText)
         }
     }
 
-    private var filteredPastCoffees: [Coffee] {
-        store.coffees.filter { coffee in
-            store.activeBag(for: coffee.id) == nil && matchesSearch(coffee)
-        }
+    private var filteredPastCoffees: [PastCoffeeRecord] {
+        store.pastCoffees(matching: recentSearchText, limit: 50)
+    }
+
+    private var filteredRoasterGroups: [PastRoasterGroup] {
+        store.pastRoasterGroups(matching: roasterSearchText)
     }
 
     private var activeEmptyText: String {
-        if searchText.trimmedForSearch.isEmpty {
+        if searchBinding.wrappedValue.trimmedForSearch.isEmpty {
             return "No active beans yet. Add a bean to start logging cups."
         }
         return "No active beans match this search."
     }
 
     private var pastEmptyText: String {
-        if searchText.trimmedForSearch.isEmpty {
+        if recentSearchText.trimmedForSearch.isEmpty {
             return "Finished beans will stay here for memory."
         }
         return "No past beans match this search."
     }
 
-    private func matchesSearch(_ coffee: Coffee) -> Bool {
-        let query = searchText.trimmedForSearch
+    private var roasterEmptyText: String {
+        if roasterSearchText.trimmedForSearch.isEmpty {
+            return "Finished beans will stay here for memory."
+        }
+        return "No roasters match this search."
+    }
+
+    private var searchBinding: Binding<String> {
+        Binding(
+            get: { pastMode == .recent ? recentSearchText : roasterSearchText },
+            set: { newValue in
+                if pastMode == .recent {
+                    recentSearchText = newValue
+                } else {
+                    roasterSearchText = newValue
+                }
+            }
+        )
+    }
+
+    private var searchPrompt: String {
+        pastMode == .recent ? "Search roaster, origin, process" : "Search roasters"
+    }
+
+    private func matchesSearch(_ coffee: Coffee, query rawQuery: String) -> Bool {
+        let query = rawQuery.trimmedForSearch
         guard !query.isEmpty else { return true }
         let searchableFields = [
             coffee.roaster,
@@ -110,6 +167,93 @@ struct BeansView: View {
             .localizedCaseInsensitiveContains(query)
     }
 
+}
+
+private enum PastBeansMode: String, CaseIterable, Identifiable {
+    case recent = "Recent"
+    case roasters = "Roasters"
+
+    var id: Self { self }
+}
+
+struct PastRoasterRow: View {
+    let group: PastRoasterGroup
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(group.displayName)
+                    .font(.headline)
+                    .lineLimit(2)
+                Text(latestCoffeeText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 8)
+            Text("\(group.coffeeCount)")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .accessibilityLabel("\(group.coffeeCount) completed coffees")
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(group.displayName)
+        .accessibilityValue(accessibilityValue)
+        .accessibilityHint("Opens completed coffees from this roaster")
+    }
+
+    private var latestCoffeeText: String {
+        let name = group.latestCoffeeName.nonEmpty ?? "Unnamed coffee"
+        guard let date = group.latestFinishedAt else { return "Latest: \(name)" }
+        return "Latest: \(name) · \(date.shortCoffeeDate)"
+    }
+
+    private var accessibilityValue: String {
+        let count = group.coffeeCount == 1
+            ? "1 completed coffee"
+            : "\(group.coffeeCount) completed coffees"
+        let latest = group.latestCoffeeName.nonEmpty ?? "Unnamed coffee"
+        return "\(count). Latest coffee: \(latest)"
+    }
+}
+
+struct RoasterPastBeansView: View {
+    let store: CoffeeJournalStore
+    let group: PastRoasterGroup
+    @State private var searchText = ""
+
+    var body: some View {
+        List {
+            if group.coffeeCount > 50, searchText.trimmedForSearch.isEmpty {
+                Text("Showing the newest 50 of \(group.coffeeCount). Search to find older beans.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            let records = store.pastCoffees(
+                matching: searchText,
+                roasterKey: group.key,
+                limit: 50
+            )
+            if records.isEmpty {
+                Text("No past beans for this roaster.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(records) { record in
+                    NavigationLink {
+                        BeanDetailView(store: store, coffeeID: record.coffee.id)
+                    } label: {
+                        BeanSummaryRow(store: store, coffee: record.coffee)
+                    }
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(CoffeeTheme.background.ignoresSafeArea())
+        .navigationTitle(group.displayName)
+        .searchable(text: $searchText, prompt: "Search this roaster")
+    }
 }
 
 struct ActiveBeanRow: View {
@@ -185,6 +329,7 @@ struct BeanSummaryRow: View {
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -192,6 +337,7 @@ struct BeanDetailView: View {
     let store: CoffeeJournalStore
     let coffeeID: UUID
     @State private var isEditing = false
+    @State private var isRegeneratingArtwork = false
 
     var body: some View {
         if let coffee = store.coffee(for: coffeeID) {
@@ -246,7 +392,7 @@ struct BeanDetailView: View {
                     ForEach(store.bags.filter { $0.coffeeID == coffee.id }) { bag in
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(bag.roastDate.map { "Roasted \($0.shortCoffeeDate)" } ?? "Roast date unknown")
+                                Text(bagRoastLabel(bag))
                                 Text("\(bag.remainingGrams.gramsText) / \(bag.totalGrams.gramsText) left")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -263,6 +409,43 @@ struct BeanDetailView: View {
                     ForEach(store.logs(for: coffee.id)) { log in
                         BrewLogRow(store: store, log: log)
                     }
+                }
+
+                Section("Artwork") {
+                    if let addedAt = coffee.addedAt {
+                        LabeledContent("Added", value: addedAt.shortCoffeeDate)
+                    }
+
+                    if let job = coffee.artworkJob {
+                        LabeledContent("Image status", value: artworkStatusText(job))
+                        if let lastError = job.lastError, job.status == .failed {
+                            Text(lastError)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Button {
+                        isRegeneratingArtwork = true
+                        enqueueFlavorArtworkGeneration(
+                            for: coffee.id,
+                            in: store,
+                            source: "manual-regenerate",
+                            force: true
+                        )
+                        isRegeneratingArtwork = false
+                    } label: {
+                        Label(
+                            isRegeneratingArtwork ? "Regenerating…" : "Regenerate flavor image",
+                            systemImage: "arrow.clockwise"
+                        )
+                    }
+                    .disabled(
+                        isRegeneratingArtwork ||
+                        coffee.flavorNotes.isEmpty ||
+                        coffee.artworkJob?.status == .queued ||
+                        coffee.artworkJob?.status == .generating
+                    )
                 }
             }
             .scrollContentBackground(.hidden)
@@ -308,6 +491,15 @@ struct BeanDetailView: View {
             .compactMap(\.nonEmpty)
             .joined(separator: " · ")
             .nonEmpty
+    }
+
+    private func artworkStatusText(_ job: ArtworkJobState) -> String {
+        switch job.status {
+        case .queued: job.attemptCount == 0 ? "Waiting" : "Waiting to retry"
+        case .generating: "Generating"
+        case .failed: "Couldn’t generate image"
+        case .succeeded: "Ready"
+        }
     }
 }
 
@@ -458,6 +650,7 @@ struct EditBeanSheet: View {
     private func save() {
         let updatedCoffee = Coffee(
             id: coffee.id,
+            addedAt: coffee.addedAt,
             roaster: roaster.trimmingCharacters(in: .whitespacesAndNewlines),
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
             origin: origin.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -467,7 +660,8 @@ struct EditBeanSheet: View {
             flavorNotes: flavorText.coffeeFlavorNotes,
             verdict: coffee.verdict,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
-            flavorArtwork: coffee.flavorArtwork
+            flavorArtwork: coffee.flavorArtwork,
+            artworkJob: coffee.artworkJob
         )
         store.updateCoffee(updatedCoffee)
 
@@ -479,8 +673,13 @@ struct EditBeanSheet: View {
             store.updateBag(bag)
         }
 
-        Task {
-            await generateFlavorArtwork(for: coffee.id, in: store, source: "edit-bean-save")
+        if coffee.artworkInputSignature != updatedCoffee.artworkInputSignature,
+           updatedCoffee.artworkInputSignature != nil {
+            enqueueFlavorArtworkGeneration(
+                for: coffee.id,
+                in: store,
+                source: "edit-bean-save"
+            )
         }
         dismiss()
     }
@@ -489,6 +688,11 @@ struct EditBeanSheet: View {
         let date = bag.roastDate?.shortCoffeeDate ?? "unknown roast"
         return "\(bag.status.rawValue.capitalized) · \(date)"
     }
+}
+
+private func bagRoastLabel(_ bag: CoffeeBag) -> String {
+    guard let roastDate = bag.roastDate else { return "Roast date unknown" }
+    return "Roasted \(roastDate.shortCoffeeDate)"
 }
 
 struct AddBeanSheet: View {
@@ -725,8 +929,12 @@ struct AddBeanSheet: View {
         draft.totalGrams = totalGrams
         draft.coffee.flavorNotes = flavorText.coffeeFlavorNotes
         let bag = store.addCoffee(from: draft)
-        Task {
-            await generateFlavorArtwork(for: bag.coffeeID, in: store, source: "add-bean-save")
+        if store.coffee(for: bag.coffeeID)?.artworkJob?.status == .queued {
+            enqueueFlavorArtworkGeneration(
+                for: bag.coffeeID,
+                in: store,
+                source: "add-bean-save"
+            )
         }
         dismiss()
     }
@@ -891,10 +1099,10 @@ struct AddBeanSheet: View {
             }
         }
 
-        guard case BagPhotoScannerError.requestFailed(let message) = error else {
+        guard case BagPhotoScannerError.requestFailed(let statusCode) = error else {
             return false
         }
-        return message.contains("HTTP 408") || message.contains("HTTP 429") || message.contains("HTTP 5")
+        return statusCode == 408 || statusCode == 429 || (500..<600).contains(statusCode)
     }
 
     private func manualRetryPayload(
@@ -907,8 +1115,8 @@ struct AddBeanSheet: View {
             switch scannerError {
             case .missingAPIKey, .invalidImage:
                 return nil
-            case .requestFailed(let message):
-                if message.contains("HTTP 401") || message.contains("HTTP 403") {
+            case .requestFailed(let statusCode):
+                if statusCode == 401 || statusCode == 403 {
                     return nil
                 }
             case .invalidResponse, .invalidJSON:
@@ -1071,6 +1279,7 @@ struct ReactivateBeanSheet: View {
                         )
                         dismiss()
                     }
+                    .disabled(totalGrams <= 0)
                 }
             }
         }
@@ -1138,12 +1347,16 @@ struct FlowTags: View {
 @MainActor
 func generateFlavorArtwork(
     for coffeeID: UUID,
+    requestID: UUID,
     in store: CoffeeJournalStore,
-    source: String = "manual"
+    source: String = "manual",
+    force: Bool = false
 ) async {
 #if canImport(UIKit)
     let startedAt = Date()
-    guard let coffee = store.coffee(for: coffeeID), !coffee.flavorNotes.isEmpty else {
+    guard let coffee = store.coffee(for: coffeeID),
+          coffee.artworkInputSignature != nil,
+          coffee.artworkJob?.requestID == requestID else {
         FlavorArtworkDiagnostics.record(
             "skipped-no-flavor-notes",
             source: source,
@@ -1158,6 +1371,20 @@ func generateFlavorArtwork(
     do {
         identity = try generator.identity(for: coffee)
     } catch {
+        let previous = coffee.artworkJob
+        _ = store.updateArtworkJob(
+            coffeeID: coffeeID,
+            state: ArtworkJobState(
+                status: .failed,
+                requestID: requestID,
+                forceGeneration: previous?.forceGeneration ?? force,
+                attemptCount: previous?.attemptCount ?? 0,
+                deferredFailureCount: previous?.deferredFailureCount ?? 0,
+                lastAttemptAt: Date(),
+                lastError: error.localizedDescription
+            ),
+            matching: requestID
+        )
         FlavorArtworkDiagnostics.record(
             "failed",
             source: source,
@@ -1168,7 +1395,7 @@ func generateFlavorArtwork(
         return
     }
 
-    let requestKey = "\(coffeeID.uuidString)|\(identity.promptHash)"
+    let requestKey = "\(coffeeID.uuidString)|\(requestID.uuidString)"
     guard await FlavorArtworkInFlightRegistry.shared.begin(requestKey) else {
         FlavorArtworkDiagnostics.record(
             "skipped-in-flight",
@@ -1184,54 +1411,165 @@ func generateFlavorArtwork(
         }
     }
 
-    FlavorArtworkDiagnostics.record(
-        "start",
-        source: source,
-        coffee: coffee,
-        fields: flavorArtworkDiagnosticFields(identity: identity, startedAt: startedAt)
-    )
-    do {
-        let result = try await generator.generateIfNeeded(for: coffee)
-        if let artwork = result.artwork {
-            store.updateFlavorArtwork(coffeeID: coffeeID, artwork: artwork)
-            FlavorArtworkDiagnostics.record(
-                result.status.rawValue,
-                source: source,
-                coffee: store.coffee(for: coffeeID),
-                message: artwork.cardFilename,
-                fields: flavorArtworkDiagnosticFields(
-                    identity: result.identity,
-                    artwork: artwork,
-                    startedAt: startedAt
-                )
-            )
-        } else {
-            FlavorArtworkDiagnostics.record(
-                result.status.rawValue,
-                source: source,
-                coffee: store.coffee(for: coffeeID),
-                fields: flavorArtworkDiagnosticFields(
-                    identity: result.identity,
-                    startedAt: startedAt
-                )
-            )
-        }
-    } catch {
+    let maximumAttempts = 3
+    let previousAttemptCount = coffee.artworkJob?.attemptCount ?? 0
+    let previousDeferredFailureCount = coffee.artworkJob?.deferredFailureCount ?? 0
+    let shouldForce = coffee.artworkJob?.forceGeneration ?? force
+
+    for attempt in 1...maximumAttempts {
+        guard !Task.isCancelled else { return }
+        guard let latestCoffee = store.coffee(for: coffeeID),
+              latestCoffee.artworkJob?.requestID == requestID else { return }
+        let attemptCount = previousAttemptCount + attempt
+        guard store.updateArtworkJob(
+            coffeeID: coffeeID,
+            state: ArtworkJobState(
+                status: .generating,
+                requestID: requestID,
+                forceGeneration: shouldForce,
+                attemptCount: attemptCount,
+                deferredFailureCount: previousDeferredFailureCount,
+                lastAttemptAt: Date()
+            ),
+            matching: requestID
+        ) else { return }
+
         FlavorArtworkDiagnostics.record(
-            "failed",
+            "start",
             source: source,
-            coffee: store.coffee(for: coffeeID),
-            message: error.localizedDescription,
+            coffee: latestCoffee,
             fields: flavorArtworkDiagnosticFields(
                 identity: identity,
                 startedAt: startedAt,
-                error: error
+                attempt: attempt
             )
         )
-        #if DEBUG
-        let latestCoffee = store.coffee(for: coffeeID)
-        print("[FlavorArtwork] generation failed coffeeID=\(coffeeID) roaster=\(latestCoffee?.roaster ?? "unknown") notes=\((latestCoffee?.flavorNotes ?? []).joined(separator: "|")) error=\(error.localizedDescription)")
-        #endif
+
+        do {
+            let result = try await generator.generateIfNeeded(
+                for: latestCoffee,
+                force: shouldForce,
+                publicationID: requestID,
+                isCurrent: {
+                    store.coffee(for: coffeeID)?.artworkJob?.requestID == requestID
+                },
+                commit: { artwork in
+                    store.updateFlavorArtwork(
+                        coffeeID: coffeeID,
+                        artwork: artwork,
+                        matching: requestID
+                    )
+                }
+            )
+            guard store.coffee(for: coffeeID)?.artworkJob?.requestID == requestID else { return }
+            if let artwork = result.artwork {
+                guard store.updateFlavorArtwork(
+                    coffeeID: coffeeID,
+                    artwork: artwork,
+                    matching: requestID
+                ) else { return }
+            } else {
+                guard store.updateArtworkJob(
+                    coffeeID: coffeeID,
+                    state: ArtworkJobState(
+                        status: .succeeded,
+                        requestID: requestID,
+                        attemptCount: attemptCount,
+                        deferredFailureCount: 0,
+                        lastAttemptAt: Date()
+                    ),
+                    matching: requestID
+                ) else { return }
+            }
+            FlavorArtworkDiagnostics.record(
+                result.status.rawValue,
+                source: source,
+                coffee: store.coffee(for: coffeeID),
+                message: result.artwork?.cardFilename ?? "",
+                fields: flavorArtworkDiagnosticFields(
+                    identity: result.identity,
+                    artwork: result.artwork,
+                    startedAt: startedAt,
+                    attempt: attempt
+                )
+            )
+            return
+        } catch {
+            guard !(error is CancellationError), !Task.isCancelled else { return }
+            let retryable = flavorArtworkErrorIsRetryable(error)
+            if retryable, attempt < maximumAttempts {
+                let delaySeconds = attempt == 1 ? 2.0 : 5.0
+                let nextRetryAt = Date().addingTimeInterval(delaySeconds)
+                guard store.updateArtworkJob(
+                    coffeeID: coffeeID,
+                    state: ArtworkJobState(
+                        status: .queued,
+                        requestID: requestID,
+                        forceGeneration: shouldForce,
+                        attemptCount: attemptCount,
+                        deferredFailureCount: previousDeferredFailureCount,
+                        lastAttemptAt: Date(),
+                        nextRetryAt: nextRetryAt,
+                        lastError: error.localizedDescription
+                    ),
+                    matching: requestID
+                ) else { return }
+                FlavorArtworkDiagnostics.record(
+                    "retry-scheduled",
+                    source: source,
+                    coffee: store.coffee(for: coffeeID),
+                    message: error.localizedDescription,
+                    fields: flavorArtworkDiagnosticFields(
+                        identity: identity,
+                        startedAt: startedAt,
+                        error: error,
+                        attempt: attempt
+                    )
+                )
+                do {
+                    try await Task.sleep(for: .seconds(delaySeconds))
+                } catch {
+                    return
+                }
+                continue
+            }
+
+            let deferredFailureCount = retryable ? previousDeferredFailureCount + 1 : previousDeferredFailureCount
+            let nextRetryAt = retryable
+                ? Date().addingTimeInterval(CoffeeJournalStore.artworkRetryDelay(for: deferredFailureCount))
+                : nil
+            _ = store.updateArtworkJob(
+                coffeeID: coffeeID,
+                state: ArtworkJobState(
+                    status: retryable ? .queued : .failed,
+                    requestID: requestID,
+                    forceGeneration: shouldForce,
+                    attemptCount: attemptCount,
+                    deferredFailureCount: deferredFailureCount,
+                    lastAttemptAt: Date(),
+                    nextRetryAt: nextRetryAt,
+                    lastError: error.localizedDescription
+                ),
+                matching: requestID
+            )
+            FlavorArtworkDiagnostics.record(
+                "failed",
+                source: source,
+                coffee: store.coffee(for: coffeeID),
+                message: error.localizedDescription,
+                fields: flavorArtworkDiagnosticFields(
+                    identity: identity,
+                    startedAt: startedAt,
+                    error: error,
+                    attempt: attempt
+                )
+            )
+            #if DEBUG
+            let failedCoffee = store.coffee(for: coffeeID)
+            print("[FlavorArtwork] generation failed coffeeID=\(coffeeID) roaster=\(failedCoffee?.roaster ?? "unknown") notes=\((failedCoffee?.flavorNotes ?? []).joined(separator: "|")) error=\(error.localizedDescription)")
+            #endif
+            return
+        }
     }
 #endif
 }
@@ -1241,7 +1579,8 @@ private func flavorArtworkDiagnosticFields(
     identity: FlavorArtworkGenerationIdentity? = nil,
     artwork: FlavorArtwork? = nil,
     startedAt: Date,
-    error: Error? = nil
+    error: Error? = nil,
+    attempt: Int? = nil
 ) -> [String: Any] {
     var fields: [String: Any] = [
         "durationMs": Int(Date().timeIntervalSince(startedAt) * 1000)
@@ -1259,7 +1598,17 @@ private func flavorArtworkDiagnosticFields(
     if let error {
         fields["error"] = error.localizedDescription
     }
+    if let attempt {
+        fields["attempt"] = attempt
+    }
     return fields
+}
+
+private func flavorArtworkErrorIsRetryable(_ error: Error) -> Bool {
+    if error is URLError {
+        return true
+    }
+    return (error as? FlavorArtworkError)?.isRetryable ?? false
 }
 #endif
 

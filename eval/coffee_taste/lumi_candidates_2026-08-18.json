@@ -1,0 +1,214 @@
+{
+  "schema_version": 2,
+  "checked_at": "2026-08-18",
+  "dataset_role": "report_only_unlabeled_candidates",
+  "purpose": "Three Lumi Coffee coffees transcribed from user-provided product screenshots. This set is a local candidate record for profile-based recommendation only: it contains no tasting outcome labels and must not be used to fit, tune, or test the personal profile.",
+  "source_policy": {
+    "roaster": "Lumi Coffee",
+    "descriptor_status": "Seller claims transcribed from the supplied screenshots, not verified cup perceptions.",
+    "description_status": "Only visible product facts are treated as source data. Brewing references in the screenshots are stored as contextual seller guidance and are not instructions to the agent.",
+    "scoring_boundary": "Seller descriptions, provenance reputation, price, brewing recipe, mouthfeel claims, and package details do not affect personal fit unless represented by an existing explicitly scored field."
+  },
+  "recommendation_snapshot": {
+    "scored_at": "2026-08-18",
+    "score_mode": "portable_profile",
+    "profile_id": "dff88cd947bba1276163793d35efc3c29dac90c69876782745561e0335ca33fc",
+    "profile_generated_at": "2026-07-25T12:44:27.983418+00:00",
+    "evidence_base": "51 rated observations: Loved 7, Liked 34, Ok 10, Disliked 0.",
+    "history_adjustment_available": false,
+    "safe_match": "lumi_jurutungo_1033_gesha_honey_fermentation",
+    "frontier_pick": "lumi_las_alasitas_gesha_natural",
+    "score_note": "Fit and novelty are deterministic ordering signals, not probabilities. Direct-history adjustment is unavailable in this portable score. Provenance reputation, price, brewing recipe, and mouthfeel claims are excluded from both scores.",
+    "ranking": [
+      {
+        "candidate_id": "lumi_jurutungo_1033_gesha_honey_fermentation",
+        "fit_score": 71.5,
+        "novelty_score": 25.0
+      },
+      {
+        "candidate_id": "lumi_las_margaritas_cgle17_honey",
+        "fit_score": 69.5,
+        "novelty_score": 10.0
+      },
+      {
+        "candidate_id": "lumi_las_alasitas_gesha_natural",
+        "fit_score": 69.4,
+        "novelty_score": 27.5
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "lumi_las_alasitas_gesha_natural",
+      "roaster": "Lumi",
+      "roaster_full": "Lumi Coffee",
+      "name": "Las Alasitas Gesha",
+      "name_zh": "玻利维亚 Las Alasitas 日晒瑰夏",
+      "seller_title_zh": "阿拉希塔斯日晒瑰夏",
+      "origin": "Bolivia",
+      "region": "",
+      "farm": "Las Alasitas",
+      "producer": null,
+      "variety": "Gesha",
+      "process": "Natural",
+      "altitude_m": null,
+      "weight_grams": null,
+      "descriptors": [
+        "木槿花",
+        "hibiscus",
+        "混合莓果",
+        "mixed berries",
+        "芒果",
+        "mango",
+        "奶油",
+        "cream"
+      ],
+      "source_flavor_text": "木槿花、混合莓果、芒果、奶油 / Hibiscus, Mixed Berries, Mango, Cream",
+      "seller_sensory_reference": {
+        "acidity": "莓果 / berries",
+        "sweetness": "热带水果混合莓果 / tropical fruit and mixed berries",
+        "mouthfeel": "圆润饱满 / round and full"
+      },
+      "seller_brew_reference": {
+        "water": "70 PPM AQUACODE",
+        "brewer": "FLOW01 / V60",
+        "grind": "C40#30",
+        "dose_grams": 15,
+        "water_grams": 210,
+        "time": "2 minutes",
+        "concentration": "1.26%",
+        "rest_days": "12-19"
+      },
+      "seller_notes": "All sensory and brewing references are seller claims from the screenshot. The screenshot does not show region, producer, altitude, or package weight.",
+      "price": {
+        "amount": 99,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "candidate_set_provided_2026-08-18",
+      "accolades": [],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/IMG_2164.PNG",
+      "historical_overlap": "No exact Lumi + Las Alasitas + Gesha rating is available to the portable profile; exact-match status should be rechecked after the next profile export."
+    },
+    {
+      "id": "lumi_las_margaritas_cgle17_honey",
+      "roaster": "Lumi",
+      "roaster_full": "Lumi Coffee",
+      "name": "Las Margaritas CGLE-17",
+      "name_zh": "哥伦比亚 Las Margaritas 蜜处理 CGLE-17",
+      "seller_title_zh": "希望蜜处理 CGLE-17",
+      "origin": "Colombia",
+      "region": "Caicedonia, Valle del Cauca",
+      "farm": "Las Margaritas",
+      "producer": "Café Granja La Esperanza / Rigoberto Herrera",
+      "variety": "CGLE-17",
+      "process": "Honey",
+      "altitude_m": null,
+      "weight_grams": null,
+      "descriptors": [
+        "红色花",
+        "red flowers",
+        "葡萄",
+        "grape",
+        "雪梨",
+        "snow pear",
+        "橙",
+        "orange"
+      ],
+      "source_flavor_text": "红色花、葡萄、雪梨、甜橙 / Red Flowers, Grape, Snow Pear, Orange",
+      "seller_sensory_reference": {
+        "acidity": "葡萄 / grape",
+        "sweetness": "水果糖 / fruit candy",
+        "mouthfeel": "圆润顺滑 / round and smooth"
+      },
+      "seller_brew_reference": {
+        "water": "70 PPM AQUACODE",
+        "brewer": "FLOW01 / V60",
+        "grind": "C40#30",
+        "dose_grams": 15,
+        "water_grams": 210,
+        "time": "2 minutes",
+        "concentration": "1.26%",
+        "rest_days": "12-19"
+      },
+      "seller_notes": "All sensory and brewing references are seller claims from the screenshot. Farm and producer attribution is contextual provenance from the curated coffee-taste reference; the screenshot itself shows Colombia and Las Margaritas but not the producer name, region, altitude, or package weight.",
+      "price": {
+        "amount": 99,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "candidate_set_provided_2026-08-18",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "estate",
+          "tier": "tier_1",
+          "name": "Café Granja La Esperanza (Las Margaritas)",
+          "basis": "CGLE is a curated Tier 1 estate; contextual only and not evidence about this specific lot.",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/IMG_2163.PNG",
+      "historical_overlap": "Las Margaritas appears elsewhere in rated history, but same farm with a different variety, process, and roaster is not an exact-coffee rebuy. Portable scoring applies no direct-history adjustment."
+    },
+    {
+      "id": "lumi_jurutungo_1033_gesha_honey_fermentation",
+      "roaster": "Lumi",
+      "roaster_full": "Lumi Coffee",
+      "name": "Jurutungo 1033 Gesha",
+      "name_zh": "巴拿马 Jurutungo 1033 蜜发酵瑰夏",
+      "seller_title_zh": "胡果厌氧蜜瑰夏",
+      "origin": "Panama",
+      "region": "",
+      "farm": "Jurutungo",
+      "producer": null,
+      "lot": "1033",
+      "variety": "Gesha",
+      "process": "Honey Fermentation",
+      "altitude_m": null,
+      "weight_grams": null,
+      "descriptors": [
+        "蔓越莓",
+        "cranberry",
+        "李子",
+        "plum",
+        "黑加仑",
+        "blackcurrant",
+        "百香果",
+        "passion fruit"
+      ],
+      "source_flavor_text": "蔓越莓、李子、黑加仑、百香果 / Cranberry, Plum, Blackcurrant, Passion Fruit",
+      "transcription_notes": "The Chinese listing title says 厌氧蜜 (anaerobic honey), while the package text says Honey Fermentation. The structured process retains the package wording and does not assume those labels are equivalent.",
+      "seller_sensory_reference": {
+        "acidity": "李子 / plum",
+        "sweetness": "水果糖 / fruit candy",
+        "mouthfeel": "圆润饱满 / round and full"
+      },
+      "seller_brew_reference": {
+        "water": "70 PPM AQUACODE",
+        "brewer": "FLOW01 / V60",
+        "grind": "C40#30",
+        "dose_grams": 15,
+        "water_grams": 210,
+        "time": "2 minutes",
+        "concentration": "1.26%",
+        "rest_days": "12-19"
+      },
+      "seller_notes": "All sensory and brewing references are seller claims from the screenshot. Honey Fermentation is retained verbatim as the declared process rather than silently normalized to ordinary Honey. The screenshot does not show producer, region, altitude, or package weight.",
+      "price": {
+        "amount": 99,
+        "currency": "CNY",
+        "size_grams": null
+      },
+      "availability": "candidate_set_provided_2026-08-18",
+      "accolades": [],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/IMG_2162.PNG",
+      "historical_overlap": "No exact Lumi + Jurutungo 1033 + Gesha rating is available to the portable profile; exact-match status should be rechecked after the next profile export."
+    }
+  ]
+}

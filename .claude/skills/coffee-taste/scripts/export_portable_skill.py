@@ -11,13 +11,16 @@ Loop: taste a bean -> refresh_profile.py -> export_portable_skill.py -> sync.
 Outputs (into --out, default ~/.claude/skills/gos-coffee-taste):
   SKILL.md
   profile-snapshot.md          (data-driven; regenerated each run)
+  profile-prior.json           (aggregate sufficient statistics; no raw rows)
+  scripts/rank_candidates.py   (standalone deterministic portable scorer)
   references/scoring-method.md
   references/prestige-regions-estates.md   (copied from this skill)
 
-Only aggregate signals are exported (families, tier distribution, evidence base).
-No raw first-person notes — those stay private in the journal repo.
+Only aggregate signals are exported. Observation rows, coffee identities,
+first-person notes, dates, and brew details stay private in the journal repo.
 """
 import argparse
+import hashlib
 import json
 import shutil
 import sys
@@ -29,6 +32,7 @@ SKILL_DIR = Path(__file__).resolve().parents[1]          # .../skills/coffee-tas
 REPO = Path(__file__).resolve().parents[4]               # journal repo root
 sys.path.insert(0, str(REPO / "scripts"))
 PRIVATE = REPO / "private" / "coffee_taste"
+PORTABLE_SCORER = REPO / "scripts" / "portable_coffee_rank.py"
 
 from build_coffee_taste_dataset import RATING_SCORE_MAX  # noqa: E402
 from evaluate_coffee_taste_prompts import (  # noqa: E402
@@ -36,6 +40,7 @@ from evaluate_coffee_taste_prompts import (  # noqa: E402
     build_evidence_packet,
     build_profile_contract,
 )
+from portable_coffee_rank import build_portable_profile  # noqa: E402
 
 TIER_BY_SCORE = {3: "Loved", 2: "Liked", 1: "Ok", 0: "Disliked"}
 
@@ -164,15 +169,28 @@ description: Evaluate which coffee beans suit THIS user and recommend from a can
 
 # gos-coffee-taste — portable bean evaluator
 
-Self-contained. You evaluate candidate beans against a **frozen snapshot** of the
-user's taste (`profile-snapshot.md`) by reasoning — no scripts, no private data.
-The precise pipeline (dataset build, scoring code, iteration) lives in the
-`coffee-taste-journal` repo; this skill is a published snapshot of it.
+Self-contained. It carries a frozen human-readable snapshot plus aggregate
+sufficient statistics and a deterministic scorer. It never contains raw tasting
+rows, coffee identities, notes, dates, or brew details.
 
-**Always open `profile-snapshot.md` first** (the user's taste + evidence base +
-caveats) and read `references/scoring-method.md` (how to turn descriptors into a
-fit ordering). Consult `references/prestige-regions-estates.md` for estate/region
-provenance.
+**Always open `profile-snapshot.md` first** and read
+`references/scoring-method.md`. Consult `references/prestige-regions-estates.md`
+for estate/region provenance.
+
+## Choose the scoring mode
+
+1. If the `coffee-taste-journal` repo and `private/coffee_taste/dataset.json`
+   are available, use its project skill and `recommend.py`. Report
+   `score_mode=private_full`; this includes direct-history adjustments.
+2. Otherwise, normalize the candidates into `{"candidates": [...]}`. Resolve
+   paths relative to this `SKILL.md`, then run:
+
+   `python3 <skill-dir>/scripts/rank_candidates.py --profile <skill-dir>/profile-prior.json --candidates <file>`
+
+   Report `score_mode=portable_profile`. Its `profile_fit_score` is reproducible
+   from exported aggregates; `history_adjustment` is unavailable, not zero.
+3. Never compare `private_full.fit_score` directly with portable
+   `profile_fit_score` without separating the history adjustment.
 
 ## The one thing to say every time
 
@@ -187,9 +205,8 @@ lower bound". Say so; never oversell.
 1. For each candidate, map its declared flavor descriptors to flavor **families**
    (see `references/scoring-method.md` for the family list). Seller words are
    claims, not facts — treat them as such.
-2. Score a **fit** ordering per the method: reward families that sit in the
-   user's top-tier / positive-correlation set from the snapshot; note novelty
-   (new origin/variety/process). Fit is an **ordering signal, not a probability**.
+2. Use the scorer output. Do not hand-invent numeric Fit or novelty values.
+   Fit is an **ordering signal, not a probability**.
 3. Pick a **稳妥之选**(highest-fit, best-supported) and a **拓展之选**(higher
    novelty that still bridges to a strong family). If a bean is one the user has
    already rated, say so — it's a known-good rebuy, not a discovery.
@@ -219,7 +236,7 @@ Then a one-line table of the remaining ranking (full bean names).
 
 - **Ratings are the evidence, notes are not.** Never derive a stated preference
   from the user's written words; the rating distribution is the signal.
-- **Same farm ≠ same coffee.** Farm-only overlap is a weak hint, not a rating of
+- **Same farm != same coffee.** Farm-only overlap is a weak hint, not a rating of
   this bean. **Same variety name ≠ same coffee** either (e.g. two different
   "Sudan Rume" farms).
 - **Provenance/accolades/price do not move fit.** Pedigree predicts objective
@@ -233,10 +250,18 @@ Then a one-line table of the remaining ranking (full bean names).
 """
 
 SCORING_MD = """\
-# Scoring method (portable — mirrors the journal pipeline's candidate_prior)
+# Scoring method (portable profile component)
 
-You reproduce this by reasoning; you do NOT need to compute it exactly. The point
-is a consistent, explainable **ordering**, not a real probability.
+Do not reproduce numeric scores by free-form reasoning. Run the bundled
+`scripts/rank_candidates.py` against `profile-prior.json`. The scorer carries the
+same profile-fit formula and vocabulary version as the journal export.
+
+## Modes
+
+- `private_full`: journal data is available. Output contains `profile_fit_score`
+  plus a direct-history adjustment and a personalized final score.
+- `portable_profile`: raw data is absent. Output reproduces
+  `profile_fit_score`; history is `unavailable`, never silently treated as zero.
 
 ## Flavor families (map descriptors to these)
 
@@ -251,7 +276,7 @@ rooibos, oolong) · `sweet.browning` (honey, caramel, sugarcane, chocolate) ·
 
 ## Fit ordering (higher = better predicted match)
 
-Weighted blend, roughly:
+Exact base blend:
 - **Sensory (0.75)** — the average standing of the bean's matched families in the
   snapshot. A family in the **top-tier / positive-correlation** set pulls fit up;
   a family with a below-neutral average (e.g. floral) pulls it down. This is the
@@ -259,20 +284,16 @@ Weighted blend, roughly:
 - **Origin (0.15)** and **Process (0.10)** — small nudges from how that
   origin/process has rated historically; neutral if unknown.
 
-Then capped bonuses, in descending strength:
-- **Direct history (largest)** — the user already rated *this exact coffee*
-  (same roaster + farm + variety). Big lift. If it's only the **same farm** (a
-  different coffee), cut that credit to **one-third**. Same *variety name* across
-  different farms is also NOT the same coffee.
-- **Top-tier family concentration** — small lift per matched top-tier family.
-- **Roaster affinity** — small ±, only if the user has rated that roaster before.
-- **Quality claims** (clean, sweet, juicy) — tiny lift; they're seller words.
+Then the exported config applies exact capped bonuses for top-tier families,
+roaster affinity, and candidate quality claims. Direct history is deliberately
+not exported. When private data is available the journal adds it separately;
+same-farm-only evidence receives one-third credit.
 
 ## Novelty
 
-Higher when the origin / variety / process / families are unfamiliar to the
-user's history. Use it to pick the 拓展之选, balanced against still bridging to a
-strong family.
+Portable novelty is exactly: 50% family familiarity + 25% origin familiarity +
+25% process familiarity, inverted to 0-100. Private mode may reduce novelty for
+positive direct history. Variety is not currently scored.
 
 ## What does NOT enter fit
 
@@ -290,27 +311,44 @@ def main() -> int:
         help="Output skill directory.",
     )
     args = parser.parse_args()
-    out = args.out
-    (out / "references").mkdir(parents=True, exist_ok=True)
-
     dataset = json.loads((PRIVATE / "dataset.json").read_text())
+    result = export_skill(dataset, args.out)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
+def export_skill(dataset: dict, out: Path) -> dict:
+    (out / "references").mkdir(parents=True, exist_ok=True)
+    (out / "scripts").mkdir(parents=True, exist_ok=True)
+
     observations = dataset["observations"]
+    scorer_version = hashlib.sha256(PORTABLE_SCORER.read_bytes()).hexdigest()
+    portable_profile = build_portable_profile(
+        observations,
+        dataset_generated_at=dataset["generated_at"],
+        scorer_version=scorer_version,
+    )
 
     (out / "profile-snapshot.md").write_text(build_snapshot(observations) + "\n")
+    (out / "profile-prior.json").write_text(
+        json.dumps(portable_profile, ensure_ascii=False, indent=2) + "\n"
+    )
     (out / "SKILL.md").write_text(SKILL_MD)
     (out / "references" / "scoring-method.md").write_text(SCORING_MD)
+    shutil.copy2(PORTABLE_SCORER, out / "scripts" / "rank_candidates.py")
     shutil.copyfile(
         SKILL_DIR / "references" / "prestige-regions-estates.md",
         out / "references" / "prestige-regions-estates.md",
     )
-    print(json.dumps({
+    return {
         "out": str(out),
         "files": sorted(str(p.relative_to(out)) for p in out.rglob("*") if p.is_file()),
         "rated_observations": sum(
             1 for o in observations if o["rating"].get("score") is not None
         ),
-    }, ensure_ascii=False, indent=2))
-    return 0
+        "profile_id": portable_profile["profile_id"],
+        "scorer_version": scorer_version,
+    }
 
 
 if __name__ == "__main__":

@@ -10,6 +10,10 @@ struct CoffeeJournalApp: App {
         loadedStore.onChange = { snapshot in
             CoffeeJournalPersistence.save(snapshot)
         }
+        loadedStore.recoverArtworkJobs()
+#if os(iOS)
+        FlavorArtworkBackgroundCoordinator.shared.register(store: loadedStore)
+#endif
         _store = State(initialValue: loadedStore)
     }
 
@@ -22,7 +26,8 @@ struct CoffeeJournalApp: App {
 
 struct CoffeeJournalRootView: View {
     let store: CoffeeJournalStore
-    @State private var didRequestFlavorArtwork = false
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var isRequestingFlavorArtwork = false
 
     var body: some View {
         TabView {
@@ -49,17 +54,54 @@ struct CoffeeJournalRootView: View {
         }
         .tint(CoffeeTheme.accent)
         .task {
-            guard !didRequestFlavorArtwork else { return }
-            didRequestFlavorArtwork = true
             await requestMissingFlavorArtwork()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task {
+                await requestMissingFlavorArtwork()
+            }
         }
     }
 
     @MainActor
     private func requestMissingFlavorArtwork() async {
-        for coffee in store.coffees where !coffee.flavorNotes.isEmpty {
-            await generateFlavorArtwork(for: coffee.id, in: store, source: "app-start-scan")
+        guard !isRequestingFlavorArtwork else { return }
+        isRequestingFlavorArtwork = true
+        defer { isRequestingFlavorArtwork = false }
+
+#if canImport(UIKit)
+        let missingFiles = store.coffees.filter { coffee in
+            guard !coffee.flavorNotes.isEmpty, let artwork = coffee.flavorArtwork else {
+                return false
+            }
+            return !FlavorArtworkGenerator.filesExist(for: artwork)
         }
+#else
+        let missingFiles: [Coffee] = []
+#endif
+
+        for coffee in missingFiles {
+            _ = store.queueArtworkGeneration(
+                coffeeID: coffee.id,
+                replacingCurrentRequest: true
+            )
+        }
+
+#if os(iOS)
+        FlavorArtworkBackgroundCoordinator.shared.startDueForegroundWork(
+            store: store,
+            source: "app-start-scan"
+        )
+#else
+        for coffee in store.coffeesNeedingArtworkGeneration() {
+            enqueueFlavorArtworkGeneration(
+                for: coffee.id,
+                in: store,
+                source: "app-start-scan"
+            )
+        }
+#endif
     }
 }
 

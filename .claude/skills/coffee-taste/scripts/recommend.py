@@ -173,6 +173,9 @@ def main() -> int:
             "name": candidate.get("name"),
             "fit": round(row["fit_score"], 1),
             "novelty": round(row["novelty_score"], 1),
+            "profile_fit": prior["profile_fit_score"],
+            "profile_novelty": prior["profile_novelty_score"],
+            "history_adjustment": prior["history_adjustment"],
             "descriptor_categories": candidate.get("descriptor_categories", []),
             "top_tier_hits": sorted(
                 top_tier_families.intersection(
@@ -194,6 +197,7 @@ def main() -> int:
         })
 
     print(json.dumps({
+        "score_mode": "private_full",
         "safe_match": grounded["safe_match"]["candidate_id"],
         "frontier_pick": grounded["frontier_pick"]["candidate_id"],
         "contract_score": score["score"],

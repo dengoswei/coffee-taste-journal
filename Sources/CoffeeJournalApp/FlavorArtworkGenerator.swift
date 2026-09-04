@@ -12,6 +12,7 @@ enum FlavorArtworkError: LocalizedError {
     case imageDownloadFailed
     case imageDecodeFailed
     case imageWriteFailed
+    case staleRequest
     case requestFailed(String)
 
     var errorDescription: String? {
@@ -26,13 +27,29 @@ enum FlavorArtworkError: LocalizedError {
             return "Generated image could not be decoded."
         case .imageWriteFailed:
             return "Generated image variants could not be saved."
+        case .staleRequest:
+            return "A newer artwork request replaced this one."
         case .requestFailed(let message):
             return message
+        }
+    }
+
+    var isRetryable: Bool {
+        switch self {
+        case .imageDownloadFailed, .requestFailed:
+            return true
+        case .missingAPIKey, .invalidResponse, .imageDecodeFailed, .imageWriteFailed, .staleRequest:
+            return false
         }
     }
 }
 
 struct FlavorArtworkGenerator {
+    static let currentGenerationVersion = 3
+    private static let rejectedLegacyPromptHashes: Set<String> = [
+        "1b02e168659fe8f6e6e411f1", // SEY Alo: opaque milk-coffee appearance
+        "a74f128900a8f3a67e60a52b"  // ALO LOT-2: opaque milk-coffee appearance
+    ]
     private let defaultModel = "doubao-seedream-5-0-260128"
     private let defaultBaseURL = URL(string: "https://ark.cn-beijing.volces.com/api/v3")!
 
@@ -42,7 +59,14 @@ struct FlavorArtworkGenerator {
         return Self.identity(for: coffee, model: credentials.model, prompt: prompt)
     }
 
-    func generateIfNeeded(for coffee: Coffee) async throws -> FlavorArtworkGenerationResult {
+    @MainActor
+    func generateIfNeeded(
+        for coffee: Coffee,
+        force: Bool = false,
+        publicationID: UUID? = nil,
+        isCurrent: @escaping () -> Bool = { true },
+        commit: @escaping (FlavorArtwork) -> Bool = { _ in true }
+    ) async throws -> FlavorArtworkGenerationResult {
         let credentials = try credentials()
         let prompt = Self.prompt(for: coffee)
         let identity = Self.identity(for: coffee, model: credentials.model, prompt: prompt)
@@ -50,27 +74,47 @@ struct FlavorArtworkGenerator {
         let flavorKey = identity.flavorKey
         Self.debugLog("start coffeeID=\(coffee.id) roaster=\(coffee.roaster) flavorKey=\(flavorKey) promptHash=\(promptHash) notes=\(coffee.flavorNotes.joined(separator: "|"))")
 
-        if let artwork = coffee.flavorArtwork, artwork.promptHash == promptHash {
-            if Self.filesExist(for: artwork) {
+        if !force, let artwork = coffee.flavorArtwork, Self.filesExist(for: artwork) {
+            if artwork.promptHash == promptHash {
                 Self.debugLog("skip existing artwork coffeeID=\(coffee.id) promptHash=\(promptHash)")
                 return FlavorArtworkGenerationResult(status: .skippedExisting, artwork: nil, identity: identity)
             }
+
+            let legacyPromptHash = Self.hash("\(credentials.model)\n\(Self.legacyPrompt(for: coffee))")
+            if artwork.generationVersion == nil,
+               artwork.promptHash == legacyPromptHash,
+               !Self.rejectedLegacyPromptHashes.contains(artwork.promptHash) {
+                Self.debugLog("keep accepted legacy artwork coffeeID=\(coffee.id) promptHash=\(artwork.promptHash)")
+                return FlavorArtworkGenerationResult(status: .skippedAcceptedLegacy, artwork: nil, identity: identity)
+            }
+
+            Self.debugLog("artwork identity changed coffeeID=\(coffee.id) oldPromptHash=\(artwork.promptHash) newPromptHash=\(promptHash); regenerating")
+        } else if let artwork = coffee.flavorArtwork, !Self.filesExist(for: artwork) {
             Self.debugLog("metadata exists but image files are missing coffeeID=\(coffee.id) promptHash=\(promptHash); regenerating")
         }
 
         var index = try Self.loadIndex()
-        if let entry = index.entries[flavorKey] {
+        if !force, let entry = index.entries[flavorKey] {
             if Self.filesExist(for: entry) {
                 Self.debugLog("reuse indexed artwork coffeeID=\(coffee.id) flavorKey=\(flavorKey)")
                 let artwork = FlavorArtwork(
                     model: credentials.model,
+                    generationVersion: Self.currentGenerationVersion,
                     promptHash: promptHash,
                     sourcePrompt: prompt,
                     heroFilename: entry.heroFilename,
                     cardFilename: entry.cardFilename,
                     thumbnailFilename: entry.thumbnailFilename
                 )
-                return FlavorArtworkGenerationResult(status: .reusedIndex, artwork: artwork, identity: identity)
+                guard let published = try ArtworkPublicationCoordinator.publishIfCurrent(
+                    isCurrent: isCurrent,
+                    makeArtifacts: { artwork },
+                    commit: commit,
+                    cleanup: { _ in }
+                ) else {
+                    throw FlavorArtworkError.staleRequest
+                }
+                return FlavorArtworkGenerationResult(status: .reusedIndex, artwork: published, identity: identity)
             }
             Self.debugLog("indexed artwork files missing flavorKey=\(flavorKey); removing stale index entry")
             index.entries.removeValue(forKey: flavorKey)
@@ -93,13 +137,23 @@ struct FlavorArtworkGenerator {
             throw FlavorArtworkError.imageDecodeFailed
         }
 
-        let artwork = try saveVariants(
-            image: image,
-            coffeeID: coffee.id,
-            model: credentials.model,
-            prompt: prompt,
-            promptHash: promptHash
-        )
+        guard let artwork = try ArtworkPublicationCoordinator.publishIfCurrent(
+            isCurrent: isCurrent,
+            makeArtifacts: {
+                try saveVariants(
+                    image: image,
+                    coffeeID: coffee.id,
+                    model: credentials.model,
+                    prompt: prompt,
+                    promptHash: promptHash,
+                    publicationID: publicationID
+                )
+            },
+            commit: commit,
+            cleanup: Self.deleteVariants
+        ) else {
+            throw FlavorArtworkError.staleRequest
+        }
         index.entries[flavorKey] = FlavorArtworkIndexEntry(
             heroFilename: artwork.heroFilename,
             cardFilename: artwork.cardFilename,
@@ -149,7 +203,9 @@ struct FlavorArtworkGenerator {
     }
 
     private func downloadImage(from url: URL) async throws -> Data {
-        let (data, response) = try await URLSession.shared.data(from: url)
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 60
+        let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode), !data.isEmpty else {
             throw FlavorArtworkError.imageDownloadFailed
         }
@@ -161,16 +217,18 @@ struct FlavorArtworkGenerator {
         coffeeID: UUID,
         model: String,
         prompt: String,
-        promptHash: String
+        promptHash: String,
+        publicationID: UUID?
     ) throws -> FlavorArtwork {
         let root = try Self.artworkRootURL()
         let relativeFolder = "FlavorArtwork/\(coffeeID.uuidString)"
         let folder = root.appendingPathComponent(relativeFolder, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
-        let heroFilename = "\(relativeFolder)/\(promptHash)-hero.jpg"
-        let cardFilename = "\(relativeFolder)/\(promptHash)-card.jpg"
-        let thumbnailFilename = "\(relativeFolder)/\(promptHash)-thumb.jpg"
+        let publicationSuffix = publicationID.map { "-\($0.uuidString.lowercased())" } ?? ""
+        let heroFilename = "\(relativeFolder)/\(promptHash)\(publicationSuffix)-hero.jpg"
+        let cardFilename = "\(relativeFolder)/\(promptHash)\(publicationSuffix)-card.jpg"
+        let thumbnailFilename = "\(relativeFolder)/\(promptHash)\(publicationSuffix)-thumb.jpg"
 
         try writeVariant(image, size: CGSize(width: 1200, height: 860), to: Self.fileURL(root: root, filename: heroFilename))
         try writeVariant(image, size: CGSize(width: 900, height: 620), to: Self.fileURL(root: root, filename: cardFilename))
@@ -178,6 +236,7 @@ struct FlavorArtworkGenerator {
 
         return FlavorArtwork(
             model: model,
+            generationVersion: Self.currentGenerationVersion,
             promptHash: promptHash,
             sourcePrompt: prompt,
             heroFilename: heroFilename,
@@ -197,6 +256,13 @@ struct FlavorArtworkGenerator {
         try data.write(to: url, options: [.atomic])
     }
 
+    private static func deleteVariants(_ artwork: FlavorArtwork) {
+        guard let root = try? artworkRootURL() else { return }
+        for filename in [artwork.heroFilename, artwork.cardFilename, artwork.thumbnailFilename] {
+            try? FileManager.default.removeItem(at: fileURL(root: root, filename: filename))
+        }
+    }
+
     private func aspectFillRect(for imageSize: CGSize, in bounds: CGRect) -> CGRect {
         guard imageSize.width > 0, imageSize.height > 0 else { return bounds }
         let scale = max(bounds.width / imageSize.width, bounds.height / imageSize.height)
@@ -211,6 +277,22 @@ struct FlavorArtworkGenerator {
     }
 
     static func prompt(for coffee: Coffee) -> String {
+        let notes = Array(coffee.flavorNotes.filter { !$0.isEmpty }.prefix(5))
+        let primary = notes.prefix(3).joined(separator: ", ")
+        let secondary = notes.dropFirst(3).joined(separator: ", ")
+        var prompt = """
+        Create a premium editorial image for a private iOS coffee tasting journal. Visualize the sensory flavor notes of this coffee as a fresh, luminous pour-over filter-coffee tasting still life. Coffee: roaster \(coffee.roaster), origin \(coffee.origin), variety \(coffee.variety), process \(coffee.process). Flavor notes in priority order: \(notes.joined(separator: ", ")). Make the first notes most prominent: \(primary).
+        """
+        if !secondary.isEmpty {
+            prompt += " Subtly include these supporting notes only if composition allows: \(secondary)."
+        }
+        prompt += """
+         No readable text, no labels, no logos, no packaging, no UI, no watermark-like marks. The flavor notes must be the main subject. Do not include coffee beans. Avoid unrelated props, table clutter, cafe scenes, hands, notebooks, grinders, kettles, plants, pastries, saucers, or decorative objects. If any coffee vessel appears, it must be exactly one small modern handleless ceramic pour-over tasting cup with no handle, no saucer, and no spoon. The beverage must be visibly dairy-free filter coffee: clear and translucent deep amber at thin edges, transitioning to dark brown-black in the deeper center, with a clean glossy surface. It must never be opaque beige, tan, caramel-milky, or creamy. Absolutely no milk, cream, dairy, plant milk, foam, froth, latte, cappuccino, flat white, latte art, crema, demitasse cup, espresso shot, portafilter, or espresso-machine cue. Otherwise use only the visible fruit, floral, spice, tea, or sensory elements from the flavor notes. Use a clean centered composition with strong silhouette, high visual clarity, a fresh neutral background without a muddy warm-brown cast, and enough contrast for a mobile app card. Must look useful as a small card thumbnail and as a larger bean detail hero image.
+        """
+        return prompt
+    }
+
+    static func legacyPrompt(for coffee: Coffee) -> String {
         let notes = Array(coffee.flavorNotes.filter { !$0.isEmpty }.prefix(5))
         let primary = notes.prefix(3).joined(separator: ", ")
         let secondary = notes.dropFirst(3).joined(separator: ", ")
@@ -237,7 +319,7 @@ struct FlavorArtworkGenerator {
             .filter { !$0.isEmpty }
             .prefix(5)
             .joined(separator: "|")
-        return hash("v2\n\(model)\n\(normalizedNotes)")
+        return hash("v3-filter-coffee\n\(model)\n\(normalizedNotes)")
     }
 
     private static func identity(
@@ -346,6 +428,7 @@ struct FlavorArtworkGenerationResult {
 
 enum FlavorArtworkGenerationStatus: String {
     case skippedExisting = "skipped-existing"
+    case skippedAcceptedLegacy = "skipped-accepted-legacy"
     case reusedIndex = "reused-index"
     case generated = "saved"
 }

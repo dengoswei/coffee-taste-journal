@@ -1,0 +1,859 @@
+{
+  "schema_version": 1,
+  "profile_id": "0baa7bac874e6da3365bdf9778dd760e154f34bf42b2089b5b2ac291c8f9c54d",
+  "scorer_version": "0e445b82063751dcecf40beb35d39255a7f219c6b0a00bd0bb1a67aff5a88bd4",
+  "score_cases": [
+    {
+      "candidate": {
+        "id": "fixture-colombia-washed",
+        "roaster": "Fixture Roaster A",
+        "name": "Citrus Lot",
+        "origin": "Colombia",
+        "process": "Washed",
+        "descriptors": [
+          "orange",
+          "nectarine",
+          "clean"
+        ],
+        "is_confirmed": true,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {
+          "roaster": "userEntered",
+          "name": "userEntered",
+          "origin": "userEntered",
+          "process": "userEntered",
+          "flavor_notes": "userEntered"
+        },
+        "unresolved_fields": []
+      },
+      "expected": {
+        "candidate_id": "fixture-colombia-washed",
+        "roaster": "Fixture Roaster A",
+        "name": "Citrus Lot",
+        "score_mode": "portable_profile",
+        "profile_fit_score": 72.9,
+        "profile_novelty_score": 10.0,
+        "history_adjustment": null,
+        "personalized_fit_score": null,
+        "personalized_novelty_score": null,
+        "fit_score": 72.9,
+        "novelty_score": 10.0,
+        "components": {
+          "sensory_fit": 65.6,
+          "origin_fit": 64.8,
+          "process_fit": 60.2,
+          "base_fit": 64.9,
+          "quality_claim_bonus": 3.0,
+          "top_tier_affinity_bonus": 5.0,
+          "roaster_affinity_bonus": 0.0
+        },
+        "descriptor_categories": [
+          "fruit.citrus",
+          "fruit.stone"
+        ],
+        "family_breakdown": [
+          {
+            "category": "fruit.citrus",
+            "n": 25,
+            "weighted_rating": 1.973,
+            "score": 65.8
+          },
+          {
+            "category": "fruit.stone",
+            "n": 22,
+            "weighted_rating": 1.961,
+            "score": 65.4
+          }
+        ],
+        "top_tier_hits": [
+          "fruit.citrus",
+          "fruit.stone"
+        ],
+        "familiar_bridges": [
+          {
+            "category": "fruit.citrus",
+            "top_tier_count": 4,
+            "observations": 25
+          },
+          {
+            "category": "fruit.stone",
+            "top_tier_count": 4,
+            "observations": 22
+          }
+        ],
+        "missing_signals": [
+          "direct_history"
+        ]
+      }
+    },
+    {
+      "candidate": {
+        "id": "fixture-ethiopia-natural",
+        "roaster": "Fixture Roaster B",
+        "name": "Berry Lot",
+        "origin": "Ethiopia",
+        "process": "Natural",
+        "descriptors": [
+          "blueberry",
+          "jasmine"
+        ],
+        "is_confirmed": true,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {
+          "roaster": "userEntered",
+          "name": "userEntered",
+          "origin": "userEntered",
+          "process": "userEntered",
+          "flavor_notes": "userEntered"
+        },
+        "unresolved_fields": []
+      },
+      "expected": {
+        "candidate_id": "fixture-ethiopia-natural",
+        "roaster": "Fixture Roaster B",
+        "name": "Berry Lot",
+        "score_mode": "portable_profile",
+        "profile_fit_score": 67.1,
+        "profile_novelty_score": 10.0,
+        "history_adjustment": null,
+        "personalized_fit_score": null,
+        "personalized_novelty_score": null,
+        "fit_score": 67.1,
+        "novelty_score": 10.0,
+        "components": {
+          "sensory_fit": 61.4,
+          "origin_fit": 57.0,
+          "process_fit": 75.0,
+          "base_fit": 62.1,
+          "quality_claim_bonus": 0.0,
+          "top_tier_affinity_bonus": 5.0,
+          "roaster_affinity_bonus": 0.0
+        },
+        "descriptor_categories": [
+          "floral",
+          "fruit.berry"
+        ],
+        "family_breakdown": [
+          {
+            "category": "floral",
+            "n": 17,
+            "weighted_rating": 1.839,
+            "score": 61.3
+          },
+          {
+            "category": "fruit.berry",
+            "n": 18,
+            "weighted_rating": 1.844,
+            "score": 61.5
+          }
+        ],
+        "top_tier_hits": [
+          "floral",
+          "fruit.berry"
+        ],
+        "familiar_bridges": [
+          {
+            "category": "fruit.berry",
+            "top_tier_count": 3,
+            "observations": 18
+          }
+        ],
+        "missing_signals": [
+          "direct_history"
+        ]
+      }
+    },
+    {
+      "candidate": {
+        "id": "fixture-unknown-experimental",
+        "roaster": "Fixture Roaster C",
+        "name": "Tropical Lot",
+        "origin": "Ecuador",
+        "process": "Experimental",
+        "descriptors": [
+          "mango",
+          "cardamom"
+        ],
+        "is_confirmed": true,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {
+          "roaster": "userEntered",
+          "name": "userEntered",
+          "origin": "userEntered",
+          "process": "userEntered",
+          "flavor_notes": "userEntered"
+        },
+        "unresolved_fields": []
+      },
+      "expected": {
+        "candidate_id": "fixture-unknown-experimental",
+        "roaster": "Fixture Roaster C",
+        "name": "Tropical Lot",
+        "score_mode": "portable_profile",
+        "profile_fit_score": 75.2,
+        "profile_novelty_score": 37.5,
+        "history_adjustment": null,
+        "personalized_fit_score": null,
+        "personalized_novelty_score": null,
+        "fit_score": 75.2,
+        "novelty_score": 37.5,
+        "components": {
+          "sensory_fit": 73.7,
+          "origin_fit": 66.7,
+          "process_fit": 50.0,
+          "base_fit": 70.2,
+          "quality_claim_bonus": 0.0,
+          "top_tier_affinity_bonus": 5.0,
+          "roaster_affinity_bonus": 0.0
+        },
+        "descriptor_categories": [
+          "fruit.tropical",
+          "spice_herbal"
+        ],
+        "family_breakdown": [
+          {
+            "category": "fruit.tropical",
+            "n": 15,
+            "weighted_rating": 2.069,
+            "score": 69.0
+          },
+          {
+            "category": "spice_herbal",
+            "n": 3,
+            "weighted_rating": 2.351,
+            "score": 78.4
+          }
+        ],
+        "top_tier_hits": [
+          "fruit.tropical",
+          "spice_herbal"
+        ],
+        "familiar_bridges": [
+          {
+            "category": "fruit.tropical",
+            "top_tier_count": 3,
+            "observations": 15
+          }
+        ],
+        "missing_signals": [
+          "direct_history"
+        ]
+      }
+    }
+  ],
+  "comparison_cases": [
+    {
+      "name": "distinct_frontier_and_ordering",
+      "candidates": [
+        {
+          "id": "fixture-colombia-washed",
+          "roaster": "Fixture Roaster A",
+          "name": "Citrus Lot",
+          "origin": "Colombia",
+          "process": "Washed",
+          "descriptors": [
+            "orange",
+            "nectarine",
+            "clean"
+          ],
+          "is_confirmed": true,
+          "confirmed_fields": [
+            "roaster",
+            "name",
+            "origin",
+            "process",
+            "flavor_notes"
+          ],
+          "field_provenance": {
+            "roaster": "userEntered",
+            "name": "userEntered",
+            "origin": "userEntered",
+            "process": "userEntered",
+            "flavor_notes": "userEntered"
+          },
+          "unresolved_fields": []
+        },
+        {
+          "id": "fixture-ethiopia-natural",
+          "roaster": "Fixture Roaster B",
+          "name": "Berry Lot",
+          "origin": "Ethiopia",
+          "process": "Natural",
+          "descriptors": [
+            "blueberry",
+            "jasmine"
+          ],
+          "is_confirmed": true,
+          "confirmed_fields": [
+            "roaster",
+            "name",
+            "origin",
+            "process",
+            "flavor_notes"
+          ],
+          "field_provenance": {
+            "roaster": "userEntered",
+            "name": "userEntered",
+            "origin": "userEntered",
+            "process": "userEntered",
+            "flavor_notes": "userEntered"
+          },
+          "unresolved_fields": []
+        },
+        {
+          "id": "fixture-unknown-experimental",
+          "roaster": "Fixture Roaster C",
+          "name": "Tropical Lot",
+          "origin": "Ecuador",
+          "process": "Experimental",
+          "descriptors": [
+            "mango",
+            "cardamom"
+          ],
+          "is_confirmed": true,
+          "confirmed_fields": [
+            "roaster",
+            "name",
+            "origin",
+            "process",
+            "flavor_notes"
+          ],
+          "field_provenance": {
+            "roaster": "userEntered",
+            "name": "userEntered",
+            "origin": "userEntered",
+            "process": "userEntered",
+            "flavor_notes": "userEntered"
+          },
+          "unresolved_fields": []
+        }
+      ],
+      "expected_ranking": [
+        "fixture-unknown-experimental",
+        "fixture-colombia-washed",
+        "fixture-ethiopia-natural"
+      ],
+      "expected_best": "fixture-unknown-experimental",
+      "expected_frontier": "fixture-colombia-washed",
+      "expected_bands": [
+        [
+          "fixture-unknown-experimental"
+        ],
+        [
+          "fixture-colombia-washed"
+        ],
+        [
+          "fixture-ethiopia-natural"
+        ]
+      ],
+      "expected_bridges": {
+        "fixture-unknown-experimental": [
+          {
+            "category": "fruit.tropical",
+            "top_tier_count": 3,
+            "observations": 15
+          }
+        ],
+        "fixture-colombia-washed": [
+          {
+            "category": "fruit.citrus",
+            "top_tier_count": 4,
+            "observations": 25
+          },
+          {
+            "category": "fruit.stone",
+            "top_tier_count": 4,
+            "observations": 22
+          }
+        ],
+        "fixture-ethiopia-natural": [
+          {
+            "category": "fruit.berry",
+            "top_tier_count": 3,
+            "observations": 18
+          }
+        ]
+      }
+    },
+    {
+      "name": "nullable_frontier_without_bridge",
+      "candidates": [
+        {
+          "id": "tea-a",
+          "roaster": "Fixture Roaster A",
+          "name": "Tea A",
+          "origin": "Colombia",
+          "process": "Washed",
+          "descriptors": [
+            "black tea"
+          ],
+          "is_confirmed": true,
+          "confirmed_fields": [
+            "roaster",
+            "name",
+            "origin",
+            "process",
+            "flavor_notes"
+          ],
+          "field_provenance": {
+            "roaster": "userEntered",
+            "name": "userEntered",
+            "origin": "userEntered",
+            "process": "userEntered",
+            "flavor_notes": "userEntered"
+          },
+          "unresolved_fields": []
+        },
+        {
+          "id": "tea-b",
+          "roaster": "Fixture Roaster B",
+          "name": "Tea B",
+          "origin": "Ethiopia",
+          "process": "Natural",
+          "descriptors": [
+            "oolong"
+          ],
+          "is_confirmed": true,
+          "confirmed_fields": [
+            "roaster",
+            "name",
+            "origin",
+            "process",
+            "flavor_notes"
+          ],
+          "field_provenance": {
+            "roaster": "userEntered",
+            "name": "userEntered",
+            "origin": "userEntered",
+            "process": "userEntered",
+            "flavor_notes": "userEntered"
+          },
+          "unresolved_fields": []
+        }
+      ],
+      "expected_ranking": [
+        "tea-b",
+        "tea-a"
+      ],
+      "expected_best": "tea-b",
+      "expected_frontier": null,
+      "expected_bands": [
+        [
+          "tea-b",
+          "tea-a"
+        ]
+      ],
+      "expected_bridges": {
+        "tea-b": [],
+        "tea-a": []
+      }
+    }
+  ],
+  "eligibility_cases": [
+    {
+      "candidate": {
+        "id": "fixture-colombia-washed",
+        "roaster": "Fixture Roaster A",
+        "name": "Citrus Lot",
+        "origin": "Colombia",
+        "process": "Washed",
+        "descriptors": [
+          "orange",
+          "nectarine",
+          "clean"
+        ],
+        "is_confirmed": true,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {
+          "roaster": "userEntered",
+          "name": "userEntered",
+          "origin": "userEntered",
+          "process": "userEntered",
+          "flavor_notes": "userEntered"
+        },
+        "unresolved_fields": []
+      },
+      "expected_reason": null
+    },
+    {
+      "candidate": {
+        "id": "unconfirmed",
+        "roaster": "Fixture Roaster A",
+        "name": "Citrus Lot",
+        "origin": "Colombia",
+        "process": "Washed",
+        "descriptors": [
+          "orange",
+          "nectarine",
+          "clean"
+        ],
+        "is_confirmed": false,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {
+          "roaster": "userEntered",
+          "name": "userEntered",
+          "origin": "userEntered",
+          "process": "userEntered",
+          "flavor_notes": "userEntered"
+        },
+        "unresolved_fields": []
+      },
+      "expected_reason": "Confirm this candidate after reviewing the extracted fields."
+    },
+    {
+      "candidate": {
+        "id": "unresolved",
+        "roaster": "Fixture Roaster A",
+        "name": "Citrus Lot",
+        "origin": "Colombia",
+        "process": "Washed",
+        "descriptors": [
+          "orange",
+          "nectarine",
+          "clean"
+        ],
+        "is_confirmed": true,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {
+          "roaster": "userEntered",
+          "name": "userEntered",
+          "origin": "userEntered",
+          "process": "userEntered",
+          "flavor_notes": "userEntered"
+        },
+        "unresolved_fields": [
+          "origin"
+        ]
+      },
+      "expected_reason": "Resolve uncertain score inputs before comparison."
+    },
+    {
+      "candidate": {
+        "id": "missing-provenance",
+        "roaster": "Fixture Roaster A",
+        "name": "Citrus Lot",
+        "origin": "Colombia",
+        "process": "Washed",
+        "descriptors": [
+          "orange",
+          "nectarine",
+          "clean"
+        ],
+        "is_confirmed": true,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {},
+        "unresolved_fields": []
+      },
+      "expected_reason": "Every score input needs visible or user-entered provenance."
+    },
+    {
+      "candidate": {
+        "id": "unknown-note",
+        "roaster": "Fixture Roaster A",
+        "name": "Citrus Lot",
+        "origin": "Colombia",
+        "process": "Washed",
+        "descriptors": [
+          "silky"
+        ],
+        "is_confirmed": true,
+        "confirmed_fields": [
+          "roaster",
+          "name",
+          "origin",
+          "process",
+          "flavor_notes"
+        ],
+        "field_provenance": {
+          "roaster": "userEntered",
+          "name": "userEntered",
+          "origin": "userEntered",
+          "process": "userEntered",
+          "flavor_notes": "userEntered"
+        },
+        "unresolved_fields": []
+      },
+      "expected_reason": "Add at least one seller flavor note recognized by the profile."
+    }
+  ],
+  "normalization_cases": [
+    {
+      "input": " ＣＯＬＯＭＢＩＡ　Washed ",
+      "expected": "colombia washed"
+    },
+    {
+      "input": "CAFÉ",
+      "expected": "café"
+    },
+    {
+      "input": "Straße",
+      "expected": "straße"
+    },
+    {
+      "input": "果  香",
+      "expected": "果 香"
+    }
+  ],
+  "rounding_cases": [
+    {
+      "input": 1.24,
+      "expected": 1.2
+    },
+    {
+      "input": 1.25,
+      "expected": 1.3
+    },
+    {
+      "input": -1.25,
+      "expected": -1.3
+    },
+    {
+      "input": 72.85,
+      "expected": 72.9
+    }
+  ],
+  "band_cases": [
+    {
+      "fits": [
+        80.0,
+        79.0,
+        78.0,
+        76.5
+      ],
+      "expected": [
+        [
+          "band-0",
+          "band-1"
+        ],
+        [
+          "band-2",
+          "band-3"
+        ]
+      ]
+    }
+  ],
+  "bridge_boundary_cases": [
+    {
+      "top_tier_count": 3,
+      "observations": 6,
+      "expected": true
+    },
+    {
+      "top_tier_count": 2,
+      "observations": 6,
+      "expected": false
+    },
+    {
+      "top_tier_count": 3,
+      "observations": 5,
+      "expected": false
+    },
+    {
+      "top_tier_count": 4,
+      "observations": 7,
+      "expected": true
+    }
+  ],
+  "role_cases": [
+    {
+      "name": "fit_then_novelty_then_id",
+      "rows": [
+        {
+          "candidate_id": "b",
+          "profile_fit_score": 70.0,
+          "profile_novelty_score": 20.0,
+          "familiar_bridges": [
+            {}
+          ]
+        },
+        {
+          "candidate_id": "a",
+          "profile_fit_score": 70.0,
+          "profile_novelty_score": 20.0,
+          "familiar_bridges": [
+            {}
+          ]
+        },
+        {
+          "candidate_id": "c",
+          "profile_fit_score": 70.0,
+          "profile_novelty_score": 30.0,
+          "familiar_bridges": [
+            {}
+          ]
+        }
+      ],
+      "expected_ranking": [
+        "c",
+        "a",
+        "b"
+      ],
+      "expected_best": "c",
+      "expected_frontier": "a",
+      "expected_bands": [
+        [
+          "c",
+          "a",
+          "b"
+        ]
+      ]
+    },
+    {
+      "name": "frontier_blend_tie_uses_fit",
+      "rows": [
+        {
+          "candidate_id": "best",
+          "profile_fit_score": 90.0,
+          "profile_novelty_score": 0.0,
+          "familiar_bridges": [
+            {}
+          ]
+        },
+        {
+          "candidate_id": "lower-fit",
+          "profile_fit_score": 60.0,
+          "profile_novelty_score": 60.0,
+          "familiar_bridges": [
+            {}
+          ]
+        },
+        {
+          "candidate_id": "higher-fit",
+          "profile_fit_score": 71.0,
+          "profile_novelty_score": 51.0,
+          "familiar_bridges": [
+            {}
+          ]
+        }
+      ],
+      "expected_ranking": [
+        "best",
+        "higher-fit",
+        "lower-fit"
+      ],
+      "expected_best": "best",
+      "expected_frontier": "higher-fit",
+      "expected_bands": [
+        [
+          "best"
+        ],
+        [
+          "higher-fit"
+        ],
+        [
+          "lower-fit"
+        ]
+      ]
+    },
+    {
+      "name": "frontier_fit_threshold_is_inclusive",
+      "rows": [
+        {
+          "candidate_id": "best",
+          "profile_fit_score": 90.0,
+          "profile_novelty_score": 0.0,
+          "familiar_bridges": [
+            {}
+          ]
+        },
+        {
+          "candidate_id": "threshold",
+          "profile_fit_score": 60.0,
+          "profile_novelty_score": 100.0,
+          "familiar_bridges": [
+            {}
+          ]
+        }
+      ],
+      "expected_ranking": [
+        "best",
+        "threshold"
+      ],
+      "expected_best": "best",
+      "expected_frontier": "threshold",
+      "expected_bands": [
+        [
+          "best"
+        ],
+        [
+          "threshold"
+        ]
+      ]
+    },
+    {
+      "name": "frontier_is_null_without_bridge",
+      "rows": [
+        {
+          "candidate_id": "best",
+          "profile_fit_score": 90.0,
+          "profile_novelty_score": 0.0,
+          "familiar_bridges": [
+            {}
+          ]
+        },
+        {
+          "candidate_id": "no-bridge",
+          "profile_fit_score": 80.0,
+          "profile_novelty_score": 100.0,
+          "familiar_bridges": []
+        }
+      ],
+      "expected_ranking": [
+        "best",
+        "no-bridge"
+      ],
+      "expected_best": "best",
+      "expected_frontier": null,
+      "expected_bands": [
+        [
+          "best"
+        ],
+        [
+          "no-bridge"
+        ]
+      ]
+    }
+  ]
+}

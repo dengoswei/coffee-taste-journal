@@ -269,10 +269,10 @@ CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
     ),
     "floral": (
         "floral", "florals", "jasmine", "honeysuckle", "hibiscus", "rose",
-        "lavender", "chamomile", "flower", "flowers", "blossom",
+        "lavender", "chamomile", "elderflower", "flower", "flowers", "blossom",
         # No bare 花: CJK matching is substring-based and 花 also appears in
         # 无花果 (fig) and 花生 (peanut).
-        "花香", "茉莉", "金银花", "玫瑰", "薰衣草", "洋甘菊", "牡丹",
+        "花香", "茉莉", "金银花", "接骨木花", "玫瑰", "薰衣草", "洋甘菊", "牡丹",
     ),
     "tea": (
         "tea", "earl grey", "pu'er", "puer", "black tea", "green tea", "oolong",
@@ -290,7 +290,8 @@ CATEGORY_TERMS: dict[str, tuple[str, ...]] = {
     "spice_herbal": (
         "spice", "spices", "herbal", "eucalyptus", "anise", "lemon balm",
         "baking spices", "cardamom", "mint", "peppermint", "spearmint",
-        "香料", "草本", "桉树", "八角", "豆蔻", "薄荷",
+        "fig leaf", "fig leaves", "香料", "草本", "桉树", "八角", "豆蔻",
+        "薄荷", "无花果叶",
     ),
     "fermented_alcoholic": (
         "ferment", "fermented", "anaerobic", "anoxic", "carbonic", "cognac",
@@ -343,11 +344,25 @@ def term_matches(haystack: str, term: str) -> bool:
 
 
 def category_matches(descriptors: list[str]) -> list[str]:
-    haystack = " | ".join(normalized_text(item) for item in descriptors)
+    normalized_descriptors = [normalized_text(item) for item in descriptors]
+    haystack = " | ".join(normalized_descriptors)
+    # "Fig leaf" is an herbal/leaf descriptor, not a dried-fruit claim. Keep
+    # other dried-fruit descriptors in the same coffee eligible for the family.
+    dried_haystack = " | ".join(
+        item
+        for item in normalized_descriptors
+        if not any(
+            term_matches(item, leaf_term)
+            for leaf_term in ("fig leaf", "fig leaves", "无花果叶")
+        )
+    )
     return sorted(
         category
         for category, terms in CATEGORY_TERMS.items()
-        if any(term_matches(haystack, term) for term in terms)
+        if any(
+            term_matches(dried_haystack if category == "fruit.dried" else haystack, term)
+            for term in terms
+        )
     )
 
 

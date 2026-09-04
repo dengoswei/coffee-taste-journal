@@ -143,6 +143,16 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         )
         self.assertIn("acid_sweet_balance_positive", quality_matches(descriptors))
 
+    def test_flower_and_fig_leaf_descriptors_map_semantically(self) -> None:
+        self.assertEqual(category_matches(["elderflower"]), ["floral"])
+        self.assertEqual(category_matches(["接骨木花"]), ["floral"])
+        self.assertEqual(category_matches(["fig leaf"]), ["spice_herbal"])
+        self.assertEqual(category_matches(["无花果叶"]), ["spice_herbal"])
+        self.assertEqual(
+            category_matches(["fig leaf", "dried cranberry"]),
+            ["fruit.berry", "fruit.dried", "spice_herbal"],
+        )
+
     def test_first_person_notes_never_become_preference_statements(self) -> None:
         observations = [
             observation(
@@ -322,7 +332,12 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             history,
         )
         true_match = direct_history_match(
-            {"name": "Heza", "farm": ""},
+            {
+                "roaster": "Test",
+                "name": "Heza",
+                "farm": "",
+                "variety": "Test Variety",
+            },
             history,
         )
         self.assertEqual(false_match["rated_observations"], 0)
@@ -343,11 +358,21 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             ),
         ]
         same_farm_different_coffee = direct_history_match(
-            {"name": "Margaritas 日晒瑰夏", "farm": "Las Margaritas"},
+            {
+                "roaster": "Other",
+                "name": "Margaritas 日晒瑰夏",
+                "farm": "Las Margaritas",
+                "variety": "Gesha",
+            },
             history,
         )
         same_coffee = direct_history_match(
-            {"name": "Las Margaritas Sudan Rume", "farm": "Las Margaritas"},
+            {
+                "roaster": "Test",
+                "name": "Las Margaritas Sudan Rume",
+                "farm": "Las Margaritas",
+                "variety": "Test Variety",
+            },
             history,
         )
         self.assertEqual(same_farm_different_coffee["match_scope"], "farm_only")
@@ -355,6 +380,31 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         self.assertEqual(same_farm_different_coffee["name_matched_observations"], 0)
         self.assertEqual(same_coffee["match_scope"], "name")
         self.assertEqual(same_coffee["name_matched_observations"], 1)
+
+    def test_same_variety_different_coffee_is_not_direct_history(self) -> None:
+        history = [
+            observation(
+                "las_margaritas_sudan_rume",
+                name="Las Margaritas Sudan Rume",
+                farm="Las Margaritas",
+                score=3,
+                categories=["spice_herbal"],
+            ),
+        ]
+        history[0]["coffee"]["variety"] = "Sudan Rume"
+
+        match = direct_history_match(
+            {
+                "roaster": "Shokunin",
+                "name": "Cultivaries Sudan Rume Anaerobic Natural",
+                "farm": "Cultivaries",
+                "variety": "Sudan Rume",
+            },
+            history,
+        )
+
+        self.assertEqual(match["rated_observations"], 0)
+        self.assertIsNone(match["match_scope"])
 
     def test_candidate_prior_downweights_farm_only_history_bonus(self) -> None:
         history = [
@@ -372,8 +422,10 @@ class CoffeeTastePipelineTests(unittest.TestCase):
             return evaluator.candidate_prior(
                 {
                     "id": "cand",
+                    "roaster": "Test",
                     "name": name,
                     "farm": "Las Margaritas",
+                    "variety": "Test Variety" if "Sudan Rume" in name else "Gesha",
                     "descriptors": [],
                     "origin": "",
                     "process": "",
@@ -387,6 +439,45 @@ class CoffeeTastePipelineTests(unittest.TestCase):
         self.assertEqual(full, 10.0)
         self.assertAlmostEqual(
             farm_only, 10.0 * evaluator.FARM_ONLY_MATCH_WEIGHT, places=1
+        )
+
+    def test_candidate_prior_separates_profile_and_history_scores(self) -> None:
+        observations = [
+            observation(
+                "known",
+                name="Known Coffee",
+                farm="Known Farm",
+                score=3,
+                categories=["fruit.citrus"],
+            ),
+        ]
+        candidate = {
+            "id": "known_candidate",
+            "roaster": "Test",
+            "name": "Known Coffee",
+            "origin": "Test Origin",
+            "farm": "Known Farm",
+            "variety": "Test Variety",
+            "process": "Washed",
+            "descriptors": ["orange"],
+        }
+
+        prior = evaluator.candidate_prior(
+            candidate,
+            evaluator.build_evidence_packet(observations),
+            observations,
+        )["deterministic_prior"]
+
+        self.assertEqual(prior["score_mode"], "private_full")
+        self.assertGreater(prior["direct_history_bonus"], 0)
+        self.assertEqual(
+            prior["fit_score"],
+            min(100.0, round(prior["profile_fit_score"] + prior["direct_history_bonus"], 1)),
+        )
+        self.assertIsNotNone(prior["history_adjustment"])
+        self.assertEqual(
+            prior["history_adjustment"]["fit_bonus"],
+            prior["direct_history_bonus"],
         )
 
     def test_live_shortlist_excludes_unavailable_candidates(self) -> None:

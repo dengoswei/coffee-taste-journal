@@ -8,23 +8,39 @@
 
 /* Begin PBXBuildFile section */
 		1A771929ED89318816572573 /* CoffeeJournalCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		1C654F162B853BF82F011301 /* BeanExplorerSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88AF5DFDC530AB680D498F5C /* BeanExplorerSession.swift */; };
+		246C6A8A6F4434D5003CD270 /* BeanExplorerScoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E138423FDB9840E15596526B /* BeanExplorerScoringTests.swift */; };
+		2E8CF66938A130F02BB7A58E /* FlavorArtworkBackgroundCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95A6EB8BD0EDA0A804CCF927 /* FlavorArtworkBackgroundCoordinator.swift */; };
 		2ED967C0EA84FB71FD44C0C0 /* CoffeeJournalCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		39664569A5E77DCC08ECBFFC /* BeanExplorerSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BB470D2BF9E1DB96EF2865 /* BeanExplorerSessionTests.swift */; };
 		3BFD17CD96333496B75D0E2F /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B473D256F72C6846449513 /* JournalView.swift */; };
 		4525497F37A250486BE18776 /* FlavorArtworkGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E61B559DDD1BB4811A81CAF0 /* FlavorArtworkGenerator.swift */; };
+		4845B0B0E7E5A2886ECD3C18 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 827CD71C5A60AF95298DB254 /* manifest.json */; };
+		4C59835C1CF30D4932B52E44 /* PersonalTasteProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DC5096033EBBAA69ACFEE5 /* PersonalTasteProfile.swift */; };
+		6765BE814F5551972EE01656 /* BeanExplorerGeneratedContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C9E99F54E7734C54CB5A424 /* BeanExplorerGeneratedContract.swift */; };
 		6AD19C9F1E48E948B84F079B /* CoffeeJournalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A85B3E331AC522746F2FAA6 /* CoffeeJournalStore.swift */; };
 		725CB63194D514E7090F6D32 /* TasteInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AC1FC6D5839278326905BCC /* TasteInsights.swift */; };
+		78332B15C33DDEDE62B6DE0D /* BeanExplorerExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19FBB60289F46855866D162D /* BeanExplorerExtraction.swift */; };
+		7E84328F8BFD3A759F438A90 /* BeanExplorerExtractionContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACEE583B525AD462A7ECB93 /* BeanExplorerExtractionContract.swift */; };
+		8721416473F6A58AA3947C18 /* BeanExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF24AD8709E604DE603D9D9 /* BeanExplorerView.swift */; };
 		9135DF14CF6044BC1161E397 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733D90120682C6DDB93A8F77 /* Models.swift */; };
 		94BD2C9AC025200EA2F5C64E /* BagPhotoScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B92F6180AC390F19A8E032C /* BagPhotoScanner.swift */; };
 		94BF4024C5B77D8BCF8699FB /* CoffeeJournalCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */; };
 		9F6FCA7A818F308CD7E8DE2E /* CoffeeJournalApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDD85A1953754840B868C27C /* CoffeeJournalApp.swift */; };
 		A4B51F377B8ECB14CA1022DC /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005D53A8E210D637797E209D /* SampleData.swift */; };
+		A53BD5634E7862C1EE6AD9E5 /* profile-parity-fixtures.json in Resources */ = {isa = PBXBuildFile; fileRef = 990D8C6D05AD3A905BD39591 /* profile-parity-fixtures.json */; };
 		ABDED25F186FD14CF68AB8FE /* CoffeeJournalCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EDB166C375F46DBD7DEF3A8 /* CoffeeJournalCoreTests.swift */; };
+		B092399710FEDDB8A7790426 /* BeanExplorerProfileResourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D366FEACA799D9F1C3F0DBE /* BeanExplorerProfileResourceTests.swift */; };
 		CD0983AB0C9C8398D8ABE996 /* ArkSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7088610246FAC0012BEAD2A /* ArkSupport.swift */; };
+		D509C23F94FB510DD1D0354A /* BagPhotoScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1D26885E2CD34475568C /* BagPhotoScannerTests.swift */; };
 		DCFE8FB1348B2F795FE9A791 /* CoffeeJournalCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */; };
 		EFD2D5D8D44B98309A571DD7 /* TasteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87171CD88E94F2FD1D8B6EE0 /* TasteView.swift */; };
+		F0F7F6726A4FA016C215DFED /* profile-prior.json in Resources */ = {isa = PBXBuildFile; fileRef = E0B0D1D8BA82E2619F6466BD /* profile-prior.json */; };
+		F5F397B61BCE9031F7905C45 /* BeanExplorerScoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = C406BA5EED8E9D241C027BF3 /* BeanExplorerScoring.swift */; };
 		F7676B67938894F4F2E42F18 /* BeansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6636D643B05C92D53B399038 /* BeansView.swift */; };
 		F98E57F4A1D21B4512179BED /* BagPhotoLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264DF502E7CE6ADF61FC929C /* BagPhotoLibrary.swift */; };
 		FC25AB7551275323E9089B00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3495166DECA9E130727E554F /* Assets.xcassets */; };
+		FD05B62F4482EEC41CD68761 /* BeanExplorerProfileResource.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE602F5F55B2FB8CC287ECE /* BeanExplorerProfileResource.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +50,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = AC8FF142B9DD04EDE7F30757;
 			remoteInfo = CoffeeJournalCore;
+		};
+		CDDBE9018DEDFE4D56DECE1F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A0EF2DDF987EDDA1E14C6297 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6E877B1117CB20298A9251D8;
+			remoteInfo = CoffeeJournalApp;
 		};
 		FA2C6BFD523A5DAE8DCEAC8D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -73,17 +96,34 @@
 		005D53A8E210D637797E209D /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
 		00CF45BFBC1A5CD3D22B8005 /* CoffeeJournalApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CoffeeJournalApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0AC1FC6D5839278326905BCC /* TasteInsights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteInsights.swift; sourceTree = "<group>"; };
+		0C9E99F54E7734C54CB5A424 /* BeanExplorerGeneratedContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerGeneratedContract.swift; sourceTree = "<group>"; };
+		19FBB60289F46855866D162D /* BeanExplorerExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerExtraction.swift; sourceTree = "<group>"; };
 		264DF502E7CE6ADF61FC929C /* BagPhotoLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagPhotoLibrary.swift; sourceTree = "<group>"; };
 		2A85B3E331AC522746F2FAA6 /* CoffeeJournalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeeJournalStore.swift; sourceTree = "<group>"; };
 		3495166DECA9E130727E554F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		59B473D256F72C6846449513 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		6636D643B05C92D53B399038 /* BeansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeansView.swift; sourceTree = "<group>"; };
+		676CE3779DC28DDAB09CCF6F /* CoffeeJournalAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CoffeeJournalAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B92F6180AC390F19A8E032C /* BagPhotoScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagPhotoScanner.swift; sourceTree = "<group>"; };
+		6E8B1D26885E2CD34475568C /* BagPhotoScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagPhotoScannerTests.swift; sourceTree = "<group>"; };
 		733D90120682C6DDB93A8F77 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		7D366FEACA799D9F1C3F0DBE /* BeanExplorerProfileResourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerProfileResourceTests.swift; sourceTree = "<group>"; };
 		7EDB166C375F46DBD7DEF3A8 /* CoffeeJournalCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeeJournalCoreTests.swift; sourceTree = "<group>"; };
+		827CD71C5A60AF95298DB254 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
 		87171CD88E94F2FD1D8B6EE0 /* TasteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteView.swift; sourceTree = "<group>"; };
+		88AF5DFDC530AB680D498F5C /* BeanExplorerSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerSession.swift; sourceTree = "<group>"; };
+		93BB470D2BF9E1DB96EF2865 /* BeanExplorerSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerSessionTests.swift; sourceTree = "<group>"; };
+		95A6EB8BD0EDA0A804CCF927 /* FlavorArtworkBackgroundCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlavorArtworkBackgroundCoordinator.swift; sourceTree = "<group>"; };
+		990D8C6D05AD3A905BD39591 /* profile-parity-fixtures.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "profile-parity-fixtures.json"; sourceTree = "<group>"; };
+		AACEE583B525AD462A7ECB93 /* BeanExplorerExtractionContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerExtractionContract.swift; sourceTree = "<group>"; };
+		B8DC5096033EBBAA69ACFEE5 /* PersonalTasteProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalTasteProfile.swift; sourceTree = "<group>"; };
 		BDD85A1953754840B868C27C /* CoffeeJournalApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeeJournalApp.swift; sourceTree = "<group>"; };
 		BFD61E103F07D9B048CD02ED /* CoffeeJournalCoreTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CoffeeJournalCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C406BA5EED8E9D241C027BF3 /* BeanExplorerScoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerScoring.swift; sourceTree = "<group>"; };
+		CCE602F5F55B2FB8CC287ECE /* BeanExplorerProfileResource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerProfileResource.swift; sourceTree = "<group>"; };
+		DFF24AD8709E604DE603D9D9 /* BeanExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerView.swift; sourceTree = "<group>"; };
+		E0B0D1D8BA82E2619F6466BD /* profile-prior.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "profile-prior.json"; sourceTree = "<group>"; };
+		E138423FDB9840E15596526B /* BeanExplorerScoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerScoringTests.swift; sourceTree = "<group>"; };
 		E61B559DDD1BB4811A81CAF0 /* FlavorArtworkGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlavorArtworkGenerator.swift; sourceTree = "<group>"; };
 		E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CoffeeJournalCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7088610246FAC0012BEAD2A /* ArkSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArkSupport.swift; sourceTree = "<group>"; };
@@ -113,6 +153,7 @@
 			isa = PBXGroup;
 			children = (
 				CAFA3F42FB54DC880615D70E /* CoffeeJournalApp */,
+				B71EEFC527006F090C7D039D /* CoffeeJournalAppTests */,
 				5A7384ACB6B47F1F4A70513C /* CoffeeJournalCore */,
 				B3D7B6A0A8DFD1703FFA5E96 /* CoffeeJournalCoreTests */,
 				FB999D5F1A3B10DC52407653 /* Products */,
@@ -122,6 +163,10 @@
 		5A7384ACB6B47F1F4A70513C /* CoffeeJournalCore */ = {
 			isa = PBXGroup;
 			children = (
+				19FBB60289F46855866D162D /* BeanExplorerExtraction.swift */,
+				AACEE583B525AD462A7ECB93 /* BeanExplorerExtractionContract.swift */,
+				C406BA5EED8E9D241C027BF3 /* BeanExplorerScoring.swift */,
+				88AF5DFDC530AB680D498F5C /* BeanExplorerSession.swift */,
 				2A85B3E331AC522746F2FAA6 /* CoffeeJournalStore.swift */,
 				733D90120682C6DDB93A8F77 /* Models.swift */,
 				005D53A8E210D637797E209D /* SampleData.swift */,
@@ -134,18 +179,41 @@
 		5F7207612AB9ACFC859231EB /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				6DEEC913FC40E64F696CD864 /* TasteProfile */,
 				3495166DECA9E130727E554F /* Assets.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		6DEEC913FC40E64F696CD864 /* TasteProfile */ = {
+			isa = PBXGroup;
+			children = (
+				827CD71C5A60AF95298DB254 /* manifest.json */,
+				990D8C6D05AD3A905BD39591 /* profile-parity-fixtures.json */,
+				E0B0D1D8BA82E2619F6466BD /* profile-prior.json */,
+			);
+			path = TasteProfile;
+			sourceTree = "<group>";
+		};
 		B3D7B6A0A8DFD1703FFA5E96 /* CoffeeJournalCoreTests */ = {
 			isa = PBXGroup;
 			children = (
+				E138423FDB9840E15596526B /* BeanExplorerScoringTests.swift */,
+				93BB470D2BF9E1DB96EF2865 /* BeanExplorerSessionTests.swift */,
 				7EDB166C375F46DBD7DEF3A8 /* CoffeeJournalCoreTests.swift */,
 			);
 			name = CoffeeJournalCoreTests;
 			path = Tests/CoffeeJournalCoreTests;
+			sourceTree = "<group>";
+		};
+		B71EEFC527006F090C7D039D /* CoffeeJournalAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				6E8B1D26885E2CD34475568C /* BagPhotoScannerTests.swift */,
+				7D366FEACA799D9F1C3F0DBE /* BeanExplorerProfileResourceTests.swift */,
+			);
+			name = CoffeeJournalAppTests;
+			path = Tests/CoffeeJournalAppTests;
 			sourceTree = "<group>";
 		};
 		CAFA3F42FB54DC880615D70E /* CoffeeJournalApp */ = {
@@ -155,10 +223,15 @@
 				F7088610246FAC0012BEAD2A /* ArkSupport.swift */,
 				264DF502E7CE6ADF61FC929C /* BagPhotoLibrary.swift */,
 				6B92F6180AC390F19A8E032C /* BagPhotoScanner.swift */,
+				0C9E99F54E7734C54CB5A424 /* BeanExplorerGeneratedContract.swift */,
+				CCE602F5F55B2FB8CC287ECE /* BeanExplorerProfileResource.swift */,
+				DFF24AD8709E604DE603D9D9 /* BeanExplorerView.swift */,
 				6636D643B05C92D53B399038 /* BeansView.swift */,
 				BDD85A1953754840B868C27C /* CoffeeJournalApp.swift */,
+				95A6EB8BD0EDA0A804CCF927 /* FlavorArtworkBackgroundCoordinator.swift */,
 				E61B559DDD1BB4811A81CAF0 /* FlavorArtworkGenerator.swift */,
 				59B473D256F72C6846449513 /* JournalView.swift */,
+				B8DC5096033EBBAA69ACFEE5 /* PersonalTasteProfile.swift */,
 				87171CD88E94F2FD1D8B6EE0 /* TasteView.swift */,
 			);
 			name = CoffeeJournalApp;
@@ -169,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				00CF45BFBC1A5CD3D22B8005 /* CoffeeJournalApp.app */,
+				676CE3779DC28DDAB09CCF6F /* CoffeeJournalAppTests.xctest */,
 				E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */,
 				BFD61E103F07D9B048CD02ED /* CoffeeJournalCoreTests.xctest */,
 			);
@@ -178,6 +252,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		30477AA26AC874F83241F118 /* CoffeeJournalAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8BDA89BC8DDF4079484945B8 /* Build configuration list for PBXNativeTarget "CoffeeJournalAppTests" */;
+			buildPhases = (
+				46B5710575086870F5CB7B56 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				091BAC0D596AA5103782B1B0 /* PBXTargetDependency */,
+			);
+			name = CoffeeJournalAppTests;
+			packageProductDependencies = (
+			);
+			productName = CoffeeJournalAppTests;
+			productReference = 676CE3779DC28DDAB09CCF6F /* CoffeeJournalAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		44B3B166A3F728475EC5D2D0 /* CoffeeJournalCoreTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7DE52303B7A7C90430FEF257 /* Build configuration list for PBXNativeTarget "CoffeeJournalCoreTests" */;
@@ -245,6 +337,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					30477AA26AC874F83241F118 = {
+						DevelopmentTeam = R57F7J777H;
+						ProvisioningStyle = Automatic;
+					};
 					44B3B166A3F728475EC5D2D0 = {
 						DevelopmentTeam = R57F7J777H;
 						ProvisioningStyle = Automatic;
@@ -273,9 +369,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6E877B1117CB20298A9251D8 /* CoffeeJournalApp */,
 				AC8FF142B9DD04EDE7F30757 /* CoffeeJournalCore */,
+				6E877B1117CB20298A9251D8 /* CoffeeJournalApp */,
 				44B3B166A3F728475EC5D2D0 /* CoffeeJournalCoreTests */,
+				30477AA26AC874F83241F118 /* CoffeeJournalAppTests */,
 			);
 		};
 /* End PBXProject section */
@@ -286,6 +383,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				FC25AB7551275323E9089B00 /* Assets.xcassets in Resources */,
+				4845B0B0E7E5A2886ECD3C18 /* manifest.json in Resources */,
+				A53BD5634E7862C1EE6AD9E5 /* profile-parity-fixtures.json in Resources */,
+				F0F7F6726A4FA016C215DFED /* profile-prior.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,10 +396,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				78332B15C33DDEDE62B6DE0D /* BeanExplorerExtraction.swift in Sources */,
+				7E84328F8BFD3A759F438A90 /* BeanExplorerExtractionContract.swift in Sources */,
+				F5F397B61BCE9031F7905C45 /* BeanExplorerScoring.swift in Sources */,
+				1C654F162B853BF82F011301 /* BeanExplorerSession.swift in Sources */,
 				6AD19C9F1E48E948B84F079B /* CoffeeJournalStore.swift in Sources */,
 				9135DF14CF6044BC1161E397 /* Models.swift in Sources */,
 				A4B51F377B8ECB14CA1022DC /* SampleData.swift in Sources */,
 				725CB63194D514E7090F6D32 /* TasteInsights.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		46B5710575086870F5CB7B56 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D509C23F94FB510DD1D0354A /* BagPhotoScannerTests.swift in Sources */,
+				B092399710FEDDB8A7790426 /* BeanExplorerProfileResourceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -310,10 +423,15 @@
 				CD0983AB0C9C8398D8ABE996 /* ArkSupport.swift in Sources */,
 				F98E57F4A1D21B4512179BED /* BagPhotoLibrary.swift in Sources */,
 				94BD2C9AC025200EA2F5C64E /* BagPhotoScanner.swift in Sources */,
+				6765BE814F5551972EE01656 /* BeanExplorerGeneratedContract.swift in Sources */,
+				FD05B62F4482EEC41CD68761 /* BeanExplorerProfileResource.swift in Sources */,
+				8721416473F6A58AA3947C18 /* BeanExplorerView.swift in Sources */,
 				F7676B67938894F4F2E42F18 /* BeansView.swift in Sources */,
 				9F6FCA7A818F308CD7E8DE2E /* CoffeeJournalApp.swift in Sources */,
+				2E8CF66938A130F02BB7A58E /* FlavorArtworkBackgroundCoordinator.swift in Sources */,
 				4525497F37A250486BE18776 /* FlavorArtworkGenerator.swift in Sources */,
 				3BFD17CD96333496B75D0E2F /* JournalView.swift in Sources */,
+				4C59835C1CF30D4932B52E44 /* PersonalTasteProfile.swift in Sources */,
 				EFD2D5D8D44B98309A571DD7 /* TasteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -322,6 +440,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				246C6A8A6F4434D5003CD270 /* BeanExplorerScoringTests.swift in Sources */,
+				39664569A5E77DCC08ECBFFC /* BeanExplorerSessionTests.swift in Sources */,
 				ABDED25F186FD14CF68AB8FE /* CoffeeJournalCoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -334,6 +454,11 @@
 			target = AC8FF142B9DD04EDE7F30757 /* CoffeeJournalCore */;
 			targetProxy = FA2C6BFD523A5DAE8DCEAC8D /* PBXContainerItemProxy */;
 		};
+		091BAC0D596AA5103782B1B0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6E877B1117CB20298A9251D8 /* CoffeeJournalApp */;
+			targetProxy = CDDBE9018DEDFE4D56DECE1F /* PBXContainerItemProxy */;
+		};
 		91806DF7F6A400B22ACED6DF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AC8FF142B9DD04EDE7F30757 /* CoffeeJournalCore */;
@@ -342,6 +467,22 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		03661F23607CD582E7D7E355 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dengos.CoffeeJournalAppTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Coffee Journal.app/Coffee Journal";
+			};
+			name = Release;
+		};
 		34C689E96AE56A2DDE8F81A3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -357,12 +498,30 @@
 			};
 			name = Release;
 		};
+		351436869A52B58B29E3C948 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dengos.CoffeeJournalAppTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Coffee Journal.app/Coffee Journal";
+			};
+			name = Debug;
+		};
 		5BB8D5AEE43AF1E78FE35869 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Configuration/CoffeeJournalApp-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Coffee Journal";
 				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Coffee Journal uses the camera to scan coffee bag labels and create editable bean drafts.";
@@ -472,6 +631,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Configuration/CoffeeJournalApp-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Coffee Journal";
 				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Coffee Journal uses the camera to scan coffee bag labels and create editable bean drafts.";
@@ -623,6 +784,15 @@
 			buildConfigurations = (
 				D395DC110DF146521C270768 /* Debug */,
 				34C689E96AE56A2DDE8F81A3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8BDA89BC8DDF4079484945B8 /* Build configuration list for PBXNativeTarget "CoffeeJournalAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				351436869A52B58B29E3C948 /* Debug */,
+				03661F23607CD582E7D7E355 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

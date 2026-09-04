@@ -1,0 +1,207 @@
+{
+  "schema_version": 2,
+  "checked_at": "2026-08-04",
+  "dataset_role": "report_only_unlabeled_candidates",
+  "purpose": "Four Shokunin Coffee coffees transcribed from a user-provided Urlicht Coffee product image. This set is for profile-based recommendation testing only: it contains no outcome labels and must not be used to fit or tune the personal profile.",
+  "source_policy": {
+    "roaster": "Shokunin Coffee",
+    "roaster_country": "Netherlands",
+    "seller": "Urlicht Coffee / 原光咖啡",
+    "descriptor_status": "Seller claims, not verified cup perceptions.",
+    "description_status": "Seller copy transcribed from the supplied image; source inconsistencies and ambiguous fields are recorded rather than silently corrected.",
+    "scoring_boundary": "Seller descriptions, accolades, provenance reputation, price, and package size do not affect deterministic fit unless represented by an existing explicitly scored field."
+  },
+  "candidates": [
+    {
+      "id": "shokunin_san_isidro_labrador_gesha_peaberry_honey",
+      "roaster": "Shokunin",
+      "roaster_full": "Shokunin Coffee",
+      "roaster_country": "Netherlands",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "San Isidro Labrador Gesha Peaberry",
+      "name_zh": "哥斯达黎加 San Isidro Labrador 瑰夏 PB",
+      "origin": "Costa Rica",
+      "region": "Tarrazú",
+      "farm": "Hacienda San Isidro Labrador",
+      "producer": "Johel Monge",
+      "variety": "Gesha Peaberry",
+      "process": "Honey",
+      "process_source": "去皮日晒（蜜处理） / pulped natural (honey)",
+      "altitude_m": "2100",
+      "weight_grams": "250",
+      "roast_use": "Filter and espresso / 手冲意式通用烘焙",
+      "descriptors": [
+        "茉莉",
+        "jasmine",
+        "白桃",
+        "white peach",
+        "小柑橘",
+        "citrus",
+        "伯爵红茶",
+        "earl grey tea"
+      ],
+      "source_flavor_text": "茉莉、白桃、小柑橘、伯爵红茶",
+      "transcription_notes": "The image title begins with 哥伦比亚 and spells the farm Lablador, but the user confirmed on 2026-08-04 that Costa Rica / Tarrazú / Hacienda San Isidro Labrador is authoritative. The candidate identity follows that confirmation.",
+      "seller_description": "卖家称 San Isidro Labrador 的蜜处理瑰夏批次获得 2023 年哥斯达黎加 Cup of Excellence 冠军，并介绍庄园主 Johel Monge 曾代表 Los Grandes de Copey 参赛，后独立参赛获奖。",
+      "seller_notes": "风味、比赛结果与庄园叙述均来自卖家图片，未独立核验。",
+      "price": {
+        "amount": 158,
+        "currency": "CNY",
+        "size_grams": 250
+      },
+      "availability": "candidate_set_provided_2026-08-04",
+      "accolades": [
+        {
+          "competition": "Costa Rica Cup of Excellence",
+          "result": "Champion",
+          "year": 2023,
+          "scope": "lot",
+          "basis": "Seller claim in the supplied image; not independently verified.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/3720.PNG",
+      "historical_overlap": "The same farm appears once in history as an unrated Mirra Bourbon exposure. This different Gesha Peaberry lot is not a rated rebuy."
+    },
+    {
+      "id": "shokunin_fausto_romo_washed_sidra",
+      "roaster": "Shokunin",
+      "roaster_full": "Shokunin Coffee",
+      "roaster_country": "Netherlands",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Fausto Romo Sidra",
+      "name_zh": "厄瓜多尔 Fausto Romo Sidra",
+      "origin": "Ecuador",
+      "region": "",
+      "farm": "Fausto Romo",
+      "producer": "Fausto Romo",
+      "variety": "Sidra",
+      "process": "Washed",
+      "altitude_m": "1350",
+      "weight_grams": "250",
+      "roast_use": "Filter and espresso / 手冲意式通用烘焙",
+      "descriptors": [
+        "接骨木花",
+        "elderflower",
+        "橙子",
+        "orange",
+        "伯爵红茶",
+        "earl grey tea"
+      ],
+      "source_flavor_text": "接骨木花、橙子、伯爵红茶",
+      "seller_description": "卖家称 Shokunin 首批样品即采用该豆，并称其干净、优雅、层次丰富；Fausto Romo 的水洗 Sidra 获得 2023 年厄瓜多尔 Cup of Excellence 第 14 名。",
+      "seller_notes": "杯中表现与比赛结果均来自卖家图片，未独立核验。",
+      "price": {
+        "amount": 168,
+        "currency": "CNY",
+        "size_grams": 250
+      },
+      "availability": "candidate_set_provided_2026-08-04",
+      "accolades": [
+        {
+          "competition": "Ecuador Cup of Excellence",
+          "result": "14th place",
+          "year": 2023,
+          "scope": "lot",
+          "basis": "Seller claim in the supplied image; not independently verified.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/3720.PNG",
+      "historical_overlap": "No exact coffee identity match. Ecuador and Sidra appear separately in history; neither is treated as this coffee."
+    },
+    {
+      "id": "shokunin_cultivaries_sudan_rume_anaerobic_natural",
+      "roaster": "Shokunin",
+      "roaster_full": "Shokunin Coffee",
+      "roaster_country": "Netherlands",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Cultivaries Sudan Rume Anaerobic Natural",
+      "name_zh": "哥伦比亚 Cultivaries 厌氧日晒苏丹茹魅",
+      "origin": "Colombia",
+      "region": "Huila",
+      "farm": "Cultivaries",
+      "producer": "Santiago Noriega",
+      "variety": "Sudan Rume",
+      "process": "Anaerobic Natural",
+      "altitude_m": "1800",
+      "weight_grams": "250",
+      "roast_use": "Filter and espresso / 手冲意式通用烘焙",
+      "descriptors": [
+        "苹果酒",
+        "apple cider",
+        "柠檬派",
+        "lemon pie",
+        "小豆蔻",
+        "cardamom"
+      ],
+      "source_flavor_text": "苹果酒、柠檬派、小豆蔻",
+      "seller_description": "卖家称 Sudan Rume 在哥伦比亚种植后表现突出并带特殊香料风味；该农场由第四代农民 Santiago Noriega 于约五年前创立，专注种植稀有品种。",
+      "seller_notes": "卖家提到 CGLE 等庄园的 Sudan Rume 作为品种背景，不表示本候选来自 CGLE；不赋予该候选 CGLE 血统标签。",
+      "price": {
+        "amount": 185,
+        "currency": "CNY",
+        "size_grams": 250
+      },
+      "availability": "candidate_set_provided_2026-08-04",
+      "accolades": [],
+      "provenance_reputation": [
+        {
+          "axis": "region",
+          "tier": "tier_2",
+          "name": "Huila, Colombia",
+          "basis": "Curated competition-backed region allowlist; contextual only.",
+          "scored": false
+        }
+      ],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/3720.PNG",
+      "historical_overlap": "Sudan Rume appears in rated history at other farms and roasters. Same variety alone is not a direct-history match or rebuy."
+    },
+    {
+      "id": "shokunin_mae_chedi_anaerobic_natural",
+      "roaster": "Shokunin",
+      "roaster_full": "Shokunin Coffee",
+      "roaster_country": "Netherlands",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Mae Chedi Anaerobic Natural",
+      "name_zh": "泰国 Mae Chedi 厌氧日晒",
+      "origin": "Thailand",
+      "region": "Mae Chedi, Chiang Rai",
+      "farm": "Mae Chedi",
+      "producer": "Mae Chedi young farmers cooperative",
+      "variety": "Chiang Mai",
+      "process": "Anaerobic Natural",
+      "altitude_m": "1100",
+      "weight_grams": "250",
+      "roast_use": "Filter and espresso / 手冲意式通用烘焙",
+      "descriptors": [
+        "无花果叶",
+        "fig leaf",
+        "甜美菠萝",
+        "sweet pineapple",
+        "棉花糖口感",
+        "marshmallow mouthfeel"
+      ],
+      "source_flavor_text": "无花果叶、甜美菠萝、棉花糖口感",
+      "transcription_notes": "The image labels Chiang Mai as 品种 even though Chiang Mai is also a geographic name. The value is retained as seller-declared variety rather than silently reclassified.",
+      "seller_description": "卖家称该豆来自 19 位年轻咖啡农组成的合作社，是 Shokunin 连续多年采购的咖啡；并称这批泰国咖啡维持一贯的高性价比。",
+      "seller_notes": "风味、合作社与性价比表述均来自卖家图片，需实饮验证；价格不进入适配分。",
+      "price": {
+        "amount": 148,
+        "currency": "CNY",
+        "size_grams": 250
+      },
+      "availability": "candidate_set_provided_2026-08-04",
+      "accolades": [],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/Users/bytedance/Downloads/3720.PNG",
+      "historical_overlap": "No exact coffee identity match in rated history."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "profile_id": "0baa7bac874e6da3365bdf9778dd760e154f34bf42b2089b5b2ac291c8f9c54d",
+  "scorer_version": "0e445b82063751dcecf40beb35d39255a7f219c6b0a00bd0bb1a67aff5a88bd4",
+  "lexicon_version": "d5968046b7b9736caafbb104fa55086c93645e7f7a25197f4c0b4207a89dc71e",
+  "swift_scorer_source_sha256": "ee5752a4fc46b26c77a70e31b6a87258b235b2a4f225974619be8bab94465498",
+  "python_scorer_source_sha256": "b9a4e532a2233e789b7cf8fd3a52ec09214d09c8258ec68197c7009e7b5b76a2",
+  "files": {
+    "profile-prior.json": "fe510f24cbc646cd8cff694a01705a264a0cf57250c78ea801c01651bc6f3323",
+    "profile-parity-fixtures.json": "c34d7e32020385cb5b0b6686f961c344a72782ebc37c774c01a3c0298301968a"
+  }
+}

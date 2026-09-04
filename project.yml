@@ -31,6 +31,8 @@ targets:
       - target: CoffeeJournalCore
     settings:
       base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Configuration/CoffeeJournalApp-Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.dengos.CoffeeJournal
         PRODUCT_NAME: Coffee Journal
         INFOPLIST_KEY_CFBundleDisplayName: Coffee Journal
@@ -55,6 +57,18 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dengos.CoffeeJournalCoreTests
+  CoffeeJournalAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/CoffeeJournalAppTests
+    dependencies:
+      - target: CoffeeJournalApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dengos.CoffeeJournalAppTests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Coffee Journal.app/Coffee Journal"
+        BUNDLE_LOADER: "$(TEST_HOST)"
 schemes:
   CoffeeJournalApp:
     build:
@@ -67,3 +81,4 @@ schemes:
       config: Debug
       targets:
         - CoffeeJournalCoreTests
+        - CoffeeJournalAppTests

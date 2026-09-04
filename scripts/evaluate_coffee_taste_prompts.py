@@ -1048,36 +1048,79 @@ def direct_history_match(
             "weighted_rating": None,
             "observation_ids": [],
         }
-    # Farm names are routinely embedded in bean names ("Las Margaritas Sudan
-    # Rume"), so a plain name-token intersection cannot tell "same coffee"
-    # from "same farm, different coffee". Classify overlap tokens instead:
-    # any token contributed by a farm field on either side is a farm token;
-    # a match whose overlap has no non-farm token is farm-only.
+    # Farm and variety names are routinely embedded in bean names (for example,
+    # "Las Margaritas Sudan Rume"). A plain name-token intersection therefore
+    # confuses both same-farm and same-variety coffees with an exact rebuy.
+    # Exact history requires the same roaster plus compatible farm/variety
+    # identity or a distinctive bean-name overlap. Same-farm-only history is
+    # retained as a weaker fallback; same-variety-only overlap is ignored.
+    candidate_name_tokens = identity_tokens(str(candidate.get("name") or ""))
     candidate_farm_tokens = identity_tokens(str(candidate.get("farm") or ""))
-    matches = []
-    name_matched = 0
-    farm_only = 0
+    candidate_variety_tokens = identity_tokens(str(candidate.get("variety") or ""))
+    candidate_roaster = normalized_key(candidate.get("roaster"))
+    candidate_variety = normalized_key(candidate.get("variety"))
+    exact_matches: list[tuple[dict[str, Any], set[str]]] = []
+    farm_matches: list[tuple[dict[str, Any], set[str]]] = []
     for item in observations:
         score = item["rating"].get("score")
         weight = float(item["evidence"].get("rating_weight") or 0)
         if score is None or weight <= 0:
             continue
-        historical_tokens = identity_tokens(" ".join([
-            str(item["coffee"].get("name") or ""),
-            str(item["coffee"].get("farm") or ""),
-        ]))
-        overlap = tokens.intersection(historical_tokens)
-        if not overlap:
-            continue
+        historical_name_tokens = identity_tokens(
+            str(item["coffee"].get("name") or "")
+        )
         historical_farm_tokens = identity_tokens(
             str(item["coffee"].get("farm") or "")
         )
+        historical_variety_tokens = identity_tokens(
+            str(item["coffee"].get("variety") or "")
+        )
+        historical_tokens = historical_name_tokens | historical_farm_tokens
+        overlap = tokens.intersection(historical_tokens)
+        if not overlap:
+            continue
+
         farm_side_tokens = candidate_farm_tokens | historical_farm_tokens
-        if overlap - farm_side_tokens:
-            name_matched += 1
-        else:
-            farm_only += 1
-        matches.append(item)
+        variety_side_tokens = candidate_variety_tokens | historical_variety_tokens
+        distinctive_name_overlap = (
+            candidate_name_tokens.intersection(historical_name_tokens)
+            - farm_side_tokens
+            - variety_side_tokens
+        )
+        farm_overlap = candidate_farm_tokens.intersection(historical_farm_tokens)
+        historical_roaster = normalized_key(item["coffee"].get("roaster"))
+        historical_variety = normalized_key(item["coffee"].get("variety"))
+        same_roaster = bool(candidate_roaster) and candidate_roaster == historical_roaster
+        same_variety = (
+            bool(candidate_variety)
+            and bool(historical_variety)
+            and candidate_variety == historical_variety
+        )
+        farm_conflict = (
+            bool(candidate_farm_tokens)
+            and bool(historical_farm_tokens)
+            and not farm_overlap
+        )
+        variety_conflict = (
+            bool(candidate_variety)
+            and bool(historical_variety)
+            and not same_variety
+        )
+        exact_identity = same_roaster and (
+            (bool(farm_overlap) and same_variety)
+            or (
+                bool(distinctive_name_overlap)
+                and not farm_conflict
+                and not variety_conflict
+            )
+        )
+        if exact_identity:
+            exact_matches.append((item, overlap))
+        elif farm_overlap:
+            farm_matches.append((item, farm_overlap))
+
+    selected_matches = exact_matches if exact_matches else farm_matches
+    matches = [item for item, _ in selected_matches]
     total_weight = sum(float(item["evidence"]["rating_weight"]) for item in matches)
     weighted_rating = (
         sum(
@@ -1087,22 +1130,12 @@ def direct_history_match(
         if total_weight else None
     )
     return {
-        "matched_tokens": sorted({
-            token
-            for token in tokens
-            if any(
-                token in identity_tokens(" ".join([
-                    str(item["coffee"].get("name") or ""),
-                    str(item["coffee"].get("farm") or ""),
-                ]))
-                for item in matches
-            )
-        }),
+        "matched_tokens": sorted(set().union(*(overlap for _, overlap in selected_matches))),
         "rated_observations": len(matches),
-        "name_matched_observations": name_matched,
-        "farm_only_observations": farm_only,
+        "name_matched_observations": len(exact_matches),
+        "farm_only_observations": len(farm_matches),
         "match_scope": (
-            "name" if name_matched else ("farm_only" if farm_only else None)
+            "name" if exact_matches else ("farm_only" if farm_matches else None)
         ),
         "weighted_rating": round(weighted_rating, 3) if weighted_rating is not None else None,
         "observation_ids": [item["id"] for item in matches],
@@ -1186,7 +1219,8 @@ def candidate_prior(
     if roaster_row and roaster_row["weighted_rating"] is not None:
         roaster_scaled = normalized_rating(roaster_row["weighted_rating"])
         roaster_bonus = max(-3.0, min(3.0, (roaster_scaled - 50.0) * 0.09))
-    fit = min(100.0, fit + quality_bonus + history_bonus + top_tier_bonus + roaster_bonus)
+    profile_fit = min(100.0, fit + quality_bonus + top_tier_bonus + roaster_bonus)
+    fit = min(100.0, profile_fit + history_bonus)
 
     category_familiarity_scores = [
         min(1.0, category_stats[normalized_key(category)]["observations"] / 6) * 100
@@ -1199,18 +1233,33 @@ def candidate_prior(
     )
     origin_familiarity = 80.0 if origin_row else 10.0
     process_familiarity = 80.0 if process_row else 20.0
-    novelty = 100 - (
+    profile_novelty = 100 - (
         category_familiarity * 0.50
         + origin_familiarity * 0.25
         + process_familiarity * 0.25
     )
-    if history_bonus:
-        novelty -= min(20.0, history_bonus)
+    history_novelty_penalty = min(20.0, history_bonus) if history_bonus else 0.0
+    novelty = profile_novelty - history_novelty_penalty
 
     enriched["descriptor_categories"] = categories
     enriched["claimed_quality_signals"] = claimed_quality_signals
     enriched["direct_history_match"] = history_match
     enriched["deterministic_prior"] = {
+        "score_mode": "private_full" if observations is not None else "profile_only",
+        "profile_fit_score": round(profile_fit, 1),
+        "profile_novelty_score": round(max(0.0, min(100.0, profile_novelty)), 1),
+        "history_adjustment": {
+            "available": observations is not None,
+            "fit_bonus": round(history_bonus, 1),
+            "novelty_penalty": round(history_novelty_penalty, 1),
+            "match_scope": history_match.get("match_scope"),
+            "rated_observations": history_match.get("rated_observations", 0),
+        } if observations is not None else None,
+        "personalized_fit_score": round(fit, 1) if observations is not None else None,
+        "personalized_novelty_score": (
+            round(max(0.0, min(100.0, novelty)), 1)
+            if observations is not None else None
+        ),
         "fit_score": round(fit, 1),
         "novelty_score": round(max(0.0, min(100.0, novelty)), 1),
         "quality_claim_bonus": round(quality_bonus, 1),

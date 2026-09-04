@@ -74,3 +74,22 @@ python3 scripts/verify_sol_max_gate.py \
 - Restore the excluded low-learnability case
   `loved_radiance_vs_ok_rogue_wave` to `private/coffee_taste/eval_cases.json`
   after copying the app export (`backups/.../store.json`) to this machine.
+
+## R3 — Portable profile scorer and private-history separation
+
+Scope: adopt the aggregate-only portable profile contract, deterministic scorer,
+and explicit separation between profile Fit and private direct-history
+adjustments. Implementation and local verification are complete, but adoption
+is blocked until the preregistered Sol Max review approves without conditions.
+
+Privacy note: the review inputs contain no raw observations. The review packet
+does state aggregate personal taste metrics; external review requires explicit
+user authorization for that payload.
+
+Review packet: `docs/portable-coffee-scorer-review-2026-07-25.md`.
+
+Preregistration:
+`.generated/sol-max-preregistrations/20260725-213053-portable-profile-scorer.json`
+
+SHA-256:
+`d4551b8fc2014e423e3c420719de18d4440d52cb61e51cd42cd17d1af6a327a1`

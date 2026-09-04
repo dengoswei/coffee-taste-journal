@@ -24,6 +24,7 @@ public enum BrewMethod: String, CaseIterable, Codable, Identifiable, Sendable {
 
 public struct Coffee: Identifiable, Codable, Equatable, Sendable {
     public let id: UUID
+    public var addedAt: Date?
     public var roaster: String
     public var name: String
     public var origin: String
@@ -34,9 +35,11 @@ public struct Coffee: Identifiable, Codable, Equatable, Sendable {
     public var verdict: Verdict?
     public var notes: String
     public var flavorArtwork: FlavorArtwork?
+    public var artworkJob: ArtworkJobState?
 
     public init(
         id: UUID = UUID(),
+        addedAt: Date? = Date(),
         roaster: String,
         name: String,
         origin: String,
@@ -46,9 +49,11 @@ public struct Coffee: Identifiable, Codable, Equatable, Sendable {
         flavorNotes: [String],
         verdict: Verdict? = nil,
         notes: String = "",
-        flavorArtwork: FlavorArtwork? = nil
+        flavorArtwork: FlavorArtwork? = nil,
+        artworkJob: ArtworkJobState? = nil
     ) {
         self.id = id
+        self.addedAt = addedAt
         self.roaster = roaster
         self.name = name
         self.origin = origin
@@ -59,10 +64,12 @@ public struct Coffee: Identifiable, Codable, Equatable, Sendable {
         self.verdict = verdict
         self.notes = notes
         self.flavorArtwork = flavorArtwork
+        self.artworkJob = artworkJob
     }
 
     enum CodingKeys: String, CodingKey {
         case id
+        case addedAt
         case roaster
         case name
         case origin
@@ -73,11 +80,13 @@ public struct Coffee: Identifiable, Codable, Equatable, Sendable {
         case verdict
         case notes
         case flavorArtwork
+        case artworkJob
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
+        addedAt = try container.decodeIfPresent(Date.self, forKey: .addedAt)
         roaster = try container.decode(String.self, forKey: .roaster)
         name = try container.decode(String.self, forKey: .name)
         origin = try container.decode(String.self, forKey: .origin)
@@ -88,11 +97,13 @@ public struct Coffee: Identifiable, Codable, Equatable, Sendable {
         verdict = try container.decodeIfPresent(Verdict.self, forKey: .verdict)
         notes = try container.decodeIfPresent(String.self, forKey: .notes) ?? ""
         flavorArtwork = try container.decodeIfPresent(FlavorArtwork.self, forKey: .flavorArtwork)
+        artworkJob = try container.decodeIfPresent(ArtworkJobState.self, forKey: .artworkJob)
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(addedAt, forKey: .addedAt)
         try container.encode(roaster, forKey: .roaster)
         try container.encode(name, forKey: .name)
         try container.encode(origin, forKey: .origin)
@@ -103,11 +114,74 @@ public struct Coffee: Identifiable, Codable, Equatable, Sendable {
         try container.encodeIfPresent(verdict, forKey: .verdict)
         try container.encode(notes, forKey: .notes)
         try container.encodeIfPresent(flavorArtwork, forKey: .flavorArtwork)
+        try container.encodeIfPresent(artworkJob, forKey: .artworkJob)
+    }
+}
+
+public enum ArtworkJobStatus: String, Codable, Sendable {
+    case queued
+    case generating
+    case failed
+    case succeeded
+}
+
+public struct ArtworkJobState: Codable, Equatable, Sendable {
+    public var status: ArtworkJobStatus
+    public var requestID: UUID?
+    public var forceGeneration: Bool
+    public var attemptCount: Int
+    public var deferredFailureCount: Int
+    public var lastAttemptAt: Date?
+    public var nextRetryAt: Date?
+    public var lastError: String?
+
+    public init(
+        status: ArtworkJobStatus,
+        requestID: UUID? = nil,
+        forceGeneration: Bool = false,
+        attemptCount: Int = 0,
+        deferredFailureCount: Int = 0,
+        lastAttemptAt: Date? = nil,
+        nextRetryAt: Date? = nil,
+        lastError: String? = nil
+    ) {
+        self.status = status
+        self.requestID = requestID
+        self.forceGeneration = forceGeneration
+        self.attemptCount = attemptCount
+        self.deferredFailureCount = deferredFailureCount
+        self.lastAttemptAt = lastAttemptAt
+        self.nextRetryAt = nextRetryAt
+        self.lastError = lastError
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case requestID
+        case forceGeneration
+        case attemptCount
+        case deferredFailureCount
+        case lastAttemptAt
+        case nextRetryAt
+        case lastError
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decode(ArtworkJobStatus.self, forKey: .status)
+        requestID = try container.decodeIfPresent(UUID.self, forKey: .requestID)
+        forceGeneration = try container.decodeIfPresent(Bool.self, forKey: .forceGeneration) ?? false
+        attemptCount = try container.decodeIfPresent(Int.self, forKey: .attemptCount) ?? 0
+        deferredFailureCount = try container.decodeIfPresent(Int.self, forKey: .deferredFailureCount) ?? 0
+        lastAttemptAt = try container.decodeIfPresent(Date.self, forKey: .lastAttemptAt)
+        nextRetryAt = try container.decodeIfPresent(Date.self, forKey: .nextRetryAt)
+        lastError = try container.decodeIfPresent(String.self, forKey: .lastError)
     }
 }
 
 public struct FlavorArtwork: Codable, Equatable, Sendable {
     public var model: String
+    public var generationVersion: Int?
     public var promptHash: String
     public var sourcePrompt: String
     public var createdAt: Date
@@ -117,6 +191,7 @@ public struct FlavorArtwork: Codable, Equatable, Sendable {
 
     public init(
         model: String,
+        generationVersion: Int? = 3,
         promptHash: String,
         sourcePrompt: String,
         createdAt: Date = Date(),
@@ -125,6 +200,7 @@ public struct FlavorArtwork: Codable, Equatable, Sendable {
         thumbnailFilename: String
     ) {
         self.model = model
+        self.generationVersion = generationVersion
         self.promptHash = promptHash
         self.sourcePrompt = sourcePrompt
         self.createdAt = createdAt
@@ -141,6 +217,7 @@ public struct CoffeeBag: Identifiable, Codable, Equatable, Sendable {
     public var totalGrams: Double
     public var remainingGrams: Double
     public var status: BagStatus
+    public var finishedAt: Date?
     public var restDays: Int?
     public var brewAdvice: String
     public var photoAssetIdentifier: String?
@@ -152,6 +229,7 @@ public struct CoffeeBag: Identifiable, Codable, Equatable, Sendable {
         totalGrams: Double,
         remainingGrams: Double,
         status: BagStatus = .active,
+        finishedAt: Date? = nil,
         restDays: Int? = nil,
         brewAdvice: String = "",
         photoAssetIdentifier: String? = nil
@@ -162,6 +240,7 @@ public struct CoffeeBag: Identifiable, Codable, Equatable, Sendable {
         self.totalGrams = totalGrams
         self.remainingGrams = remainingGrams
         self.status = status
+        self.finishedAt = finishedAt
         self.restDays = restDays
         self.brewAdvice = brewAdvice
         self.photoAssetIdentifier = photoAssetIdentifier
@@ -174,6 +253,68 @@ public struct CoffeeBag: Identifiable, Codable, Equatable, Sendable {
     public var remainingRatio: Double {
         guard totalGrams > 0 else { return 0 }
         return max(0, min(1, remainingGrams / totalGrams))
+    }
+
+    public var isFinished: Bool {
+        status == .finished || remainingGrams <= 0
+    }
+}
+
+public struct ArtworkInputSignature: Equatable, Sendable {
+    public var roaster: String
+    public var origin: String
+    public var variety: String
+    public var process: String
+    public var flavorNotes: [String]
+
+    public init(
+        roaster: String,
+        origin: String,
+        variety: String,
+        process: String,
+        flavorNotes: [String]
+    ) {
+        self.roaster = roaster
+        self.origin = origin
+        self.variety = variety
+        self.process = process
+        self.flavorNotes = flavorNotes
+    }
+}
+
+public extension Coffee {
+    var artworkInputSignature: ArtworkInputSignature? {
+        let normalizedRoaster = roaster.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedNotes = flavorNotes
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .prefix(5)
+
+        guard !normalizedRoaster.isEmpty, !normalizedNotes.isEmpty else { return nil }
+        return ArtworkInputSignature(
+            roaster: normalizedRoaster,
+            origin: origin.trimmingCharacters(in: .whitespacesAndNewlines),
+            variety: variety.trimmingCharacters(in: .whitespacesAndNewlines),
+            process: process.trimmingCharacters(in: .whitespacesAndNewlines),
+            flavorNotes: Array(normalizedNotes)
+        )
+    }
+}
+
+public enum ArtworkPublicationCoordinator {
+    public static func publishIfCurrent<Artifact>(
+        isCurrent: () -> Bool,
+        makeArtifacts: () throws -> Artifact,
+        commit: (Artifact) -> Bool,
+        cleanup: (Artifact) -> Void
+    ) rethrows -> Artifact? {
+        guard isCurrent() else { return nil }
+        let artifact = try makeArtifacts()
+        guard isCurrent(), commit(artifact) else {
+            cleanup(artifact)
+            return nil
+        }
+        return artifact
     }
 }
 

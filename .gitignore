@@ -15,3 +15,4 @@ backups/
 test_images/
 __pycache__/
 *.py[cod]
+.gstack/

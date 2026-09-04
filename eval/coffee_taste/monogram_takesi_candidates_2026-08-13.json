@@ -1,0 +1,394 @@
+{
+  "schema_version": 2,
+  "checked_at": "2026-08-13",
+  "dataset_role": "report_only_unlabeled_candidates",
+  "purpose": "Six Monogram Coffee Takesi coffees transcribed from a user-provided Urlicht Coffee product image. This set is a local candidate record for profile-based recommendation only: it contains no tasting outcome labels and must not be used to fit, tune, or test the personal profile.",
+  "source_policy": {
+    "roaster": "Monogram Coffee",
+    "roaster_country": "Canada",
+    "seller": "Urlicht Coffee / 原光咖啡",
+    "descriptor_status": "Seller claims transcribed from the supplied image, not verified cup perceptions.",
+    "description_status": "Product facts and promotional copy are image-derived unless a research source is named explicitly.",
+    "scoring_boundary": "Seller descriptions, farm reputation, accolades, variety prestige, price, package size, and peaberry sorting do not affect personal fit unless represented by an existing explicitly scored field."
+  },
+  "recommendation_snapshot": {
+    "scored_at": "2026-08-13",
+    "score_mode": "portable_profile",
+    "profile_id": "dff88cd947bba1276163793d35efc3c29dac90c69876782745561e0335ca33fc",
+    "profile_generated_at": "2026-07-25T12:44:27.983418+00:00",
+    "evidence_base": "51 rated observations: Loved 7, Liked 34, Ok 10, Disliked 0.",
+    "history_adjustment_available": false,
+    "safe_match": "monogram_takesi_gesha_washed",
+    "frontier_pick": "monogram_takesi_java_peaberry_washed",
+    "score_note": "Fit and novelty are deterministic ordering signals, not probabilities. Direct-history adjustment is unavailable in this portable score. Estate reputation, accolades, price, variety prestige, package size, and peaberry sorting are excluded from both scores.",
+    "ranking": [
+      {
+        "candidate_id": "monogram_takesi_gesha_washed",
+        "fit_score": 67.7,
+        "novelty_score": 27.5
+      },
+      {
+        "candidate_id": "monogram_takesi_gesha_peaberry_washed",
+        "fit_score": 67.0,
+        "novelty_score": 27.5
+      },
+      {
+        "candidate_id": "monogram_takesi_java_washed",
+        "fit_score": 66.9,
+        "novelty_score": 27.5
+      },
+      {
+        "candidate_id": "monogram_takesi_catuai_peaberry_washed",
+        "fit_score": 66.4,
+        "novelty_score": 27.5
+      },
+      {
+        "candidate_id": "monogram_takesi_sl28_washed",
+        "fit_score": 63.9,
+        "novelty_score": 27.5
+      },
+      {
+        "candidate_id": "monogram_takesi_java_peaberry_washed",
+        "fit_score": 63.3,
+        "novelty_score": 38.6
+      }
+    ]
+  },
+  "farm_research": {
+    "farm": "Finca Takesi / Agro Takesi",
+    "summary": "A high-altitude specialty estate founded in 2001 in Yanacachi, Sud Yungas, La Paz, Bolivia. Its strongest objective evidence is first place with 93.36 points in the 2009 Bolivia Cup of Excellence. The farm says it maintains relationships with five demanding international micro-roasters, including Monogram Coffee.",
+    "altitude_note": "The seller image prints 1940-2600 masl for all six coffees. Takesi's current site describes its lots as 1850-2300 masl, while Coffee Collective describes the broader farm valley as 1700-2600 masl. Keep 1940-2600 as seller-declared metadata, not a verified exact-lot altitude.",
+    "context_only": true,
+    "scored": false,
+    "sources": [
+      {
+        "title": "Bolivia 2009 - Cup of Excellence",
+        "url": "https://cupofexcellence.org/bolivia-2009/",
+        "evidence": "Agrotakesi SA placed first with 93.36 points."
+      },
+      {
+        "title": "Takesi - Nosotros",
+        "url": "https://takesi.bo/nosotros/",
+        "evidence": "Farm history, Yanacachi location, high-altitude lots, and named long-term roaster relationships."
+      },
+      {
+        "title": "Takesi - Coffee Collective",
+        "url": "https://coffeecollective.dk/pages/farmer/takesi",
+        "evidence": "High-altitude growing context, quality-control organization, and predominantly washed processing."
+      },
+      {
+        "title": "Exclusive Micro-Release - Takesi Java, Bolivia",
+        "url": "https://sevenseeds.com.au/blogs/seven-seeds-blog/exclusive-micro-release-takesi-java-bolivia",
+        "evidence": "Java production history and an experienced roaster's lot-level assessment; promotional and contextual, not a personal fit signal."
+      },
+      {
+        "title": "World Coffee Research - Java",
+        "url": "https://varieties.worldcoffeeresearch.org/varieties/java",
+        "evidence": "Java lineage, agronomic traits, and quality potential."
+      },
+      {
+        "title": "World Coffee Research - SL28",
+        "url": "https://varieties.worldcoffeeresearch.org/varieties/sl28",
+        "evidence": "SL28 lineage, agronomic traits, and established variety reputation."
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "monogram_takesi_catuai_peaberry_washed",
+      "roaster": "Monogram",
+      "roaster_full": "Monogram Coffee",
+      "roaster_country": "Canada",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Takesi Catuai Peaberry",
+      "name_zh": "玻利维亚 Takesi 庄园 Catuai PB",
+      "origin": "Bolivia",
+      "region": "Yanacachi, Sud Yungas, La Paz",
+      "farm": "Finca Takesi / Agro Takesi",
+      "producer": "Mariana Iturralde and the Takesi team",
+      "variety": "Catuai Peaberry",
+      "process": "Washed",
+      "altitude_m": "1940-2600",
+      "weight_grams": "200",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "草莓",
+        "strawberry",
+        "杏",
+        "apricot",
+        "苹果花",
+        "apple blossom"
+      ],
+      "source_flavor_text": "草莓、杏、苹果花 / Strawberry, Apricot, Apple Blossom",
+      "seller_description": "卖家称这是 Takesi 较少受关注的宝藏批次，并主打相对瑰夏的性价比。",
+      "seller_notes": "风味与性价比表述来自卖家图片；价格未提供，性价比未独立核验且不进入适配分。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-08-13",
+      "accolades": [
+        {
+          "competition": "Bolivia Cup of Excellence",
+          "result": "1st place, 93.36 points",
+          "year": 2009,
+          "scope": "estate",
+          "basis": "Official Cup of Excellence result for Agrotakesi SA; not a result for this current lot.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/var/folders/8j/kscd3fxx2b1cwvkw_d1vg1l00000gn/T/codex-clipboard-b57bc31d-41b0-426c-8255-2de9f74645ff.jpg",
+      "historical_overlap": "No exact Monogram + Takesi + Catuai Peaberry rating is identified in the frozen portable profile; exact-match status should be rechecked after the next profile export."
+    },
+    {
+      "id": "monogram_takesi_gesha_peaberry_washed",
+      "roaster": "Monogram",
+      "roaster_full": "Monogram Coffee",
+      "roaster_country": "Canada",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Takesi Gesha Peaberry",
+      "name_zh": "玻利维亚 Takesi 庄园瑰夏 PB",
+      "origin": "Bolivia",
+      "region": "Yanacachi, Sud Yungas, La Paz",
+      "farm": "Finca Takesi / Agro Takesi",
+      "producer": "Mariana Iturralde and the Takesi team",
+      "variety": "Gesha Peaberry",
+      "process": "Washed",
+      "altitude_m": "1940-2600",
+      "weight_grams": "100",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "草莓",
+        "strawberry",
+        "玫瑰",
+        "rose",
+        "桃子",
+        "peach"
+      ],
+      "source_flavor_text": "草莓、玫瑰、桃子 / Strawberry, Rose, Peach",
+      "transcription_notes": "The image title says Gesha PB while the variety row says Gesha; the candidate keeps the title's peaberry sorting and records the variety as Gesha Peaberry.",
+      "seller_description": "卖家称其为 Takesi 水洗瑰夏的标杆产品，并称上一批 PB 更受欢迎。",
+      "seller_notes": "风味与批次偏好来自卖家图片，未独立核验。Peaberry 是筛选形态，不自动代表更高杯测质量。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "candidate_set_provided_2026-08-13",
+      "accolades": [
+        {
+          "competition": "Bolivia Cup of Excellence",
+          "result": "1st place, 93.36 points",
+          "year": 2009,
+          "scope": "estate",
+          "basis": "Official Cup of Excellence result for Agrotakesi SA; not a result for this current lot.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/var/folders/8j/kscd3fxx2b1cwvkw_d1vg1l00000gn/T/codex-clipboard-b57bc31d-41b0-426c-8255-2de9f74645ff.jpg",
+      "historical_overlap": "No exact Monogram + Takesi + Gesha Peaberry rating is identified in the frozen portable profile; exact-match status should be rechecked after the next profile export."
+    },
+    {
+      "id": "monogram_takesi_gesha_washed",
+      "roaster": "Monogram",
+      "roaster_full": "Monogram Coffee",
+      "roaster_country": "Canada",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Takesi Gesha",
+      "name_zh": "玻利维亚 Takesi 庄园瑰夏",
+      "origin": "Bolivia",
+      "region": "Yanacachi, Sud Yungas, La Paz",
+      "farm": "Finca Takesi / Agro Takesi",
+      "producer": "Mariana Iturralde and the Takesi team",
+      "variety": "Gesha",
+      "process": "Washed",
+      "altitude_m": "1940-2600",
+      "weight_grams": "100",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "油桃",
+        "nectarine",
+        "咖啡花",
+        "coffee blossom",
+        "橙花",
+        "orange blossom"
+      ],
+      "source_flavor_text": "油桃、咖啡花、橙花 / Nectarine, Coffee Blossom, Orange Blossom",
+      "seller_description": "卖家称其为 Takesi 水洗瑰夏的标杆产品。",
+      "seller_notes": "风味与标杆表述来自卖家图片，未独立核验。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 100
+      },
+      "availability": "candidate_set_provided_2026-08-13",
+      "accolades": [
+        {
+          "competition": "Bolivia Cup of Excellence",
+          "result": "1st place, 93.36 points",
+          "year": 2009,
+          "scope": "estate",
+          "basis": "Official Cup of Excellence result for Agrotakesi SA; not a result for this current lot.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/var/folders/8j/kscd3fxx2b1cwvkw_d1vg1l00000gn/T/codex-clipboard-b57bc31d-41b0-426c-8255-2de9f74645ff.jpg",
+      "historical_overlap": "No exact Monogram + Takesi + Gesha rating is identified in the frozen portable profile; exact-match status should be rechecked after the next profile export."
+    },
+    {
+      "id": "monogram_takesi_java_peaberry_washed",
+      "roaster": "Monogram",
+      "roaster_full": "Monogram Coffee",
+      "roaster_country": "Canada",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Takesi Java Peaberry",
+      "name_zh": "玻利维亚 Takesi 庄园 Java PB",
+      "origin": "Bolivia",
+      "region": "Yanacachi, Sud Yungas, La Paz",
+      "farm": "Finca Takesi / Agro Takesi",
+      "producer": "Mariana Iturralde and the Takesi team",
+      "variety": "Java Peaberry",
+      "process": "Washed",
+      "altitude_m": "1940-2600",
+      "weight_grams": "200",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "乌龙茶",
+        "oolong tea",
+        "花香",
+        "floral",
+        "蜜瓜",
+        "honeydew melon"
+      ],
+      "source_flavor_text": "乌龙茶、花香、蜜瓜 / Oolong Tea, Floral, Honeydew Melon",
+      "seller_description": "卖家称 Takesi Java 稀缺且官网很快售罄。",
+      "seller_notes": "风味、稀缺与售罄表述来自卖家图片；Seven Seeds 的公开资料支持 Takesi Java 产量小、分配范围窄，但不证明当前批次杯中表现。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-08-13",
+      "accolades": [
+        {
+          "competition": "Bolivia Cup of Excellence",
+          "result": "1st place, 93.36 points",
+          "year": 2009,
+          "scope": "estate",
+          "basis": "Official Cup of Excellence result for Agrotakesi SA; not a result for this current lot.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/var/folders/8j/kscd3fxx2b1cwvkw_d1vg1l00000gn/T/codex-clipboard-b57bc31d-41b0-426c-8255-2de9f74645ff.jpg",
+      "historical_overlap": "No exact Monogram + Takesi + Java Peaberry rating is identified in the frozen portable profile; exact-match status should be rechecked after the next profile export."
+    },
+    {
+      "id": "monogram_takesi_java_washed",
+      "roaster": "Monogram",
+      "roaster_full": "Monogram Coffee",
+      "roaster_country": "Canada",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Takesi Java",
+      "name_zh": "玻利维亚 Takesi 庄园 Java",
+      "origin": "Bolivia",
+      "region": "Yanacachi, Sud Yungas, La Paz",
+      "farm": "Finca Takesi / Agro Takesi",
+      "producer": "Mariana Iturralde and the Takesi team",
+      "variety": "Java",
+      "process": "Washed",
+      "altitude_m": "1940-2600",
+      "weight_grams": "200",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "苹果花",
+        "apple blossom",
+        "克莱门汀柑橘",
+        "clementine",
+        "蔗糖",
+        "cane sugar"
+      ],
+      "source_flavor_text": "苹果花、克莱门汀柑橘、蔗糖 / Apple Blossom, Clementine, Cane Sugar",
+      "seller_description": "卖家称 Takesi Java 稀缺且官网很快售罄。",
+      "seller_notes": "风味、稀缺与售罄表述来自卖家图片；Takesi 自有网站当前也把 Java 作为独立产品销售，Seven Seeds 将其描述为小产量长期合作批次。",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-08-13",
+      "accolades": [
+        {
+          "competition": "Bolivia Cup of Excellence",
+          "result": "1st place, 93.36 points",
+          "year": 2009,
+          "scope": "estate",
+          "basis": "Official Cup of Excellence result for Agrotakesi SA; not a result for this current lot.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/var/folders/8j/kscd3fxx2b1cwvkw_d1vg1l00000gn/T/codex-clipboard-b57bc31d-41b0-426c-8255-2de9f74645ff.jpg",
+      "historical_overlap": "No exact Monogram + Takesi + Java rating is identified in the frozen portable profile; exact-match status should be rechecked after the next profile export."
+    },
+    {
+      "id": "monogram_takesi_sl28_washed",
+      "roaster": "Monogram",
+      "roaster_full": "Monogram Coffee",
+      "roaster_country": "Canada",
+      "seller": "Urlicht Coffee / 原光咖啡",
+      "name": "Takesi SL28",
+      "name_zh": "玻利维亚 Takesi 庄园 SL28",
+      "origin": "Bolivia",
+      "region": "Yanacachi, Sud Yungas, La Paz",
+      "farm": "Finca Takesi / Agro Takesi",
+      "producer": "Mariana Iturralde and the Takesi team",
+      "variety": "SL28",
+      "process": "Washed",
+      "altitude_m": "1940-2600",
+      "weight_grams": "200",
+      "roast_use": "Filter / 手冲烘焙",
+      "descriptors": [
+        "醋栗",
+        "currant",
+        "克莱门汀柑橘",
+        "clementine",
+        "绿苹果",
+        "green apple"
+      ],
+      "source_flavor_text": "醋栗、克莱门汀柑橘、绿苹果 / Currant, Clementine, Green Apple",
+      "transcription_notes": "The supplied image clearly labels this variety SL28, not SL27.",
+      "seller_description": "卖家称 Takesi SL28 稀缺且官网很快售罄，并强调醋栗酸质与明亮酸感。",
+      "seller_notes": "风味、稀缺与售罄表述来自卖家图片；World Coffee Research supports SL28's established variety reputation but not this current lot's cup quality.",
+      "price": {
+        "amount": null,
+        "currency": "CNY",
+        "size_grams": 200
+      },
+      "availability": "candidate_set_provided_2026-08-13",
+      "accolades": [
+        {
+          "competition": "Bolivia Cup of Excellence",
+          "result": "1st place, 93.36 points",
+          "year": 2009,
+          "scope": "estate",
+          "basis": "Official Cup of Excellence result for Agrotakesi SA; not a result for this current lot.",
+          "scored": false
+        }
+      ],
+      "provenance_reputation": [],
+      "source_url": "",
+      "source_image": "/var/folders/8j/kscd3fxx2b1cwvkw_d1vg1l00000gn/T/codex-clipboard-b57bc31d-41b0-426c-8255-2de9f74645ff.jpg",
+      "historical_overlap": "No exact Monogram + Takesi + SL28 rating is identified in the frozen portable profile; exact-match status should be rechecked after the next profile export."
+    }
+  ]
+}
