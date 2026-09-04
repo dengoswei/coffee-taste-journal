@@ -395,7 +395,13 @@ struct BeanExplorerView: View {
                     Text(score.name)
                         .font(.subheadline.weight(.semibold))
                         .fixedSize(horizontal: false, vertical: true)
-                    if !score.matchedFamilies.isEmpty {
+                    let rawNotes = session.activeCandidates.first(where: { $0.id == score.id })?.draft.flavorNotes ?? []
+                    if !rawNotes.isEmpty {
+                        Text(rawNotes.joined(separator: " · "))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else if !score.matchedFamilies.isEmpty {
                         Text(score.matchedFamilies.joined(separator: " · "))
                             .font(.caption)
                             .foregroundStyle(.secondary)

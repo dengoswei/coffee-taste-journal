@@ -50,7 +50,7 @@ public struct BeanExplorerExtractionParser: Sendable {
         } catch {
             throw BeanExplorerExtractionError.invalidEnvelope
         }
-        guard envelope.schemaVersion == "bean-explorer-extraction-v1" else {
+        guard envelope.schemaVersion == "bean-explorer-extraction-v2" else {
             throw BeanExplorerExtractionError.unsupportedSchema
         }
         guard envelope.packages.count <= 8, envelope.rejectedRegions.count <= 8,
@@ -117,7 +117,7 @@ private struct Package: Decodable {
             throw BeanExplorerExtractionError.invalidPackage
         }
         let box = try validatedBoundingBox()
-        let normalizedEvidence = evidence.compactMapValues(clean)
+        var normalizedEvidence = evidence.compactMapValues(clean)
         let allowedFields: Set<String> = [
             "roaster", "name", "origin", "farm", "variety", "process", "flavor_notes"
         ]
@@ -135,29 +135,27 @@ private struct Package: Decodable {
             ("process", clean(coffee.process)),
         ]
         for (field, value) in scalarValues {
-            if value != nil && normalizedEvidence[field] == nil {
-                throw BeanExplorerExtractionError.invalidPackage
-            }
             if uncertainty.contains(field), value != nil {
                 throw BeanExplorerExtractionError.invalidPackage
+            }
+            // Align with Add Bean: readable scalar values do not require separate evidence spans.
+            if let value, normalizedEvidence[field] == nil {
+                normalizedEvidence[field] = value
             }
         }
         let valueByField = Dictionary(uniqueKeysWithValues: scalarValues.compactMap { item in
             item.value.map { (item.field, $0) }
         })
-        let notes = coffee.flavorNotes.compactMap { note -> String? in
-            guard let value = clean(note.value), clean(note.evidence) != nil else { return nil }
-            return value
-        }
-        guard notes.count == coffee.flavorNotes.count,
-              notes.count <= 12,
-              !uncertainty.contains("flavor_notes") || notes.isEmpty else {
+        guard !uncertainty.contains("flavor_notes") || coffee.flavorNotes.isEmpty else {
             throw BeanExplorerExtractionError.invalidPackage
         }
-        let noteEvidence = coffee.flavorNotes.enumerated().reduce(into: normalizedEvidence) { result, item in
-            if let evidence = clean(item.element.evidence) {
-                result["flavor_note_\(item.offset + 1)"] = evidence
-            }
+        let notes = coffee.flavorNotes.compactMap(clean)
+        guard notes.count == coffee.flavorNotes.count, notes.count <= 12 else {
+            throw BeanExplorerExtractionError.invalidPackage
+        }
+        var noteEvidence = normalizedEvidence
+        for (offset, note) in notes.enumerated() {
+            noteEvidence["flavor_note_\(offset + 1)"] = note
         }
         let draft = BeanExplorerCandidateDraft(
             roaster: valueByField["roaster"] ?? "",
@@ -206,7 +204,7 @@ private struct CoffeeFields: Decodable {
     let farm: String?
     let variety: String?
     let process: String?
-    let flavorNotes: [FlavorNote]
+    let flavorNotes: [String]
 
     enum CodingKeys: String, CodingKey {
         case roaster
@@ -217,11 +215,6 @@ private struct CoffeeFields: Decodable {
         case process
         case flavorNotes = "flavor_notes"
     }
-}
-
-private struct FlavorNote: Decodable {
-    let value: String?
-    let evidence: String?
 }
 
 private struct RejectedRegion: Decodable {
@@ -264,7 +257,6 @@ private func hasExactExtractionShape(_ object: [String: Any]) -> Bool {
         "roaster", "name", "origin", "farm", "variety", "process", "flavor_notes"
     ]
     let evidenceKeys: Set<String> = ["roaster", "name", "origin", "farm", "variety", "process"]
-    let flavorNoteKeys: Set<String> = ["value", "evidence"]
     let rejectedRegionKeys: Set<String> = ["bounding_box", "reason"]
 
     for package in packages {
@@ -273,8 +265,8 @@ private func hasExactExtractionShape(_ object: [String: Any]) -> Bool {
               Set(coffee.keys) == coffeeKeys,
               let evidence = package["evidence"] as? [String: Any],
               Set(evidence.keys) == evidenceKeys,
-              let flavorNotes = coffee["flavor_notes"] as? [[String: Any]],
-              flavorNotes.allSatisfy({ Set($0.keys) == flavorNoteKeys }),
+              let flavorNotes = coffee["flavor_notes"] as? [Any],
+              flavorNotes.allSatisfy({ $0 is String }),
               package["uncertain_fields"] is [String] else {
             return false
         }

@@ -33,7 +33,7 @@ final class BeanExplorerSessionTests: XCTestCase {
     func testExtractionParserReturnsMultipleTemporaryCandidates() throws {
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [
             {
               "package_index": 1,
@@ -45,9 +45,7 @@ final class BeanExplorerSessionTests: XCTestCase {
                 "farm": "Volcan Azul",
                 "variety": "SL28",
                 "process": "Washed",
-                "flavor_notes": [
-                  {"value": "Nectarine", "evidence": "Nectarine"}
-                ]
+                "flavor_notes": ["Nectarine"]
               },
               "evidence": {
                 "roaster": "April",
@@ -98,7 +96,7 @@ final class BeanExplorerSessionTests: XCTestCase {
     func testExtractionParserKeepsValidPackagesAndCountsInvalidOnes() throws {
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [
             {
               "package_index": 1,
@@ -158,7 +156,7 @@ final class BeanExplorerSessionTests: XCTestCase {
     func testExtractionParserRejectsUnsupportedUncertaintyAndMissingEvidence() throws {
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [
             {
               "package_index": 1,
@@ -373,7 +371,7 @@ final class BeanExplorerSessionTests: XCTestCase {
         """
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [\(package), \(package)],
           "rejected_regions": []
         }
@@ -387,7 +385,7 @@ final class BeanExplorerSessionTests: XCTestCase {
     func testExtractionParserRejectsUnknownEnvelopeFields() {
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [],
           "rejected_regions": [],
           "recommendation": "Buy the first one"
@@ -402,7 +400,7 @@ final class BeanExplorerSessionTests: XCTestCase {
     func testExtractionParserRejectsUnknownNestedCoffeeFields() {
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [{
             "package_index": 1,
             "bounding_box": null,
@@ -429,7 +427,7 @@ final class BeanExplorerSessionTests: XCTestCase {
     func testExtractionParserRejectsUnknownRejectedRegionReason() {
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [],
           "rejected_regions": [{"bounding_box": null, "reason": "buy_this_one"}]
         }
@@ -444,7 +442,7 @@ final class BeanExplorerSessionTests: XCTestCase {
         let longValue = String(repeating: "e\u{301}", count: 80) + "x"
         let json = """
         {
-          "schema_version": "bean-explorer-extraction-v1",
+          "schema_version": "bean-explorer-extraction-v2",
           "packages": [{
             "package_index": 1,
             "bounding_box": null,
