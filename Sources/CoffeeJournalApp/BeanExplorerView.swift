@@ -26,7 +26,7 @@ struct BeanExplorerView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 28) {
                     sourceContent
                     if isScanning {
                         scanningContent
@@ -37,24 +37,23 @@ struct BeanExplorerView: View {
                         comparisonUnavailableContent
                     }
                 }
-                .padding(20)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 28)
             }
             .background(CoffeeTheme.background.ignoresSafeArea())
-            .navigationTitle("Find Next Coffee")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Discover")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
                         persistCache()
                         dismiss()
+                    } label: {
+                        Image(systemName: "chevron.backward")
+                            .font(.body.weight(.semibold))
                     }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    if !session.activeSources.isEmpty || !images.isEmpty {
-                        Button("Clear comparison", role: .destructive) {
-                            clearComparison(persist: true)
-                        }
-                    }
+                    .accessibilityLabel("Back")
                 }
             }
         }
@@ -82,9 +81,13 @@ struct BeanExplorerView: View {
     }
 
 
+    private var photoGridColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: 104, maximum: 140), spacing: 12)]
+    }
+
     private var sourceContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
                 PhotosPicker(
                     selection: $selectedPhotoItems,
                     maxSelectionCount: max(0, BeanExplorerSession.maximumImageSources - images.count),
@@ -115,10 +118,8 @@ struct BeanExplorerView: View {
             }
 
             if !images.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(images) { imageThumbnail($0) }
-                    }
+                LazyVGrid(columns: photoGridColumns, spacing: 12) {
+                    ForEach(images) { imageThumbnail($0) }
                 }
             }
         }
@@ -151,7 +152,7 @@ struct BeanExplorerView: View {
     @ViewBuilder
     private var exploreContent: some View {
         if let comparison {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 recommendationCard(
                     title: "Best match",
                     symbol: "checkmark.seal.fill",
@@ -355,9 +356,10 @@ struct BeanExplorerView: View {
             Image(uiImage: item.image)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 92, height: 92)
+                .frame(maxWidth: .infinity)
+                .aspectRatio(1, contentMode: .fit)
                 .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .accessibilityLabel("Selected coffee package image")
 
             VStack(alignment: .trailing, spacing: 4) {
