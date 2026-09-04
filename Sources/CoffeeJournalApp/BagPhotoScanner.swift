@@ -73,14 +73,57 @@ struct BeanExplorerPhotoScanner: Sendable {
             .joined()
     }
 
-    func scan(imageData: Data, remainingCapacity: Int) async throws -> BeanExplorerExtractionResult {
-        let content = try await client.extract(
-            imageData: imageData,
-            systemPrompt: Self.systemPrompt,
-            userPrompt: Self.userPrompt,
-            maxOutputTokens: 3000
-        )
-        return try BeanExplorerExtractionParser().parse(content, remainingCapacity: remainingCapacity)
+    func scan(imageData: Data, remainingCapacity: Int, sourceID: UUID) async throws -> BeanExplorerExtractionResult {
+        let started = Date()
+        DiscoverScanLog.logExtractStart(sourceID: sourceID)
+        var httpStatus: Int?
+        var responseBytes = 0
+        do {
+            let content = try await client.extract(
+                imageData: imageData,
+                systemPrompt: Self.systemPrompt,
+                userPrompt: Self.userPrompt,
+                maxOutputTokens: 3000,
+                didReceiveResponse: { status, bytes in
+                    httpStatus = status
+                    responseBytes = bytes
+                }
+            )
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractSuccess(
+                sourceID: sourceID,
+                status: httpStatus ?? 0,
+                bytes: responseBytes,
+                durationMs: durationMs
+            )
+            return try BeanExplorerExtractionParser().parse(content, remainingCapacity: remainingCapacity)
+        } catch let error as URLError where error.code == .timedOut {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "timeout", durationMs: durationMs)
+            throw error
+        } catch is CancellationError {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "cancel", durationMs: durationMs)
+            throw CancellationError()
+        } catch let error as BagPhotoScannerError {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            switch error {
+            case .requestFailed(let statusCode):
+                DiscoverScanLog.logExtractFailure(
+                    sourceID: sourceID,
+                    reason: "http",
+                    status: statusCode,
+                    durationMs: durationMs
+                )
+            default:
+                DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "error", durationMs: durationMs)
+            }
+            throw error
+        } catch {
+            let durationMs = Int(Date().timeIntervalSince(started) * 1000)
+            DiscoverScanLog.logExtractFailure(sourceID: sourceID, reason: "error", durationMs: durationMs)
+            throw error
+        }
     }
 }
 
@@ -174,7 +217,8 @@ struct ArkResponsesClient: Sendable {
         imageData: Data,
         systemPrompt: String,
         userPrompt: String,
-        maxOutputTokens: Int
+        maxOutputTokens: Int,
+        didReceiveResponse: (@Sendable (Int, Int) -> Void)? = nil
     ) async throws -> String {
         let credentials = try credentialsLoader()
         let jpegData = try compressedJPEGData(from: imageData)
@@ -218,6 +262,7 @@ struct ArkResponsesClient: Sendable {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw BagPhotoScannerError.invalidResponse
         }
+        didReceiveResponse?(httpResponse.statusCode, data.count)
         guard (200..<300).contains(httpResponse.statusCode) else {
             throw BagPhotoScannerError.requestFailed(statusCode: httpResponse.statusCode)
         }

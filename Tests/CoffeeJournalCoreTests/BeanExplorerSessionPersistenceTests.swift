@@ -23,7 +23,7 @@ final class BeanExplorerSessionPersistenceTests: XCTestCase {
                 "flavor_note_0": "Citrus"
             ]
         )
-        XCTAssertTrue(try session.commitExtraction(request: request, drafts: [draft], rejectedCount: 0))
+        try session.commitExtraction(request: request, drafts: [draft], rejectedCount: 0)
         try session.confirmCandidate(id: session.activeCandidates[0].id)
 
         let encoder = JSONEncoder()
