@@ -20,6 +20,9 @@ struct BeanExplorerView: View {
     @State private var isShowingCamera = false
     @State private var cameraCaptureTrigger = 0
     @State private var scanTasks: [UUID: Task<Void, Never>] = [:]
+    @State private var scanQueue: [UUID] = []
+    private let maxConcurrentScans = 2
+    private let scanTimeoutSeconds: TimeInterval = 150
     @State private var errorMessage: String?
     @State private var comparison: BeanExplorerComparison?
 
@@ -107,6 +110,7 @@ struct BeanExplorerView: View {
         .onDisappear {
             scanTasks.values.forEach { $0.cancel() }
             scanTasks.removeAll()
+            scanQueue.removeAll()
             persistCache()
         }
     }
@@ -522,57 +526,106 @@ struct BeanExplorerView: View {
 
     @MainActor
     private func startScan(sourceID: UUID) {
-        guard let image = images.first(where: { $0.id == sourceID }),
-              scanTasks[sourceID] == nil else { return }
-        let remainingCapacity = BeanExplorerSession.maximumCandidates - session.activeCandidates.count
-        guard remainingCapacity > 0 else {
-            errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
-            return
+        guard images.contains(where: { $0.id == sourceID }) else { return }
+        guard scanTasks[sourceID] == nil else { return }
+        if !scanQueue.contains(sourceID) {
+            scanQueue.append(sourceID)
         }
+        pumpScanQueue()
+    }
 
-        let request: BeanExplorerExtractionRequest
-        do {
-            request = try session.beginExtraction(
-                sourceID: sourceID,
-                promptContractHash: BeanExplorerPhotoScanner.promptContractHash
-            )
-        } catch {
-            errorMessage = message(for: error)
-            return
-        }
+    @MainActor
+    private func pumpScanQueue() {
+        while scanTasks.count < maxConcurrentScans, let sourceID = scanQueue.first {
+            scanQueue.removeFirst()
+            guard let image = images.first(where: { $0.id == sourceID }) else { continue }
+            guard scanTasks[sourceID] == nil else { continue }
 
-        scanTasks[sourceID] = Task {
+            let remainingCapacity = BeanExplorerSession.maximumCandidates - session.activeCandidates.count
+            guard remainingCapacity > 0 else {
+                errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
+                try? session.cancelRequest(sourceID: sourceID)
+                continue
+            }
+
+            let request: BeanExplorerExtractionRequest
             do {
-                let result = try await BeanExplorerPhotoScanner().scan(
-                    imageData: image.data,
-                    remainingCapacity: remainingCapacity
+                request = try session.beginExtraction(
+                    sourceID: sourceID,
+                    promptContractHash: BeanExplorerPhotoScanner.promptContractHash
                 )
-                try Task.checkCancellation()
-                let committed = try session.commitExtraction(
-                    request: request,
-                    drafts: result.candidates,
-                    rejectedCount: result.rejectedCount
-                )
-                if committed {
-                    for candidate in session.activeCandidates where candidate.sourceID == sourceID {
-                        trustCandidateIfPossible(candidate.id)
+            } catch {
+                errorMessage = message(for: error)
+                continue
+            }
+
+            scanTasks[sourceID] = Task { @MainActor in
+                defer {
+                    scanTasks[sourceID] = nil
+                    pumpScanQueue()
+                }
+                do {
+                    let result = try await withTimeout(seconds: scanTimeoutSeconds) {
+                        try await BeanExplorerPhotoScanner().scan(
+                            imageData: image.data,
+                            remainingCapacity: remainingCapacity
+                        )
+                    }
+                    try Task.checkCancellation()
+                    let committed = try session.commitExtraction(
+                        request: request,
+                        drafts: result.candidates,
+                        rejectedCount: result.rejectedCount
+                    )
+                    if committed {
+                        for candidate in session.activeCandidates where candidate.sourceID == sourceID {
+                            trustCandidateIfPossible(candidate.id)
+                        }
+                    } else {
+                        // Prompt/revision mismatch left the source in .uploading otherwise.
+                        _ = session.failExtraction(request: request)
+                        errorMessage = "The image could not be read. Touch and hold the photo to try again."
+                    }
+                    refreshComparison()
+                } catch is CancellationError {
+                    try? session.cancelRequest(sourceID: sourceID)
+                    refreshComparison()
+                } catch is TimeoutError {
+                    _ = session.failExtraction(request: request)
+                    errorMessage = "Reading timed out. Tap the photo to try again."
+                    refreshComparison()
+                } catch {
+                    _ = session.failExtraction(request: request)
+                    if case BagPhotoScannerError.missingAPIKey = error {
+                        errorMessage = error.localizedDescription
+                    } else if case BeanExplorerSessionError.candidateLimitReached = error {
+                        errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
+                    } else {
+                        errorMessage = "The image could not be read. Touch and hold the photo to try again."
                     }
                     refreshComparison()
                 }
-            } catch is CancellationError {
-                try? session.cancelRequest(sourceID: sourceID)
-            } catch {
-                _ = session.failExtraction(request: request)
-                if case BagPhotoScannerError.missingAPIKey = error {
-                    errorMessage = error.localizedDescription
-                } else if case BeanExplorerSessionError.candidateLimitReached = error {
-                    errorMessage = "This comparison already has \(BeanExplorerSession.maximumCandidates) coffees."
-                } else {
-                    errorMessage = "The image could not be read. Touch and hold the photo to try again."
-                }
-                refreshComparison()
             }
-            scanTasks[sourceID] = nil
+        }
+    }
+
+    private func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw TimeoutError()
+            }
+            guard let value = try await group.next() else {
+                throw TimeoutError()
+            }
+            group.cancelAll()
+            return value
         }
     }
 
@@ -776,6 +829,12 @@ struct BeanExplorerView: View {
 
     /// Continue interrupted / failed extractions without a dedicated button.
     private func resumeIncompleteScans() {
+        // Orphan .uploading rows (no live Task) can pin the UI on "Reading…" forever.
+        for source in session.activeSources where source.kind == .image {
+            if case .uploading = source.requestState, scanTasks[source.id] == nil {
+                try? session.cancelRequest(sourceID: source.id)
+            }
+        }
         for source in session.activeSources where source.kind == .image {
             guard images.contains(where: { $0.id == source.id }) else { continue }
             guard sourceCanScan(source.id) else { continue }
@@ -861,6 +920,8 @@ private enum BeanExplorerImageError: Error {
     case invalidImage
     case imageTooLarge
 }
+
+private struct TimeoutError: Error {}
 
 private extension String {
     var explorerFlavorNotes: [String] {

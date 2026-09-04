@@ -164,6 +164,10 @@ struct ArkResponsesClient: Sendable {
             let configuration = URLSessionConfiguration.ephemeral
             configuration.urlCache = nil
             configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+            // Default resource timeout is ~7 days — a hung Ark call would keep
+            // Discover stuck on "Reading…" indefinitely. Cap both timers.
+            configuration.timeoutIntervalForRequest = 60
+            configuration.timeoutIntervalForResource = 150
             self.session = URLSession(configuration: configuration)
             invalidatesSessionAfterRequest = true
         }
@@ -205,7 +209,7 @@ struct ArkResponsesClient: Sendable {
         request.setValue("Bearer \(credentials.apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(payload)
-        request.timeoutInterval = 120
+        request.timeoutInterval = 60
 
         defer {
             if invalidatesSessionAfterRequest {
@@ -264,7 +268,7 @@ struct ArkResponsesClient: Sendable {
         request.setValue("Bearer \(credentials.apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(payload)
-        request.timeoutInterval = 120
+        request.timeoutInterval = 60
 
         defer {
             if invalidatesSessionAfterRequest {
