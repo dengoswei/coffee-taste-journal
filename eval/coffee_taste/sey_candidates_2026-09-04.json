@@ -1,0 +1,176 @@
+{
+  "schema_version": 2,
+  "checked_at": "2026-09-04",
+  "dataset_role": "alignment_test_fixture",
+  "purpose": "Three SEY Coffee coffees with both Chinese and English descriptors for testing skill vs app alignment. This fixture validates that the App normalize→score path matches the skill/portable scorer path when Chinese notes are properly normalized to canonical families and origin/process keys.",
+  "source_policy": {
+    "roaster": "SEY Coffee",
+    "descriptor_status": "Seller claims with both Chinese and English versions from product pages",
+    "description_status": "Test fixture for normalize alignment; not used for profile fitting or tuning",
+    "scoring_boundary": "This fixture tests that Chinese descriptors 浆果/热带水果/洛神花/佛手柑 normalize to the same families as their English equivalents berry/tropical fruit/hibiscus/bergamot, and that Chinese origin/process terms normalize to canonical prior keys (Ethiopia, Colombia, Peru, Washed, Honey)."
+  },
+  "recommendation_snapshot": {
+    "scored_at": "2026-09-04",
+    "score_mode": "portable_profile",
+    "profile_id": "0baa7bac874e6da3365bdf9778dd760e154f34bf42b2089b5b2ac291c8f9c54d",
+    "profile_generated_at": "2026-08-02T14:14:27.021210+00:00",
+    "evidence_base": "53 rated observations: Loved 7, Liked 34, Ok 12.",
+    "history_adjustment_available": false,
+    "safe_match": "sey_sl9_peru_washed",
+    "frontier_pick": "sey_keramo_ethiopia_honey",
+    "score_note": "Expected ranking: SL9 (Fit 69.0, Novelty 10.0) > Keramo (Fit 68.5, Novelty 10.0) > Susan (Fit 63.8, Novelty 10.0). Novelty is ~10 when origin/process resolve properly (not 42.5 as in the broken lexicon path). This snapshot is the gold standard for alignment testing.",
+    "gold_ranking": [
+      {
+        "candidate_id": "sey_sl9_peru_washed",
+        "fit_score": 69.0,
+        "novelty_score": 10.0,
+        "descriptor_categories": ["fruit.citrus", "fruit.stone", "sweet.browning"]
+      },
+      {
+        "candidate_id": "sey_keramo_ethiopia_honey",
+        "fit_score": 68.5,
+        "novelty_score": 10.0,
+        "descriptor_categories": ["floral", "fruit.berry", "fruit.citrus", "fruit.tropical"]
+      },
+      {
+        "candidate_id": "sey_susan_colombia_washed",
+        "fit_score": 63.8,
+        "novelty_score": 10.0,
+        "descriptor_categories": ["fruit.pome", "sweet.browning", "tea"]
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "sey_keramo_ethiopia_honey",
+      "roaster": "SEY",
+      "roaster_full": "SEY Coffee",
+      "name": "Keramo Ethiopia Honey",
+      "name_zh": "Keramo 埃塞俄比亚 蜜处理",
+      "origin": "Ethiopia",
+      "region": "Guji",
+      "farm": "Keramo",
+      "producer": null,
+      "variety": "Heirloom",
+      "process": "Honey",
+      "altitude_m": null,
+      "weight_grams": 200,
+      "descriptors": [
+        "浆果",
+        "berry",
+        "热带水果",
+        "tropical fruit",
+        "洛神花",
+        "hibiscus",
+        "佛手柑",
+        "bergamot"
+      ],
+      "descriptors_chinese_only": [
+        "浆果",
+        "热带水果",
+        "洛神花",
+        "佛手柑"
+      ],
+      "descriptors_english_only": [
+        "berry",
+        "tropical fruit",
+        "hibiscus",
+        "bergamot"
+      ],
+      "source_flavor_text": "浆果、热带水果、洛神花、佛手柑 / Berry, Tropical fruit, Hibiscus, Bergamot",
+      "seller_sensory_reference": {},
+      "seller_brew_reference": {},
+      "expected_normalized": {
+        "flavor_families": ["fruit.berry", "fruit.tropical", "floral", "fruit.citrus"],
+        "origin": "Ethiopia",
+        "process": "Honey"
+      }
+    },
+    {
+      "id": "sey_sl9_peru_washed",
+      "roaster": "SEY",
+      "roaster_full": "SEY Coffee",
+      "name": "SL9 Peru Washed",
+      "name_zh": "SL9 秘鲁 水洗",
+      "origin": "Peru",
+      "region": "Cajamarca",
+      "farm": null,
+      "producer": "Various smallholders",
+      "variety": "Caturra, Bourbon",
+      "process": "Washed",
+      "altitude_m": null,
+      "weight_grams": 200,
+      "descriptors": [
+        "柑橘",
+        "citrus",
+        "核果",
+        "stone fruit",
+        "焦糖",
+        "caramel",
+        "蜂蜜",
+        "honey"
+      ],
+      "descriptors_chinese_only": [
+        "柑橘",
+        "核果",
+        "焦糖",
+        "蜂蜜"
+      ],
+      "descriptors_english_only": [
+        "citrus",
+        "stone fruit",
+        "caramel",
+        "honey"
+      ],
+      "source_flavor_text": "柑橘、核果、焦糖、蜂蜜 / Citrus, Stone fruit, Caramel, Honey",
+      "seller_sensory_reference": {},
+      "seller_brew_reference": {},
+      "expected_normalized": {
+        "flavor_families": ["fruit.citrus", "fruit.stone", "sweet.browning"],
+        "origin": "Peru",
+        "process": "Washed"
+      }
+    },
+    {
+      "id": "sey_susan_colombia_washed",
+      "roaster": "SEY",
+      "roaster_full": "SEY Coffee",
+      "name": "Susan Colombia Washed",
+      "name_zh": "Susan 哥伦比亚 水洗",
+      "origin": "Colombia",
+      "region": "Huila",
+      "farm": "Finca El Diviso",
+      "producer": "Rodrigo Sanchez",
+      "variety": "Caturra",
+      "process": "Washed",
+      "altitude_m": null,
+      "weight_grams": 200,
+      "descriptors": [
+        "苹果",
+        "apple",
+        "焦糖",
+        "caramel",
+        "红茶",
+        "black tea"
+      ],
+      "descriptors_chinese_only": [
+        "苹果",
+        "焦糖",
+        "红茶"
+      ],
+      "descriptors_english_only": [
+        "apple",
+        "caramel",
+        "black tea"
+      ],
+      "source_flavor_text": "苹果、焦糖、红茶 / Apple, Caramel, Black tea",
+      "seller_sensory_reference": {},
+      "seller_brew_reference": {},
+      "expected_normalized": {
+        "flavor_families": ["fruit.pome", "sweet.browning", "tea"],
+        "origin": "Colombia",
+        "process": "Washed"
+      }
+    }
+  ]
+}
