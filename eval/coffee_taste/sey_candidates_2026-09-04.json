@@ -1,0 +1,174 @@
+{
+  "schema_version": 2,
+  "checked_at": "2026-09-04",
+  "dataset_role": "alignment_test_fixture",
+  "purpose": "Three SEY Coffee coffees with both Chinese and English descriptors for testing skill vs app alignment. This fixture validates that the App normalize→score path matches the skill/portable scorer path when Chinese notes are properly normalized to canonical families and origin/process keys.",
+  "source_policy": {
+    "roaster": "SEY Coffee",
+    "descriptor_status": "Seller claims with both Chinese and English versions from product pages",
+    "description_status": "Test fixture for normalize alignment; not used for profile fitting or tuning",
+    "scoring_boundary": "This fixture tests that Chinese descriptors 浆果/热带水果/洛神花/佛手柑 normalize to the same families as their English equivalents berry/tropical fruit/hibiscus/bergamot, and that Chinese origin/process terms normalize to canonical prior keys (Ethiopia, Colombia, Peru, Washed, Honey)."
+  },
+  "recommendation_snapshot": {
+    "scored_at": "2026-09-04",
+    "score_mode": "portable_profile",
+    "profile_id": "0baa7bac874e6da3365bdf9778dd760e154f34bf42b2089b5b2ac291c8f9c54d",
+    "profile_generated_at": "2026-08-02T14:14:27.021210+00:00",
+    "evidence_base": "53 rated observations: Loved 7, Liked 34, Ok 12.",
+    "history_adjustment_available": false,
+    "safe_match": "sey_keramo_ethiopia_honey",
+    "frontier_pick": "sey_sl9_peru_washed",
+    "score_note": "Expected ranking with corrected real bag notes: Keramo (Fit 69.3, Novelty 10.0) > SL9 (Fit 68.4, Novelty 10.0) > Susan (Fit 67.9, Novelty 10.0). All three in similar-fit band (delta < 1.5). Novelty is ~10 when origin/process resolve properly (not 42.5 as in broken lexicon path). This snapshot is the gold standard for alignment testing.",
+    "gold_ranking": [
+      {
+        "candidate_id": "sey_keramo_ethiopia_honey",
+        "fit_score": 69.3,
+        "novelty_score": 10.0,
+        "descriptor_categories": ["fruit.berry", "fruit.citrus", "fruit.tropical"]
+      },
+      {
+        "candidate_id": "sey_sl9_peru_washed",
+        "fit_score": 68.4,
+        "novelty_score": 10.0,
+        "descriptor_categories": ["fruit.berry", "fruit.tropical"]
+      },
+      {
+        "candidate_id": "sey_susan_colombia_washed",
+        "fit_score": 67.9,
+        "novelty_score": 10.0,
+        "descriptor_categories": ["floral", "fruit.berry", "fruit.citrus"]
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "sey_keramo_ethiopia_honey",
+      "roaster": "SEY",
+      "roaster_full": "SEY Coffee",
+      "name": "Mate Matiwos Keramo 74158 Honey",
+      "name_zh": "Mate Matiwos Keramo 74158 蜜处理",
+      "origin": "Ethiopia",
+      "origin_zh": "埃塞俄比亚",
+      "region": "Guji",
+      "farm": "Keramo",
+      "producer": "Mate Matiwos",
+      "variety": "74158",
+      "process": "Honey",
+      "process_zh": "蜜处理",
+      "altitude_m": null,
+      "weight_grams": 200,
+      "descriptors": [
+        "浆果",
+        "berries",
+        "热带水果",
+        "tropical fruit",
+        "佛手柑",
+        "bergamot"
+      ],
+      "descriptors_chinese_only": [
+        "浆果",
+        "热带水果",
+        "佛手柑"
+      ],
+      "descriptors_english_only": [
+        "berries",
+        "tropical fruit",
+        "bergamot"
+      ],
+      "source_flavor_text": "浆果、热带水果、佛手柑 / Berries, Tropical fruit, Bergamot",
+      "seller_sensory_reference": {},
+      "seller_brew_reference": {},
+      "expected_normalized": {
+        "flavor_families": ["fruit.berry", "fruit.tropical", "fruit.citrus"],
+        "origin": "Ethiopia",
+        "process": "Honey"
+      }
+    },
+    {
+      "id": "sey_sl9_peru_washed",
+      "roaster": "SEY",
+      "roaster_full": "SEY Coffee",
+      "name": "Alejandrina Maytan Kukipata SL9 Washed",
+      "name_zh": "Alejandrina Maytan Kukipata SL9 水洗",
+      "origin": "Peru",
+      "origin_zh": "秘鲁",
+      "region": "Cajamarca",
+      "farm": "Kukipata",
+      "producer": "Alejandrina Maytan",
+      "variety": "SL9",
+      "process": "Washed",
+      "process_zh": "水洗",
+      "altitude_m": null,
+      "weight_grams": 200,
+      "descriptors": [
+        "热带水果",
+        "yellow tropical fruit",
+        "草莓",
+        "strawberry",
+        "柔和酸质",
+        "soft but lifting acidity"
+      ],
+      "descriptors_chinese_only": [
+        "热带水果",
+        "草莓",
+        "柔和酸质"
+      ],
+      "descriptors_english_only": [
+        "yellow tropical fruit",
+        "strawberry",
+        "soft but lifting acidity"
+      ],
+      "source_flavor_text": "热带水果、草莓、柔和酸质 / Yellow tropical fruit, Strawberry, Soft but lifting acidity",
+      "seller_sensory_reference": {},
+      "seller_brew_reference": {},
+      "expected_normalized": {
+        "flavor_families": ["fruit.tropical", "fruit.berry"],
+        "origin": "Peru",
+        "process": "Washed"
+      }
+    },
+    {
+      "id": "sey_susan_colombia_washed",
+      "roaster": "SEY",
+      "roaster_full": "SEY Coffee",
+      "name": "Susan Meneses Pink Bourbon Washed",
+      "name_zh": "Susan Meneses 粉红波旁 水洗",
+      "origin": "Colombia",
+      "origin_zh": "哥伦比亚",
+      "region": "Huila",
+      "farm": null,
+      "producer": "Susan Meneses",
+      "variety": "Pink Bourbon",
+      "process": "Washed",
+      "process_zh": "水洗",
+      "altitude_m": null,
+      "weight_grams": 200,
+      "descriptors": [
+        "洛神花",
+        "hibiscus",
+        "蓝莓",
+        "blueberry",
+        "手指柠檬",
+        "finger lime"
+      ],
+      "descriptors_chinese_only": [
+        "洛神花",
+        "蓝莓",
+        "手指柠檬"
+      ],
+      "descriptors_english_only": [
+        "hibiscus",
+        "blueberry",
+        "finger lime"
+      ],
+      "source_flavor_text": "洛神花、蓝莓、手指柠檬 / Hibiscus, Blueberry, Finger lime",
+      "seller_sensory_reference": {},
+      "seller_brew_reference": {},
+      "expected_normalized": {
+        "flavor_families": ["floral", "fruit.berry", "fruit.citrus"],
+        "origin": "Colombia",
+        "process": "Washed"
+      }
+    }
+  ]
+}
