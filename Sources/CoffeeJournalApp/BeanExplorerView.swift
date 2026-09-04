@@ -19,7 +19,6 @@ struct BeanExplorerView: View {
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var isShowingCamera = false
     @State private var cameraCaptureTrigger = 0
-    @State private var isShowingManualEntry = false
     @State private var scanTasks: [UUID: Task<Void, Never>] = [:]
     @State private var errorMessage: String?
     @State private var comparison: BeanExplorerComparison?
@@ -52,22 +51,11 @@ struct BeanExplorerView: View {
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Button {
-                            isShowingManualEntry = true
-                        } label: {
-                            Label("Enter coffee manually", systemImage: "square.and.pencil")
+                    if !session.activeSources.isEmpty || !images.isEmpty {
+                        Button("Clear comparison", role: .destructive) {
+                            clearComparison(persist: true)
                         }
-                        .disabled(session.activeCandidates.count >= BeanExplorerSession.maximumCandidates)
-                        if !session.activeSources.isEmpty || !images.isEmpty {
-                            Button("Clear comparison", role: .destructive) {
-                                clearComparison(persist: true)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("More options")
                 }
             }
         }
@@ -86,17 +74,6 @@ struct BeanExplorerView: View {
         }
         .fullScreenCover(isPresented: $isShowingCamera) {
             cameraCapture
-        }
-        .sheet(isPresented: $isShowingManualEntry) {
-            ManualExplorerCandidateSheet { draft in
-                do {
-                    let candidate = try session.addManualCandidate(draft)
-                    trustCandidateIfPossible(candidate.id)
-                    refreshComparison()
-                } catch {
-                    errorMessage = message(for: error)
-                }
-            }
         }
         .onDisappear {
             scanTasks.values.forEach { $0.cancel() }
@@ -172,7 +149,7 @@ struct BeanExplorerView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(scorableCandidateCount < 2 ? "Add more coffees to compare" : "Comparison in progress")
                 .font(.subheadline.weight(.semibold))
-            Text("Add photos or enter coffee manually. The recommendation will appear when at least two coffees can be scored.")
+            Text("Add photos of coffee packages. The recommendation will appear when at least two coffees can be scored.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -864,94 +841,6 @@ struct BeanExplorerView: View {
 private enum BeanExplorerImageError: Error {
     case invalidImage
     case imageTooLarge
-}
-
-private struct ManualExplorerCandidateSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var roaster: String
-    @State private var name: String
-    @State private var origin: String
-    @State private var farm: String
-    @State private var variety: String
-    @State private var process: String
-    @State private var flavorNotes: String
-
-    let title: String
-    let actionTitle: String
-    let initialDraft: BeanExplorerCandidateDraft
-    let onAdd: (BeanExplorerCandidateDraft) -> Void
-
-    init(
-        title: String = "Manual Candidate",
-        actionTitle: String = "Add",
-        initialDraft: BeanExplorerCandidateDraft = .init(),
-        onAdd: @escaping (BeanExplorerCandidateDraft) -> Void
-    ) {
-        self.title = title
-        self.actionTitle = actionTitle
-        self.initialDraft = initialDraft
-        self.onAdd = onAdd
-        _roaster = State(initialValue: initialDraft.roaster)
-        _name = State(initialValue: initialDraft.name)
-        _origin = State(initialValue: initialDraft.origin)
-        _farm = State(initialValue: initialDraft.farm)
-        _variety = State(initialValue: initialDraft.variety)
-        _process = State(initialValue: initialDraft.process)
-        _flavorNotes = State(initialValue: initialDraft.flavorNotes.joined(separator: ", "))
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Coffee") {
-                    TextField("Roaster", text: $roaster)
-                    TextField("Coffee name", text: $name)
-                    TextField("Origin", text: $origin)
-                    TextField("Farm or producer", text: $farm)
-                    TextField("Variety", text: $variety)
-                    TextField("Process", text: $process)
-                    TextField("Flavor notes, comma separated", text: $flavorNotes, axis: .vertical)
-                }
-                Section {
-                    Text("Manual values stay linked to this comparison source and are kept until you clear the comparison or choose new photos.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(actionTitle) {
-                        onAdd(
-                            .init(
-                                roaster: roaster.trimmingCharacters(in: .whitespacesAndNewlines),
-                                name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                                origin: origin.trimmingCharacters(in: .whitespacesAndNewlines),
-                                farm: farm.trimmingCharacters(in: .whitespacesAndNewlines),
-                                variety: variety.trimmingCharacters(in: .whitespacesAndNewlines),
-                                process: process.trimmingCharacters(in: .whitespacesAndNewlines),
-                                flavorNotes: flavorNotes.explorerFlavorNotes,
-                                evidence: initialDraft.evidence,
-                                uncertainFields: initialDraft.uncertainFields,
-                                boundingBox: initialDraft.boundingBox
-                            )
-                        )
-                        dismiss()
-                    }
-                    .disabled(isDraftEmpty)
-                }
-            }
-        }
-    }
-
-    private var isDraftEmpty: Bool {
-        [roaster, name, origin, farm, variety, process, flavorNotes]
-            .allSatisfy { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-    }
 }
 
 private extension String {
