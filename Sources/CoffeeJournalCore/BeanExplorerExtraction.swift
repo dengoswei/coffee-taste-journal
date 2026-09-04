@@ -1,6 +1,6 @@
 import Foundation
 
-public struct BeanExplorerBoundingBox: Equatable, Sendable {
+public struct BeanExplorerBoundingBox: Equatable, Sendable, Codable {
     public let top: Double
     public let left: Double
     public let bottom: Double

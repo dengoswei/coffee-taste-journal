@@ -27,10 +27,12 @@
 		94BD2C9AC025200EA2F5C64E /* BagPhotoScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B92F6180AC390F19A8E032C /* BagPhotoScanner.swift */; };
 		94BF4024C5B77D8BCF8699FB /* CoffeeJournalCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */; };
 		9F6FCA7A818F308CD7E8DE2E /* CoffeeJournalApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDD85A1953754840B868C27C /* CoffeeJournalApp.swift */; };
+		A4210475EDB7227834678EF1 /* BeanExplorerSessionPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D7125370741C01EC1F009B /* BeanExplorerSessionPersistenceTests.swift */; };
 		A4B51F377B8ECB14CA1022DC /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005D53A8E210D637797E209D /* SampleData.swift */; };
 		A53BD5634E7862C1EE6AD9E5 /* profile-parity-fixtures.json in Resources */ = {isa = PBXBuildFile; fileRef = 990D8C6D05AD3A905BD39591 /* profile-parity-fixtures.json */; };
 		ABDED25F186FD14CF68AB8FE /* CoffeeJournalCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EDB166C375F46DBD7DEF3A8 /* CoffeeJournalCoreTests.swift */; };
 		B092399710FEDDB8A7790426 /* BeanExplorerProfileResourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D366FEACA799D9F1C3F0DBE /* BeanExplorerProfileResourceTests.swift */; };
+		B7EE412D176B877FC5525763 /* BeanExplorerPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43823121429BCF43F9701ED7 /* BeanExplorerPersistence.swift */; };
 		CD0983AB0C9C8398D8ABE996 /* ArkSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7088610246FAC0012BEAD2A /* ArkSupport.swift */; };
 		D509C23F94FB510DD1D0354A /* BagPhotoScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1D26885E2CD34475568C /* BagPhotoScannerTests.swift */; };
 		DCFE8FB1348B2F795FE9A791 /* CoffeeJournalCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E79D9D696793778849E26A2A /* CoffeeJournalCore.framework */; };
@@ -101,6 +103,7 @@
 		264DF502E7CE6ADF61FC929C /* BagPhotoLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagPhotoLibrary.swift; sourceTree = "<group>"; };
 		2A85B3E331AC522746F2FAA6 /* CoffeeJournalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeeJournalStore.swift; sourceTree = "<group>"; };
 		3495166DECA9E130727E554F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		43823121429BCF43F9701ED7 /* BeanExplorerPersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerPersistence.swift; sourceTree = "<group>"; };
 		59B473D256F72C6846449513 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		6636D643B05C92D53B399038 /* BeansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeansView.swift; sourceTree = "<group>"; };
 		676CE3779DC28DDAB09CCF6F /* CoffeeJournalAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CoffeeJournalAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -115,6 +118,7 @@
 		93BB470D2BF9E1DB96EF2865 /* BeanExplorerSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerSessionTests.swift; sourceTree = "<group>"; };
 		95A6EB8BD0EDA0A804CCF927 /* FlavorArtworkBackgroundCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlavorArtworkBackgroundCoordinator.swift; sourceTree = "<group>"; };
 		990D8C6D05AD3A905BD39591 /* profile-parity-fixtures.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "profile-parity-fixtures.json"; sourceTree = "<group>"; };
+		A5D7125370741C01EC1F009B /* BeanExplorerSessionPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerSessionPersistenceTests.swift; sourceTree = "<group>"; };
 		AACEE583B525AD462A7ECB93 /* BeanExplorerExtractionContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanExplorerExtractionContract.swift; sourceTree = "<group>"; };
 		B8DC5096033EBBAA69ACFEE5 /* PersonalTasteProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalTasteProfile.swift; sourceTree = "<group>"; };
 		BDD85A1953754840B868C27C /* CoffeeJournalApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeeJournalApp.swift; sourceTree = "<group>"; };
@@ -199,6 +203,7 @@
 			isa = PBXGroup;
 			children = (
 				E138423FDB9840E15596526B /* BeanExplorerScoringTests.swift */,
+				A5D7125370741C01EC1F009B /* BeanExplorerSessionPersistenceTests.swift */,
 				93BB470D2BF9E1DB96EF2865 /* BeanExplorerSessionTests.swift */,
 				7EDB166C375F46DBD7DEF3A8 /* CoffeeJournalCoreTests.swift */,
 			);
@@ -224,6 +229,7 @@
 				264DF502E7CE6ADF61FC929C /* BagPhotoLibrary.swift */,
 				6B92F6180AC390F19A8E032C /* BagPhotoScanner.swift */,
 				0C9E99F54E7734C54CB5A424 /* BeanExplorerGeneratedContract.swift */,
+				43823121429BCF43F9701ED7 /* BeanExplorerPersistence.swift */,
 				CCE602F5F55B2FB8CC287ECE /* BeanExplorerProfileResource.swift */,
 				DFF24AD8709E604DE603D9D9 /* BeanExplorerView.swift */,
 				6636D643B05C92D53B399038 /* BeansView.swift */,
@@ -369,10 +375,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AC8FF142B9DD04EDE7F30757 /* CoffeeJournalCore */,
 				6E877B1117CB20298A9251D8 /* CoffeeJournalApp */,
-				44B3B166A3F728475EC5D2D0 /* CoffeeJournalCoreTests */,
 				30477AA26AC874F83241F118 /* CoffeeJournalAppTests */,
+				AC8FF142B9DD04EDE7F30757 /* CoffeeJournalCore */,
+				44B3B166A3F728475EC5D2D0 /* CoffeeJournalCoreTests */,
 			);
 		};
 /* End PBXProject section */
@@ -424,6 +430,7 @@
 				F98E57F4A1D21B4512179BED /* BagPhotoLibrary.swift in Sources */,
 				94BD2C9AC025200EA2F5C64E /* BagPhotoScanner.swift in Sources */,
 				6765BE814F5551972EE01656 /* BeanExplorerGeneratedContract.swift in Sources */,
+				B7EE412D176B877FC5525763 /* BeanExplorerPersistence.swift in Sources */,
 				FD05B62F4482EEC41CD68761 /* BeanExplorerProfileResource.swift in Sources */,
 				8721416473F6A58AA3947C18 /* BeanExplorerView.swift in Sources */,
 				F7676B67938894F4F2E42F18 /* BeansView.swift in Sources */,
@@ -441,6 +448,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				246C6A8A6F4434D5003CD270 /* BeanExplorerScoringTests.swift in Sources */,
+				A4210475EDB7227834678EF1 /* BeanExplorerSessionPersistenceTests.swift in Sources */,
 				39664569A5E77DCC08ECBFFC /* BeanExplorerSessionTests.swift in Sources */,
 				ABDED25F186FD14CF68AB8FE /* CoffeeJournalCoreTests.swift in Sources */,
 			);

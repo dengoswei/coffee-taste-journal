@@ -8,7 +8,7 @@ public enum BeanExplorerSessionError: Error, Equatable, Sendable {
     case unresolvedCandidateFields(Set<String>)
 }
 
-public enum BeanExplorerFieldProvenance: String, Equatable, Sendable {
+public enum BeanExplorerFieldProvenance: String, Equatable, Sendable, Codable {
     case extracted
     case userEntered
 }
@@ -32,7 +32,7 @@ public struct BeanExplorerExtractionRequest: Equatable, Sendable {
     }
 }
 
-public struct BeanExplorerCandidateDraft: Equatable, Sendable {
+public struct BeanExplorerCandidateDraft: Equatable, Sendable, Codable {
     public var roaster: String
     public var name: String
     public var origin: String
@@ -69,7 +69,7 @@ public struct BeanExplorerCandidateDraft: Equatable, Sendable {
     }
 }
 
-public struct BeanExplorerCandidate: Identifiable, Equatable, Sendable {
+public struct BeanExplorerCandidate: Identifiable, Equatable, Sendable, Codable {
     public let id: String
     public let rankOrdinal: Int
     public let sourceID: UUID
@@ -100,13 +100,13 @@ public struct BeanExplorerCandidate: Identifiable, Equatable, Sendable {
     }
 }
 
-public struct BeanExplorerSource: Identifiable, Equatable, Sendable {
-    public enum Kind: Equatable, Sendable {
+public struct BeanExplorerSource: Identifiable, Equatable, Sendable, Codable {
+    public enum Kind: String, Equatable, Sendable, Codable {
         case image
         case manual
     }
 
-    public enum RequestState: Equatable, Sendable {
+    public enum RequestState: Equatable, Sendable, Codable {
         case idle
         case uploading
         case partialSuccess(validCount: Int, rejectedCount: Int)
@@ -139,7 +139,7 @@ public struct BeanExplorerSource: Identifiable, Equatable, Sendable {
     }
 }
 
-public struct BeanExplorerSession: Equatable, Sendable {
+public struct BeanExplorerSession: Equatable, Sendable, Codable {
     public static let maximumCandidates = 8
     public static let maximumImageSources = 5
 
@@ -147,6 +147,11 @@ public struct BeanExplorerSession: Equatable, Sendable {
     public private(set) var candidates: [BeanExplorerCandidate] = []
 
     public init() {}
+
+    public mutating func clear() {
+        sources = []
+        candidates = []
+    }
 
     public var activeCandidates: [BeanExplorerCandidate] {
         candidates.filter { !$0.isRemoved }

@@ -15,12 +15,12 @@ struct BeanExplorerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var session = BeanExplorerSession()
     @State private var images: [CollectedImage] = []
+    @State private var didRestoreCache = false
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var isShowingCamera = false
     @State private var cameraCaptureTrigger = 0
     @State private var isShowingManualEntry = false
     @State private var candidateForEditing: BeanExplorerCandidate?
-    @State private var isConfirmingDiscard = false
     @State private var scanTasks: [UUID: Task<Void, Never>] = [:]
     @State private var errorMessage: String?
     @State private var comparison: BeanExplorerComparison?
@@ -51,11 +51,8 @@ struct BeanExplorerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
-                        if session.activeSources.isEmpty {
-                            dismiss()
-                        } else {
-                            isConfirmingDiscard = true
-                        }
+                        persistCache()
+                        dismiss()
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
@@ -65,34 +62,31 @@ struct BeanExplorerView: View {
                         } label: {
                             Label("Enter coffee manually", systemImage: "square.and.pencil")
                         }
+                        .disabled(session.activeCandidates.count >= BeanExplorerSession.maximumCandidates)
+                        if !session.activeSources.isEmpty || !images.isEmpty {
+                            Button("Clear comparison", role: .destructive) {
+                                clearComparison(persist: true)
+                            }
+                        }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
-                    .disabled(session.activeCandidates.count >= BeanExplorerSession.maximumCandidates)
                     .accessibilityLabel("More options")
                 }
             }
-        }
-        .interactiveDismissDisabled(!session.activeSources.isEmpty)
-        .confirmationDialog(
-            "Discard this comparison?",
-            isPresented: $isConfirmingDiscard,
-            titleVisibility: .visible
-        ) {
-            Button("Discard Comparison", role: .destructive) { dismiss() }
-            Button("Keep Comparing", role: .cancel) {}
-        } message: {
-            Text("Images and candidates exist only in this temporary session.")
         }
         .alert("Something went wrong", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "Unknown error")
         }
+        .onAppear {
+            restoreCacheIfNeeded()
+        }
         .onChange(of: selectedPhotoItems) { _, items in
             guard !items.isEmpty else { return }
             selectedPhotoItems = []
-            Task { await loadPhotoItems(items) }
+            Task { await refreshWithPhotoItems(items) }
         }
         .fullScreenCover(isPresented: $isShowingCamera) {
             cameraCapture
@@ -126,6 +120,7 @@ struct BeanExplorerView: View {
         .onDisappear {
             scanTasks.values.forEach { $0.cancel() }
             scanTasks.removeAll()
+            persistCache()
         }
     }
 
@@ -144,16 +139,15 @@ struct BeanExplorerView: View {
             HStack(spacing: 10) {
                 PhotosPicker(
                     selection: $selectedPhotoItems,
-                    maxSelectionCount: max(1, BeanExplorerSession.maximumImageSources - session.activeImageSourceCount),
+                    maxSelectionCount: BeanExplorerSession.maximumImageSources,
                     matching: .images
                 ) {
-                    Label("Choose photos", systemImage: "photo.on.rectangle.angled")
+                    Label(images.isEmpty ? "Choose photos" : "Replace photos", systemImage: "photo.on.rectangle.angled")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(CoffeeTheme.accent)
-                .disabled(session.activeImageSourceCount >= BeanExplorerSession.maximumImageSources)
 
                 Button {
                     isShowingCamera = true
@@ -183,7 +177,7 @@ struct BeanExplorerView: View {
                 }
             }
 
-            Text("Photos are processed by your configured vision service and stay out of Beans. Closing discards this comparison.")
+            Text("Photos are processed by your configured vision service and stay out of Beans. This comparison is kept when you close; Choose photos starts fresh, or clear it from the menu.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -577,6 +571,24 @@ struct BeanExplorerView: View {
     }
 
     @MainActor
+    private func refreshWithPhotoItems(_ items: [PhotosPickerItem]) async {
+        clearComparison(persist: false)
+        for item in items {
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data) else {
+                    errorMessage = "The selected photo could not be read."
+                    continue
+                }
+                addImage(image)
+            } catch {
+                errorMessage = "Could not load a selected photo: \(error.localizedDescription)"
+            }
+        }
+        persistCache()
+    }
+
+    @MainActor
     private func loadPhotoItems(_ items: [PhotosPickerItem]) async {
         for item in items {
             do {
@@ -590,6 +602,7 @@ struct BeanExplorerView: View {
                 errorMessage = "Could not load a selected photo: \(error.localizedDescription)"
             }
         }
+        persistCache()
     }
 
     @MainActor
@@ -599,6 +612,7 @@ struct BeanExplorerView: View {
             let source = try session.addImageSource()
             images.append(.init(id: source.id, image: prepared.image, data: prepared.data))
             comparison = nil
+            persistCache()
             startScan(sourceID: source.id)
         } catch {
             errorMessage = message(for: error)
@@ -630,6 +644,7 @@ struct BeanExplorerView: View {
         try? session.removeSource(sourceID: image.id)
         images.removeAll { $0.id == image.id }
         refreshComparison()
+        persistCache()
     }
 
     @MainActor
@@ -783,6 +798,7 @@ struct BeanExplorerView: View {
     private func refreshComparison() {
         guard !isScanning, scorableCandidateCount >= 2 else {
             comparison = nil
+            persistCache()
             return
         }
         do {
@@ -795,6 +811,45 @@ struct BeanExplorerView: View {
         } catch {
             comparison = nil
             errorMessage = "The taste profile could not be verified."
+        }
+        persistCache()
+    }
+
+    private func restoreCacheIfNeeded() {
+        guard !didRestoreCache else { return }
+        didRestoreCache = true
+        guard let restored = BeanExplorerPersistence.load() else { return }
+        session = restored.session
+        images = restored.images.map { CollectedImage(id: $0.id, image: $0.image, data: $0.data) }
+        let imageIDs = Set(images.map(\.id))
+        for source in session.activeSources where source.kind == .image && !imageIDs.contains(source.id) {
+            try? session.removeSource(sourceID: source.id)
+        }
+        // Drop in-flight uploading markers from a previous process.
+        for source in session.activeSources {
+            if case .uploading = source.requestState {
+                try? session.cancelRequest(sourceID: source.id)
+            }
+        }
+        refreshComparison()
+    }
+
+    private func persistCache() {
+        BeanExplorerPersistence.save(
+            session: session,
+            images: images.map { ($0.id, $0.data) }
+        )
+    }
+
+    private func clearComparison(persist: Bool) {
+        scanTasks.values.forEach { $0.cancel() }
+        scanTasks.removeAll()
+        session.clear()
+        images = []
+        comparison = nil
+        candidateForEditing = nil
+        if persist {
+            BeanExplorerPersistence.clear()
         }
     }
 
@@ -882,7 +937,7 @@ private struct ManualExplorerCandidateSheet: View {
                     TextField("Flavor notes, comma separated", text: $flavorNotes, axis: .vertical)
                 }
                 Section {
-                    Text("Manual values stay linked to this temporary source and are discarded when you close the comparison.")
+                    Text("Manual values stay linked to this comparison source and are kept until you clear the comparison or choose new photos.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
