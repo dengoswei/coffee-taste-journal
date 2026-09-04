@@ -230,6 +230,65 @@ struct ArkResponsesClient: Sendable {
         }
         return try arkResponse.extractedText()
     }
+
+    /// Text-only Responses call (no image) for descriptor normalization.
+    func extractTextOnly(
+        systemPrompt: String,
+        userPrompt: String,
+        maxOutputTokens: Int
+    ) async throws -> String {
+        let credentials = try credentialsLoader()
+        let payload = ArkResponsesPayload(
+            model: credentials.model,
+            input: [
+                .init(
+                    role: "system",
+                    content: [
+                        .init(type: "input_text", imageURL: nil, detail: nil, text: systemPrompt)
+                    ]
+                ),
+                .init(
+                    role: "user",
+                    content: [
+                        .init(type: "input_text", imageURL: nil, detail: nil, text: userPrompt)
+                    ]
+                )
+            ],
+            temperature: 0,
+            maxOutputTokens: maxOutputTokens
+        )
+
+        var request = URLRequest(url: credentials.baseURL.appending(path: "responses"))
+        request.httpMethod = "POST"
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("Bearer \(credentials.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(payload)
+        request.timeoutInterval = 120
+
+        defer {
+            if invalidatesSessionAfterRequest {
+                session.finishTasksAndInvalidate()
+            }
+        }
+
+        let (data, response) = try await session.data(for: request)
+        try Task.checkCancellation()
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw BagPhotoScannerError.invalidResponse
+        }
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw BagPhotoScannerError.requestFailed(statusCode: httpResponse.statusCode)
+        }
+
+        let arkResponse: ArkResponsesResponse
+        do {
+            arkResponse = try JSONDecoder().decode(ArkResponsesResponse.self, from: data)
+        } catch {
+            throw BagPhotoScannerError.invalidJSON
+        }
+        return try arkResponse.extractedText()
+    }
 }
 
 private extension BagPhotoScanner {

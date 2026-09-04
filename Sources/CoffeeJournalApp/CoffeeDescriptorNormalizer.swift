@@ -52,7 +52,7 @@ enum CoffeeDescriptorNormalizerError: LocalizedError {
     case requestFailed(statusCode: Int)
     
     var errorDescription: String? {
-        switch self:
+        switch self {
         case .missingAPIKey:
             return "Ark API key is not configured."
         case .invalidResponse:
@@ -131,8 +131,7 @@ struct CoffeeDescriptorNormalizer: Sendable {
             retryContext: retryContext
         )
         
-        let content = try await client.extract(
-            imageData: Data(), // Empty for text-only
+        let content = try await client.extractTextOnly(
             systemPrompt: Self.systemPrompt(profile: profile),
             userPrompt: userPrompt,
             maxOutputTokens: 800
@@ -285,101 +284,6 @@ struct CoffeeDescriptorNormalizer: Sendable {
         
         Return ONLY valid JSON. Do not use markdown code fences. Do not add explanations.
         """
-    }
-}
-
-// MARK: - Text-only Ark client extension
-
-extension ArkResponsesClient {
-    /// Send text-only request (no image data).
-    func extract(
-        systemPrompt: String,
-        userPrompt: String,
-        maxOutputTokens: Int
-    ) async throws -> String {
-        let credentials = try credentialsLoader()
-        let payload = ArkResponsesPayload(
-            model: credentials.model,
-            input: [
-                .init(
-                    role: "system",
-                    content: [
-                        .init(type: "input_text", imageURL: nil, detail: nil, text: systemPrompt)
-                    ]
-                ),
-                .init(
-                    role: "user",
-                    content: [
-                        .init(type: "input_text", imageURL: nil, detail: nil, text: userPrompt)
-                    ]
-                )
-            ],
-            temperature: 0,
-            maxOutputTokens: maxOutputTokens
-        )
-        
-        var request = URLRequest(url: credentials.baseURL.appending(path: "responses"))
-        request.httpMethod = "POST"
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("Bearer \(credentials.apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(payload)
-        request.timeoutInterval = 120
-        
-        defer {
-            if invalidatesSessionAfterRequest {
-                session.finishTasksAndInvalidate()
-            }
-        }
-        
-        let (data, response) = try await session.data(for: request)
-        try Task.checkCancellation()
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw CoffeeDescriptorNormalizerError.invalidResponse
-        }
-        
-        guard (200..<300).contains(httpResponse.statusCode) else {
-            throw CoffeeDescriptorNormalizerError.requestFailed(statusCode: httpResponse.statusCode)
-        }
-        
-        // Use same response structure as BagPhotoScanner
-        struct ArkResponsesResponse: Decodable {
-            var outputText: String?
-            var output: [OutputItem]?
-            
-            enum CodingKeys: String, CodingKey {
-                case outputText = "output_text"
-                case output
-            }
-            
-            func extractedText() throws -> String {
-                if let outputText, !outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    return outputText
-                }
-                
-                let texts = output?
-                    .flatMap { $0.content ?? [] }
-                    .compactMap(\.text)
-                    .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? []
-                
-                guard !texts.isEmpty else {
-                    throw CoffeeDescriptorNormalizerError.invalidResponse
-                }
-                return texts.joined(separator: "\n")
-            }
-            
-            struct OutputItem: Decodable {
-                var content: [Content]?
-            }
-            
-            struct Content: Decodable {
-                var text: String?
-            }
-        }
-        
-        let decoded = try JSONDecoder().decode(ArkResponsesResponse.self, from: data)
-        return try decoded.extractedText()
     }
 }
 
